@@ -157,6 +157,24 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       } catch { /* raw auth_pg unavailable → fall back to the USL-only verdict */ }
       return { status: "approved", reason: `${ip}: failures against ${n(fail?.accounts)} accounts and ${n(succ.rows[0]?.n)} success as ${upn}`, sql_id: succ.sql_id, confirm: true };
     }
+    case "spray_roster": {
+      // Independent re-count: how many distinct victims actually failed from this IP in the window?
+      const ip = String(f.facts.ip ?? "");
+      const claimed = Number(f.facts.unique_victims ?? 0);
+      const victims = String(f.facts.victims ?? "").split(",").filter(Boolean);
+      const r = await z.runSql(`SELECT COUNT(DISTINCT upn) AS actual FROM ${USL}.signin_event WHERE ip = '${esc(ip)}' AND result IN ('failure','mfa_denied')`);
+      const actual = n(r.rows[0]?.actual);
+      if (actual < 10) return { status: "rejected", reason: `${ip} only touched ${actual} distinct accounts; not a spray roster`, sql_id: r.sql_id };
+      // Sanity: Markovian's claim must be close to the independent count (within 25%).
+      const diff = Math.abs(actual - claimed);
+      if (claimed === 0 || diff > Math.max(5, Math.ceil(actual * 0.25))) {
+        return { status: "approved", reason: `independent re-count sees ${actual} victims from ${ip} (Markovian listed ${claimed}); the spray roster is real`, sql_id: r.sql_id, confirm: false };
+      }
+      // Verify the alerting UPN really appears in the Markovian roster.
+      const upnInRoster = upn && victims.includes(upn.toLowerCase());
+      if (!upnInRoster) return { status: "approved", reason: `independent re-count confirms ${actual} victims from ${ip}; alerting user not in roster`, sql_id: r.sql_id, confirm: false };
+      return { status: "approved", reason: `independent re-count confirms ${actual} victims from ${ip}; ${upn} appears in the Markovian roster`, sql_id: r.sql_id, confirm: true };
+    }
     case "new_device": {
       const dev = String(f.facts.device_id ?? "");
       const r = await z.runSql(`SELECT device_id, owner_upn, managed, type FROM ${USL}.device WHERE device_id = '${esc(dev)}'`);

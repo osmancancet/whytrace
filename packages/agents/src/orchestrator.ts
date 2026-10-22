@@ -14,6 +14,7 @@ import { gate, policy } from "./risk-gate.ts";
 import { readQueryLog, validateReport, type QueryLogRecord } from "./validate.ts";
 import { CaseMemory } from "./memory.ts";
 import { EvidenceGraph } from "./evidence-graph.ts";
+import { runSprayMarkovian } from "./markovian-sweep.ts";
 
 export type Case = { id: string; upn: string; expected?: VerdictT; description?: string };
 
@@ -29,7 +30,7 @@ const DEMO_CASES: Record<string, Case> = {
 export const LIMITS = { sql: 25, model: 30, wallMs: 8 * 60_000, rounds: 3 };
 
 export type ZetarisLike = Pick<Zetaris, "runSql">;
-export type NightshiftLike = Pick<Nightshift, "callTool">;
+export type NightshiftLike = Pick<Nightshift, "callTool" | "chat">;
 
 export type OrchestratorOptions = {
   caseId: string;
@@ -204,6 +205,32 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     remember([...findings.map((f) => f.claim), ...rejected.map((r) => r.claim), ...appliancesFromRows(allRows)].join(" "), `round ${round} evidence`);
     if (!needsMore.length && !pendingPivot) break;
     if (budget.timeUp()) break;
+  }
+
+  // ---- Markovian long sweep over spray failures (only when the Investigator saw a password-spray signal)
+  const spraySignal = findings.find((f) => f.kind === "password_spray");
+  if (spraySignal && budget.canSql() && budget.canModel()) {
+    const ip = String(spraySignal.facts?.ip ?? "");
+    const firstTs = String(spraySignal.facts?.first_ts ?? "");
+    const lastTs = String(spraySignal.facts?.last_ts ?? firstTs);
+    if (ip && firstTs) {
+      try {
+        const result = await runSprayMarkovian(
+          { zetaris: { runSql: (sql) => run(sql, "markovian") }, nightshift: opts.nightshift as Nightshift, trace },
+          { caseId: caseInfo.id, upn: caseInfo.upn, ip, firstTs, lastTs, memoryContext: recall.context || undefined },
+          ids,
+        );
+        budget.model += result.modelCalls;
+        if (result.findings.length) {
+          const criticOut = opts.ablate?.critic === false ? { approved: result.findings, rejected: [], needsMore: [], verdicts: [] } : await critique(criticZ, result.findings, verdictsById);
+          for (const v of criticOut.verdicts) { verdictsById.set(v.finding_id, v); trace.emit({ agent: "critic", action: `verdict_${v.status}`, sql_id: v.check_sql_id, input_summary: v.finding_id, output_summary: v.reason.slice(0, 300), lane: "code", status: "ok" }); }
+          findings.push(...criticOut.approved);
+          rejected.push(...criticOut.rejected);
+        }
+      } catch (err) {
+        trace.emit({ agent: "markovian", action: "sweep", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
+      }
+    }
   }
 
   // ---- Scoped DQ (drives reasoning)

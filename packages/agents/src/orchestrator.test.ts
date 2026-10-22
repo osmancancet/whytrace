@@ -90,6 +90,22 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     expect(r.limitations.join(" ")).toMatch(/Reporter model unavailable/);
   });
 
+  it("Markovian: case-004 triggers the paginated spray sweep and records a measured-token log", async () => {
+    const { run, trace } = setup("case-004");
+    const r = await run();
+    expect(r.verdict).toBe("contain");
+    expect(existsSync(join(trace.rootDir, "markovian.json"))).toBe(true);
+    const summary = JSON.parse(readFileSync(join(trace.rootDir, "markovian.json"), "utf8"));
+    expect(summary.engine).toBe("meterless-markovian");
+    expect(summary.tokenLabel).toBe("measured");
+    expect(summary.windows.length).toBeGreaterThanOrEqual(2);
+    expect(summary.victim_count).toBeGreaterThanOrEqual(5);
+    // The Markovian sweep's roster claim must be visible in the report (either as a surviving finding or in rejected_claims).
+    const inFindings = r.findings.some((f) => f.kind === "spray_roster");
+    const inRejected = r.rejected_claims.some((c) => /Markovian sweep/.test(c.claim));
+    expect(inFindings || inRejected).toBe(true);
+  });
+
   it("H-MEM: case-003 recalls the lesson stored by case-002 and still escalates", async () => {
     const memory = new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-hmem-")) });
     const r2 = await setup("case-002", { memory }).run();

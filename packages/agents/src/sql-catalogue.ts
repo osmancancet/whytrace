@@ -19,7 +19,8 @@ export type QueryName =
   | "peer_baseline"
   | "dq_signin_bad_vpn_order"
   | "signin_count_by_country"
-  | "spray_source_for";
+  | "spray_source_for"
+  | "spray_failures_window";
 
 export type SqlCatalogueEntry = { sql: string; description: string };
 
@@ -90,6 +91,11 @@ export function queryFor(name: QueryName, params: Record<string, string | number
         description: "sign-in distribution by country for a UPN",
         sql: `SELECT country, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' GROUP BY country ORDER BY n DESC`,
       };
+    case "spray_failures_window":
+      return {
+        description: "failed sign-ins from one source IP within a time window (paginated spray sweep)",
+        sql: `SELECT event_id, ts, upn, result, ip, asn_org, country, mfa_prompt_count FROM ${USL}.signin_event WHERE ip = '${esc(params.ip)}' AND result IN ('failure','mfa_denied') AND ts >= '${esc(params.from)}' AND ts < '${esc(params.to)}' ORDER BY ts`,
+      };
   }
 }
 
@@ -107,6 +113,7 @@ export function listCatalogue(): Array<{ name: QueryName; description: string; p
     { name: "peer_baseline", description: "department sign-in baseline", params: ["department"] },
     { name: "signin_count_by_country", description: "sign-in counts by country", params: ["upn"] },
     { name: "spray_source_for", description: "password-spray sources behind this UPN's successful sign-ins", params: ["upn"] },
+    { name: "spray_failures_window", description: "paginated failures from one IP across a time window (Markovian step)", params: ["ip", "from", "to"] },
     { name: "dq_signin_bad_vpn_order", description: "VPN sessions with ts_end < ts_start", params: [] },
   ];
 }

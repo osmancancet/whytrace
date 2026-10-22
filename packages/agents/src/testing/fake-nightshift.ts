@@ -6,10 +6,12 @@ export type FakePlan = { hypotheses: Array<{ id: string; label: string }>; steps
 
 export class FakeNightshift {
   readonly calls: Array<{ tool: string; messages: Msg[] }> = [];
+  readonly chatCalls: Array<{ messages: Msg[]; lane: string }> = [];
   constructor(private readonly script: {
     plan?: (round: number, user: string) => FakePlan;
     risk?: (evidence: string) => { decision: VerdictT; confidence: number; rationale: string };
     note?: () => Record<string, unknown>;
+    chat?: (messages: Msg[], lane: string) => { text: string; tokens_in?: number; tokens_out?: number };
     failTools?: string[];
   } = {}) {}
 
@@ -28,6 +30,24 @@ export class FakeNightshift {
     }
     return { value: opts.parse(args), model: "nvidia/nemotron-fake", latencyMs: 1, retryCount: 0, receipt: { receipt_id: `rcpt_${this.calls.length}` }, raw: undefined as never };
   }
+
+  async chat(opts: { messages: Msg[]; lane?: string }): Promise<{ text: string; toolCalls: []; receipt: { receipt_id: string; usage: { input_tokens: number; output_tokens: number } }; rawStatus: number; latencyMs: number; retryCount: number; model: string; lane: "deep" | "fast" }> {
+    const lane = (opts.lane ?? "fast") as "deep" | "fast";
+    this.chatCalls.push({ messages: opts.messages, lane });
+    const r = (this.script.chat ?? defaultChat)(opts.messages, lane);
+    return { text: r.text, toolCalls: [], receipt: { receipt_id: `rcpt_chat_${this.chatCalls.length}`, usage: { input_tokens: r.tokens_in ?? 500, output_tokens: r.tokens_out ?? 120 } }, rawStatus: 200, latencyMs: 1, retryCount: 0, model: "nvidia/nemotron-fake", lane };
+  }
+}
+
+function defaultChat(messages: Msg[], _lane: string): { text: string; tokens_in: number; tokens_out: number } {
+  const user = messages[messages.length - 1]?.content ?? "";
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const m of user.matchAll(/([a-z0-9._%+-]+@[a-z0-9.-]+)\s+failure/gi)) {
+    const u = m[1]!.toLowerCase();
+    if (!seen.has(u)) { seen.add(u); out.push(`SUSPECT:${u} count=1`); }
+  }
+  return { text: out.join("\n"), tokens_in: 400 + user.length / 10, tokens_out: 20 + out.length * 8 };
 }
 
 export function defaultPlan(round: number): FakePlan {

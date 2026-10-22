@@ -159,6 +159,19 @@ export class FakeZetaris {
       const ip = lit(sql, /ip = '([^']+)'/);
       return [{ n: S.filter((r) => r.ip === ip && r.result === "success").length }];
     }
+    if (sql.includes(".signin_event") && sql.includes("result IN ('failure','mfa_denied')") && sql.includes("ip = '")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const from = lit(sql, /ts >= '([^']+)'/);
+      const to = lit(sql, /ts < '([^']+)'/);
+      const inWindow = (s: string) => (!from || s >= T(from)) && (!to || s < T(to));
+      const rs = t.signin_event.filter((r) => r.ip === ip && (r.result === "failure" || r.result === "mfa_denied") && inWindow(String(r.ts)));
+      return pick(rs.sort(byTs("ts")), colsOf(sql));
+    }
+    if (sql.includes(".signin_event") && sql.includes("COUNT(DISTINCT upn) AS actual") && sql.includes("ip = '")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.ip === ip && (r.result === "failure" || r.result === "mfa_denied"));
+      return [{ actual: new Set(rs.map((r) => r.upn)).size }];
+    }
     if (sql.includes("result IN ('mfa_denied','mfa_approved')")) return pick(S.filter((r) => r.result === "mfa_denied" || r.result === "mfa_approved").sort(byTs("ts")), colsOf(sql));
     if (sql.includes("asn_org NOT IN")) {
       const excl = list(/asn_org NOT IN \(([^)]*)\)/.exec(sql)![1]!);
