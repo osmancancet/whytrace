@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# ./run <case-id> [--sample]
+# Thin wrapper around the CLI. --sample sets SAMPLE_MODE=true so a judge can
+# replay a recorded run against samples/<case>/ with no keys and no network.
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "usage: ./run <case-id> [--sample]"
+  echo "       pass --sample to replay from samples/<case>/ (no keys needed)"
+  exit 2
+fi
+
+CASE_ID="$1"
+shift || true
+
+if [ "${1:-}" = "--sample" ]; then
+  export SAMPLE_MODE=true
+fi
+
+exec npm --silent run investigate -- "$CASE_ID"
