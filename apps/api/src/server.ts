@@ -1,0 +1,238 @@
+// Fastify server for the Analyst Console. Reads saved runs from output_examples/
+// and logs/, streams live trace events over SSE, exposes POST /run to launch an
+// investigation and POST /runs/:id/approve to persist an audit entry. The real
+// Nightshift / Zetaris adapters do the work; nothing is faked here.
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync, appendFileSync, watch } from "node:fs";
+import { basename, resolve as resolvePath, join } from "node:path";
+import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
+import { Nightshift, RunTrace, Zetaris } from "@whytrace/adapters";
+import { CaseMemory, investigate, listDemoCases, type Report } from "@whytrace/agents";
+
+const PORT = Number(process.env.PORT ?? 8000);
+const ROOT = resolvePath(process.cwd());
+const OUTPUT_DIR = resolvePath(ROOT, "output_examples");
+const LOG_DIR = resolvePath(ROOT, "logs");
+const AUDIT_DIR = resolvePath(ROOT, "logs", "audit");
+
+function loadDotenv() {
+  const path = resolvePath(process.cwd(), ".env");
+  if (!existsSync(path)) return;
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const eq = t.indexOf("=");
+    if (eq < 0) continue;
+    const k = t.slice(0, eq).trim();
+    let v = t.slice(eq + 1).trim();
+    if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1);
+    const h = v.indexOf(" #");
+    if (h >= 0) v = v.slice(0, h).trim();
+    if (!process.env[k]) process.env[k] = v;
+  }
+}
+
+type SavedRun = { id: string; case_id: string; verdict: string; confidence: number; file: string; ts: string };
+
+function listSavedRuns(): SavedRun[] {
+  if (!existsSync(OUTPUT_DIR)) return [];
+  const files = readdirSync(OUTPUT_DIR).filter((f) => f.endsWith(".json"));
+  const out: SavedRun[] = [];
+  for (const file of files) {
+    try {
+      const full = JSON.parse(readFileSync(join(OUTPUT_DIR, file), "utf8")) as Partial<Report>;
+      if (!full.run_id || !full.case_id || !full.verdict) continue;
+      const st = statSync(join(OUTPUT_DIR, file));
+      out.push({ id: full.run_id, case_id: full.case_id, verdict: String(full.verdict), confidence: Number(full.confidence ?? 0), file, ts: st.mtime.toISOString() });
+    } catch { /* skip malformed */ }
+  }
+  return out.sort((a, b) => (a.ts < b.ts ? 1 : -1));
+}
+
+type ActiveRun = {
+  run_id: string;
+  case_id: string;
+  started_at: string;
+  trace: RunTrace;
+  listeners: Set<(line: string) => void>;
+  done: boolean;
+  verdict?: string;
+  error?: string;
+};
+
+const ACTIVE = new Map<string, ActiveRun>();
+
+function startRun(caseId: string, opts: { ablate?: { critic?: boolean; dq?: boolean; memory?: boolean } }): ActiveRun {
+  const trace = new RunTrace();
+  const run_id = trace.run_id;
+  const entry: ActiveRun = { run_id, case_id: caseId, started_at: new Date().toISOString(), trace, listeners: new Set(), done: false };
+  ACTIVE.set(run_id, entry);
+  // Tail the trace file so SSE subscribers see every event as it's written.
+  const traceFile = trace.files().trace;
+  // Ensure the file exists so the watcher attaches reliably.
+  try { if (!existsSync(traceFile)) writeFileSync(traceFile, "", "utf8"); } catch { /* best effort */ }
+  let pos = 0;
+  const push = () => {
+    try {
+      const buf = readFileSync(traceFile, "utf8");
+      if (buf.length <= pos) return;
+      const chunk = buf.slice(pos);
+      pos = buf.length;
+      for (const line of chunk.split("\n")) if (line.trim()) for (const l of entry.listeners) l(line);
+    } catch { /* file may be rotating */ }
+  };
+  const watcher = watch(trace.rootDir, { persistent: false }, (_evt, filename) => {
+    if (filename && basename(traceFile) === String(filename)) push();
+  });
+  const timer = setInterval(push, 500);
+
+  (async () => {
+    try {
+      const zetaris = new Zetaris({ trace, agent: "investigator" });
+      const nightshift = new Nightshift({ trace });
+      const memory = opts.ablate?.memory === false ? null : new CaseMemory({ persistDir: resolvePath(ROOT, "logs", "hmem") });
+      const report = await investigate({ caseId, trace, zetaris, nightshift, memory, ablate: opts.ablate });
+      mkdirSync(OUTPUT_DIR, { recursive: true });
+      const outPath = resolvePath(OUTPUT_DIR, `${caseId}-${run_id}.json`);
+      writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
+      entry.verdict = report.verdict;
+    } catch (err) {
+      entry.error = (err as Error).message.slice(0, 400);
+    } finally {
+      entry.done = true;
+      push();
+      clearInterval(timer);
+      try { watcher.close(); } catch { /* ignore */ }
+      // Flush a terminal SSE event so clients can close their connection.
+      for (const l of entry.listeners) l(JSON.stringify({ agent: "orchestrator", action: "done", verdict: entry.verdict ?? "error", error: entry.error, status: entry.error ? "error" : "ok" }));
+    }
+  })();
+
+  return entry;
+}
+
+async function readReport(id: string): Promise<Report | null> {
+  if (!existsSync(OUTPUT_DIR)) return null;
+  for (const f of readdirSync(OUTPUT_DIR)) {
+    if (!f.includes(`-${id}`) || !f.endsWith(".json")) continue;
+    try { return JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Report; } catch { return null; }
+  }
+  return null;
+}
+
+function readLogFile(id: string, name: string): string | null {
+  const path = join(LOG_DIR, id, name);
+  if (!existsSync(path)) return null;
+  return readFileSync(path, "utf8");
+}
+
+async function main() {
+  loadDotenv();
+  const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
+
+  // Minimal CORS — only localhost dev clients need to reach this port.
+  app.addHook("onSend", async (_req, reply, payload) => {
+    reply.header("access-control-allow-origin", "*");
+    reply.header("access-control-allow-methods", "GET,POST,OPTIONS");
+    reply.header("access-control-allow-headers", "content-type");
+    return payload;
+  });
+  app.options("/*", async (_req, reply) => { reply.code(204).send(); });
+
+  app.get("/cases", async () => ({ cases: listDemoCases() }));
+
+  app.get("/runs", async () => ({ runs: listSavedRuns() }));
+
+  app.get<{ Params: { id: string } }>("/runs/:id", async (req, reply) => {
+    const r = await readReport(req.params.id);
+    if (!r) return reply.code(404).send({ error: "run not found" });
+    return r;
+  });
+
+  app.get<{ Params: { id: string } }>("/runs/:id/trace", async (req, reply) => {
+    const t = readLogFile(req.params.id, "trace.jsonl");
+    if (t === null) return reply.code(404).send({ error: "trace not found" });
+    reply.type("application/x-ndjson").send(t);
+    return reply;
+  });
+
+  app.get<{ Params: { id: string } }>("/runs/:id/queries", async (req, reply) => {
+    const q = readLogFile(req.params.id, "queries.jsonl");
+    if (q === null) return reply.code(404).send({ error: "queries not found" });
+    reply.type("application/x-ndjson").send(q);
+    return reply;
+  });
+
+  app.get<{ Params: { id: string } }>("/runs/:id/markovian", async (req, reply) => {
+    const m = readLogFile(req.params.id, "markovian.json");
+    if (m === null) return reply.code(404).send({ error: "no markovian run for this id" });
+    return JSON.parse(m);
+  });
+
+  app.get<{ Params: { id: string } }>("/runs/:id/stream", async (req, reply) => {
+    reply.raw.writeHead(200, {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache, no-transform",
+      "connection": "keep-alive",
+      "access-control-allow-origin": "*",
+    });
+    const active = ACTIVE.get(req.params.id);
+    if (active) {
+      // Live tail
+      const existing = readFileSync(active.trace.files().trace, "utf8").split("\n").filter(Boolean);
+      for (const line of existing) reply.raw.write(`data: ${line}\n\n`);
+      const listener = (line: string) => reply.raw.write(`data: ${line}\n\n`);
+      active.listeners.add(listener);
+      req.raw.on("close", () => active.listeners.delete(listener));
+      // Keep-alive comment every 15 s
+      const beat = setInterval(() => reply.raw.write(":beat\n\n"), 15_000);
+      req.raw.on("close", () => clearInterval(beat));
+    } else {
+      // Replay a saved trace (clearly labelled)
+      const t = readLogFile(req.params.id, "trace.jsonl");
+      if (t === null) { reply.raw.write(`event: error\ndata: ${JSON.stringify({ error: "trace not found" })}\n\n`); reply.raw.end(); return reply; }
+      reply.raw.write(`event: replay\ndata: ${JSON.stringify({ mode: "replay", run_id: req.params.id })}\n\n`);
+      const lines = t.split("\n").filter(Boolean);
+      let i = 0;
+      const flush = () => {
+        if (i >= lines.length) { reply.raw.write(`event: end\ndata: {}\n\n`); reply.raw.end(); return; }
+        reply.raw.write(`data: ${lines[i]!}\n\n`);
+        i += 1;
+        setTimeout(flush, 25);
+      };
+      flush();
+    }
+    return reply;
+  });
+
+  app.post<{ Body: { case_id?: string; ablate?: { critic?: boolean; dq?: boolean; memory?: boolean } } }>("/run", async (req, reply) => {
+    const caseId = req.body?.case_id ?? "";
+    if (!listDemoCases().some((c) => c.id === caseId)) return reply.code(400).send({ error: `unknown case: ${caseId}` });
+    const ablate = req.body?.ablate ?? {};
+    const entry = startRun(caseId, { ablate });
+    return { run_id: entry.run_id, started_at: entry.started_at, case_id: caseId };
+  });
+
+  app.post<{ Params: { id: string }; Body: { analyst?: string; action?: string; note?: string } }>("/runs/:id/approve", async (req, reply) => {
+    const report = await readReport(req.params.id);
+    if (!report) return reply.code(404).send({ error: "run not found" });
+    mkdirSync(AUDIT_DIR, { recursive: true });
+    const entry = {
+      ts: new Date().toISOString(),
+      run_id: req.params.id,
+      case_id: report.case_id,
+      verdict: report.verdict,
+      action: req.body?.action ?? "approve",
+      analyst: req.body?.analyst ?? "osman.cetlenbik@aegean.edu",
+      note: req.body?.note ?? "",
+    };
+    appendFileSync(join(AUDIT_DIR, "approvals.jsonl"), JSON.stringify(entry) + "\n", "utf8");
+    return { ok: true, entry };
+  });
+
+  app.get("/healthz", async () => ({ ok: true, service: "whytrace-api", runs: listSavedRuns().length, active: ACTIVE.size }));
+
+  await app.listen({ port: PORT, host: "0.0.0.0" });
+  app.log.info(`WhyTrace API ready on http://0.0.0.0:${PORT}`);
+}
+
+main().catch((err) => { console.error(err); process.exit(1); });

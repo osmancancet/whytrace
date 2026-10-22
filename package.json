@@ -19,7 +19,10 @@
     "test:watch": "vitest",
     "conformance": "node scripts/run_conformance.mjs",
     "investigate": "tsx apps/api/src/cli.ts",
-    "dev": "tsx watch apps/api/src/server.ts",
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "tsx watch apps/api/src/server.ts",
+    "dev:web": "npm --workspace @whytrace/web run dev",
+    "build:web": "npm --workspace @whytrace/web run build",
     "eval": "tsx scripts/eval.ts",
     "bootstrap:zetaris": "tsx scripts/zetaris_bootstrap.ts",
     "services:up": "docker compose -f services/docker-compose.data.yml up -d",
@@ -29,11 +32,16 @@
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
+    "concurrently": "^9.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   },
   "dependencies": {
     "zod": "^4.6.7"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
   }
 }
