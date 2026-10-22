@@ -1,0 +1,28 @@
+device_id,owner_upn,hostname,os,os_version,managed,last_seen,type,firmware,location
+LT-2207,d.yilmaz@aegean.edu,finance-lt-2207.aegean.edu,Windows,11 23H2,true,2026-10-13T18:12:00Z,laptop,n/a,Manisa / Finance
+LT-3104,prof.kaya@aegean.edu,ce-lt-3104.aegean.edu,macOS,14.4.1,true,2026-10-16T18:12:00Z,laptop,n/a,Manisa / CE
+LT-7701,e.oz@aegean.edu,sa-lt-7701.aegean.edu,Windows,11 23H2,true,2026-10-18T18:12:00Z,laptop,n/a,Manisa / Student Affairs
+LT-6002,b.cetin@aegean.edu,it-lt-6002.aegean.edu,Linux,Ubuntu 24.04,true,2026-10-19T18:12:00Z,laptop,n/a,Manisa / IT
+PH-9900,b.cetin@aegean.edu,it-ph-9900,Android,14,false,2026-10-19T18:00:00Z,phone,n/a,Manisa
+vpn-edge-01,it-infra@aegean.edu,vpn-edge-01.aegean.edu,Ivanti Connect Secure,22.7R2.3,true,2026-10-19T18:00:00Z,vpn_appliance,22.7R2.3,Manisa / DMZ
+vpn-edge-02,it-infra@aegean.edu,vpn-edge-02.aegean.edu,Ivanti Connect Secure,22.7R2.8,true,2026-10-19T18:00:00Z,vpn_appliance,22.7R2.8,Manisa / DMZ
+BG-30,can.şahin0@aegean.edu,bg-0.aegean.edu,Linux,Ubuntu 24.04,false,2026-10-10T12:00:00Z,laptop,n/a,Manisa
+BG-31,fatma.tekin1@aegean.edu,bg-1.aegean.edu,Windows,Ubuntu 24.04,false,2026-10-11T12:00:00Z,phone,n/a,Manisa
+BG-32,tuğçe.barış2@aegean.edu,bg-2.aegean.edu,Windows,11 23H2,true,2026-10-12T12:00:00Z,desktop,n/a,Manisa
+BG-33,emre.erden3@aegean.edu,bg-3.aegean.edu,macOS,11 23H2,true,2026-10-13T12:00:00Z,laptop,n/a,Manisa
+BG-34,tuğçe.yıldız4@aegean.edu,bg-4.aegean.edu,Linux,14.4.1,true,2026-10-14T12:00:00Z,desktop,n/a,Manisa
+BG-35,mert.barış5@aegean.edu,bg-5.aegean.edu,Linux,11 23H2,true,2026-10-15T12:00:00Z,phone,n/a,Manisa
+BG-36,ayşe.yıldız6@aegean.edu,bg-6.aegean.edu,macOS,Ubuntu 24.04,true,2026-10-16T12:00:00Z,desktop,n/a,Manisa
+BG-37,ulaş.erden7@aegean.edu,bg-7.aegean.edu,macOS,Ubuntu 24.04,true,2026-10-17T12:00:00Z,laptop,n/a,Manisa
+BG-38,leyla.doğan8@aegean.edu,bg-8.aegean.edu,macOS,14.4.1,true,2026-10-18T12:00:00Z,desktop,n/a,Manisa
+BG-39,rıza.tekin9@aegean.edu,bg-9.aegean.edu,macOS,14.4.1,true,2026-10-19T12:00:00Z,laptop,n/a,Manisa
+BG-40,can.erden10@aegean.edu,bg-10.aegean.edu,Linux,14.4.1,true,2026-10-10T12:00:00Z,desktop,n/a,Manisa
+BG-41,pelin.doğan11@aegean.edu,bg-11.aegean.edu,macOS,14.4.1,true,2026-10-11T12:00:00Z,phone,n/a,Manisa
+BG-42,rıza.arslan12@aegean.edu,bg-12.aegean.edu,macOS,14.4.1,true,2026-10-12T12:00:00Z,laptop,n/a,Manisa
+BG-43,tuğçe.keskin13@aegean.edu,bg-13.aegean.edu,macOS,11 23H2,false,2026-10-13T12:00:00Z,phone,n/a,Manisa
+BG-44,irmak.koç14@aegean.edu,bg-14.aegean.edu,macOS,14.4.1,true,2026-10-14T12:00:00Z,phone,n/a,Manisa
+BG-45,tuğçe.yıldız15@aegean.edu,bg-15.aegean.edu,macOS,Ubuntu 24.04,true,2026-10-15T12:00:00Z,desktop,n/a,Manisa
+BG-46,mert.çelik16@aegean.edu,bg-16.aegean.edu,Linux,14.4.1,false,2026-10-16T12:00:00Z,laptop,n/a,Manisa
+BG-47,jale.koç17@aegean.edu,bg-17.aegean.edu,macOS,14.4.1,false,2026-10-17T12:00:00Z,laptop,n/a,Manisa
+BG-48,tuğçe.avcı18@aegean.edu,bg-18.aegean.edu,macOS,Ubuntu 24.04,true,2026-10-18T12:00:00Z,phone,n/a,Manisa
+BG-49,jale.polat19@aegean.edu,bg-19.aegean.edu,Linux,Ubuntu 24.04,true,2026-10-19T12:00:00Z,desktop,n/a,Manisa

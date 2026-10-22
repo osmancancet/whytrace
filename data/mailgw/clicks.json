@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "click_id": "clk-001",
+      "ts": "2026-10-14T06:15:00.000Z",
+      "message_id": "msg-001-phish",
+      "upn": "d.yilmaz@aegean.edu",
+      "url": "https://aegean-edu.co/verify",
+      "url_domain": "aegean-edu.co",
+      "user_ip": "193.140.10.44"
+    }
+  ]
+}

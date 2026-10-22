@@ -1,0 +1,92 @@
+---
+description: Use whenever code or SQL touches Zetaris in WhyTrace: registering sources (Postgres JDBC, REST, file store CSV, CISA KEV), building the Unified Semantic Layer and DQ checks, writing Lightning SQL, calling the Zetaris REST API from agents, or debugging Zetaris errors.
+alwaysApply: false
+---
+
+# Zetaris (DATA layer) — verified working rules for WhyTrace
+
+Zetaris is the single SQL access point for every fact the agents use. Everything below was **run against our local Zetaris 2.4.3.1 on 21 Oct 2026** unless marked *unverified*. Reference repo for extra syntax: `zetaris/getting-started` (Apache-2.0), files `open_data/usl/sql/*.sql` and `docs/guides/zetaris-lightning-sql-companion.md`.
+
+## Endpoints (local install, compose project `zetaris`)
+- UI + SQL Editor: `http://localhost:3000` · REST: `ZETARIS_REST_URL=http://localhost:8888/api/v1.0` (never 8889) · JDBC `localhost:10000`.
+- Containers: `zetaris-driver-1` (query engine), `zetaris-api-1`, `zetaris-ui-1`, `zetaris-postgres-1`. Named volume `customer-data` is mounted at `/home/zetaris/customer-data` in driver and API.
+- Inside SQL, `localhost` = the Zetaris container. Our services on the Mac are reached at **`host.docker.internal:<port>`** (verified for REST and Postgres). The public internet is reachable (CISA KEV verified).
+
+## Calling SQL from the app — `packages/adapters/zetaris.ts`
+```
+POST {ZETARIS_REST_URL}/sql-editor/sqls/run
+Authorization: Bearer $ZETARIS_API_KEY
+X-Org-ID: $ZETARIS_ORG_ID          # 1 locally
+X-Request-ID: <uuid4>
+Content-Type: application/json
+{"queryId":"<uuid4>","sql":"<ONE statement, no trailing ;>","source":"SqlEditor","limit":200}
+```
+- Success: `{"headers":[...colnames],"data":[[...row as strings]],"total":N,"timeUsed":ms}`. **All values are strings** (`"3"`, `"2026-10-14 09:52:00.0"`, `null`). Cast in the adapter with the expected column types.
+- DDL success: `{"headers":["Result"],"data":[],"total":0}` (or `registered`/`removed`/`json` headers for USL commands).
+- Error: HTTP 400 `{"msg":"<Spark/Hive exception text>"}` — e.g. `[TABLE_OR_VIEW_NOT_FOUND]`, `LightningDdlParseException ... no viable alternative`. Map to typed errors; never leak the key.
+- Latency seen: SELECT 0.1–2.6 s; CACHE of KEV ~2 s; first query after start slower. Use a 60 s client timeout; a hung FILESTORE/S3 registration never returns (we saw 300 s) — always set a timeout.
+- `limit` caps rows returned; there is no paging API. Aggregate/filter in SQL.
+- `sql_id` = sha256 of whitespace-normalised SQL, first 12 hex. Log every call to the trace: `{action:"query_zetaris", sql_id, rows, ms, status}`.
+- `SAMPLE_MODE=true` replays recorded results from `data/sample/zetaris/<sql_id>.json` captured from real runs only.
+
+## Lightning SQL rules
+- One statement per request, no trailing `;`, fully qualified names. `DESCRIBE BY "..."`: letters, digits, space, `_ . - ,` only.
+- Non-ASCII / mixed-case / reserved column names need backticks: `` `İçerik` ``, `` `Gönderen` `` (verified with the Turkish corpus).
+- REST tables re-fetch on every query → `CACHE TABLE <db>.<t>` right after creating. Source JSON must be a top-level object; flatten arrays with `LATERAL VIEW explode(data) AS r` then `r.*`.
+- Do not reuse the same explode/UNION view twice in one query (→ `MISSING_ATTRIBUTES`); use window functions.
+- Not supported (verified): `SHOW DQ RULES`, `DROP LIGHTNING TABLE`, `DROP LIGHTNING DATABASE … CASCADE`, `DROP SCHEMASTORE CONTAINER`, `DROP SCHEMASTORE VIEW db.v` (form is `DROP SCHEMASTORE VIEW v FROM container`). `CREATE SCHEMASTORE CONTAINER` has no IF NOT EXISTS → treat "already exists" as success.
+- Teardown that works: `DROP DATASOURCE <ds>`, `DROP LIGHTNING DATABASE <db>` (drops its REST/file tables), `REMOVE USL <usl> NAMESPACE <ns>`, `DROP NAMESPACE <ns> CASCADE`.
+- Agents only run read-only `SELECT`/`SHOW`/`DESCRIBE` (guard rejects anything else). All DDL lives in `scripts/zetaris_bootstrap.ts` (idempotent, `--dry-run`).
+
+## Registration templates (all verified)
+```sql
+-- Postgres (JDBC). Tables are addressed as <ds>.<table> (no schema prefix).
+CREATE DATASOURCE auth_pg DESCRIBE BY "University identity and sign-in logs" OPTIONS (jdbcdriver "org.postgresql.Driver", jdbcurl "jdbc:postgresql://host.docker.internal:5433/authlogs", username "...", password "...", fetchsize "1000")
+REGISTER DATASOURCE TABLES FROM auth_pg
+SELECT * FROM auth_pg.signin_events LIMIT 5
+
+-- REST (our mail-gateway mock on the Mac; returns {"data":[...]})
+CREATE LIGHTNING DATABASE MAILGW DESCRIBE BY "Mail gateway events"
+CREATE LIGHTNING REST TABLE deliveries FROM MAILGW REQUEST(endpoint "http://host.docker.internal:8090/mailgw/deliveries", method "get", response_type "json", http_encoding "URLENCODED") HEADER (user-agent "whytrace") BODY ()
+CACHE TABLE MAILGW.deliveries
+SELECT r.* FROM MAILGW.deliveries LATERAL VIEW explode(data) AS r
+
+-- Public REST: CISA KEV (1,754 entries on 21 Oct)
+CREATE LIGHTNING DATABASE KEV DESCRIBE BY "CISA known exploited vulnerabilities"
+CREATE LIGHTNING REST TABLE catalog FROM KEV REQUEST(endpoint "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json", method "get", response_type "json", http_encoding "URLENCODED") HEADER (user-agent "whytrace") BODY ()
+CACHE TABLE KEV.catalog
+SELECT v.cveID, v.vendorProject, v.product, v.dateAdded, v.knownRansomwareCampaignUse FROM KEV.catalog LATERAL VIEW explode(vulnerabilities) AS v
+
+-- CSV files: Zetaris file store (MinIO images are no longer pullable — do not use S3)
+--   shell: docker exec -u 0 zetaris-driver-1 mkdir -p /home/zetaris/customer-data/shared/whytrace
+--          docker cp data/assets.csv zetaris-driver-1:/home/zetaris/customer-data/shared/whytrace/assets.csv
+CREATE LIGHTNING DATABASE FILES DESCRIBE BY "Asset inventory and phishing corpus"
+CREATE LIGHTNING FILESTORE TABLE assets FROM FILES FORMAT CSV OPTIONS (PATH "/home/zetaris/customer-data/shared/whytrace/assets.csv", header "true", inferSchema "true")
+CREATE LIGHTNING FILESTORE TABLE phish_corpus FROM FILES FORMAT CSV OPTIONS (PATH "/home/zetaris/customer-data/shared/whytrace/turkish_phishing_dataset.csv", header "true", inferSchema "true", multiLine "true", escape "\"")
+```
+KEV pick for the vulnerable appliance: Ivanti Connect Secure `CVE-2026-104935` (added 2026-10-13); re-check at build time.
+
+## Unified Semantic Layer (verified lifecycle)
+```sql
+CREATE NAMESPACE IF NOT EXISTS lightning.metastore
+CREATE NAMESPACE IF NOT EXISTS lightning.metastore.whytrace
+-- ONE request for the whole COMPILE (multi-table DDL, ; between tables is fine inside it)
+COMPILE USL IF NOT EXISTS security_usl DEPLOY NAMESPACE lightning.metastore.whytrace DDL
+CREATE TABLE identity (upn varchar(64) NOT NULL PRIMARY KEY, display_name varchar(128), role varchar(16), department varchar(64), mfa_method varchar(8), home_country varchar(2));
+CREATE TABLE signin_event (event_id varchar(32) NOT NULL PRIMARY KEY, ts timestamp, upn varchar(64) NOT NULL FOREIGN KEY REFERENCES identity(upn), result varchar(16), ip varchar(45), asn_org varchar(128), country varchar(2), device_id varchar(32), app varchar(16), mfa_prompt_count int, via_vpn_appliance varchar(32))
+-- one ACTIVATE per table; the SELECT's columns/types must match the DDL (CAST explicitly)
+ACTIVATE USL TABLE lightning.metastore.whytrace.security_usl.identity AS SELECT upn, display_name, role, department, mfa_method, home_country FROM auth_pg.identities
+-- data quality: PK and FK rules are generated automatically
+RUN DQ TABLE lightning.metastore.whytrace.security_usl.signin_event
+--   → rows [name, table, type, total_record, valid_record, invalid_record], e.g. ["upn","signin_event","Foreign Key Constraint","3","2","1"]
+SELECT ... FROM lightning.metastore.whytrace.security_usl.signin_event s JOIN lightning.metastore.whytrace.security_usl.identity i ON s.upn = i.upn
+-- teardown
+REMOVE USL security_usl NAMESPACE lightning.metastore.whytrace
+DROP NAMESPACE lightning.metastore.whytrace CASCADE
+```
+- ACTIVATE also works over inline `VALUES` and over JDBC / REST / file tables.
+- Custom DQ beyond PK/FK: `REGISTER DQ` syntax is *unverified* and failed in the upstream repo; express extra checks (ts order, recency, UPN domain) as named SQL checks in `packages/adapters/dq.ts` and report them next to `RUN DQ` results.
+- DQ results feed the agents: a finding resting on rows from a table with invalid_record > 0 gets a limitation line and lower confidence.
+
+## Discovery (read-only, safe for agents)
+`SHOW DATASOURCES` · `SHOW LIGHTNING DATABASES` · `SHOW LIGHTNING TABLES <db>` · `SHOW DATASOURCE VIEWS` · `SHOW NAMESPACES` · `DESCRIBE DATASOURCE TABLE <ds>.<t>`.

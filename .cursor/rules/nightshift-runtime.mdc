@@ -1,0 +1,55 @@
+---
+description: Use when writing or debugging the model client in WhyTrace: calls to Meterless Nightshift (meterless/auto, meterless/fast), NVIDIA Nemotron routing, tool calling, retries, receipts and model provenance in the trace.
+alwaysApply: false
+---
+
+# Nightshift (Meterless Runtime) + NVIDIA Nemotron — verified behaviour
+
+Measured on 21 Oct 2026 against Nightshift v1.2.1 on the builder's Mac, NVIDIA provider, lanes NEMOTRON-DEEP (`nvidia/nemotron-3.5-super-vl-120b-a12b`) and NEMOTRON-FAST (`nvidia/nemotron-3.5-lightning-30b-a3b`, verify lane).
+
+## Contract (setup guide + verified)
+- Base `METERLESS_BASE_URL=http://127.0.0.1:8088/v1` (only reachable from the Mac itself, not from containers/VMs unless Hotspot/Network mode is enabled).
+- Headers: `Authorization: Bearer <runtime token>`, `meterless-app: whytrace`, `meterless-scope: user`, `Content-Type: application/json`. Token from `METERLESS_RUNTIME_TOKEN`, else `~/Library/Application Support/ai.meterless.runtime/proxy-token`. Never log it.
+- `GET /v1/models` returns only routes: `meterless/auto` (adaptive) and `meterless/fast` (lowest TTFT, ready models only). Concrete NVIDIA ids are NOT listed.
+- `POST /v1/chat/completions`, OpenAI-compatible, supports `tools` (tool_calls returned) and plain JSON-in-text. `/receipts`, `/runs`, `/usage`, `/lanes` → 404.
+- Requesting `model:"nvidia/…"` is coerced to `meterless/auto` (mode auto); the router picks the lane. Use `meterless/auto` for deep steps and `meterless/fast` for quick steps, and **record the model that actually ran from the receipt**.
+
+## The receipt (our model-provenance source)
+Every successful response has a top-level `meterless` object, schema `meterless.compute_receipt.v1`:
+`receipt_id`, `decision_id`, `requested_model`, `routed_model`, `winning_route{model,label,provider,kind,tier}`, `phases[{phase,model,ms,tokensIn,tokensOut,outputTps}]` (phases seen: `final_synthesis`, `planning`, `tool_call_format`), `usage{input_tokens,output_tokens,latency_ms}`, `cost`, `privacy{path}`, `cache`, `receipt.app_policy`.
+Errors (HTTP 502) also carry `meterless.request_id` and `error.meterless_detail`.
+→ The trace stores per model call: `{agent, route, receipt_id, routed_model, phases, tokens, latency_ms, status, retry}`. The UI shows routed_model per step; the video shows one receipt.
+
+## Reliability findings (important)
+| Request shape | Result |
+|---|---|
+| tool calling (`tools` + max_tokens ≥ 300) | 6/6 ok, 1.2–5.7 s |
+| plain/JSON/Turkish with small `max_tokens` (20–250) | mostly 502 `…_empty_response` / `nvidia_500` — the model spends the budget on reasoning |
+| same with `/no_think` system message + `max_tokens: 2000` | 6/6 ok (plain 0.7 s, JSON 2–6 s, Turkish 7–23 s) |
+| first call after idle | sometimes 502 `provider_deadline` at 45 s or `ttfb_timeout` |
+Without `/no_think`, `meterless/auto` sometimes returns a *planning* phase output ("1. Translate the email…") instead of the answer.
+
+## Client rules (`packages/adapters/nightshift.ts`)
+1. Always send a first system message `"/no_think"` for structured steps (then the role system prompt), and `max_tokens ≥ 2000` (or omit).
+2. Prefer **tool calling** for structured outputs: define a `submit_<thing>` function whose JSON schema is the Zod schema; read `tool_calls[0].function.arguments`; validate with Zod; on invalid → one repair retry with the validation error.
+3. Timeout 180 s per call (official contract); retry on 502/timeout/429 with backoff 2 s, 4 s, 8 s (max 3 retries); then mark the step `degraded` and let the orchestrator decide (Risk Gate escalates). Count retries in the trace.
+4. Warm-up call (`"ready"`, /no_think) at server start.
+5. One generator function used everywhere (agents, Markovian); budget caps: 30 model calls / run.
+6. Never put the runtime token into Cursor settings or the repo.
+7. `SAMPLE_MODE` replays recorded real responses (incl. receipts) from `data/sample/nightshift/<hash>.json`.
+
+## UI facts
+Nightshift → NIGHT → LANES shows lanes; Console (Connect / Apps / Activity / Proof). The red "Runtime endpoint is offline" banner refers to network/hotspot exposure, not localhost — localhost calls work. App policy for `whytrace` had `lanes:null` (any configured lane may be used; all configured lanes are Nemotron, so every call is Nemotron).
+
+## From containers and under load (verified 21 Oct)
+- Inside Docker use `METERLESS_BASE_URL=http://host.docker.internal:8088/v1` (reaches the host's 127.0.0.1:8088). Pass the token as an env var at run time.
+- 4 concurrent calls: 3 ok, 1 × 502 after 45 s. Limit model concurrency to 2 and rely on retries.
+
+## Official provider contract (Runtime 1.4, contract v4 — meterless.ai/engines.html → Power, 22 Oct)
+- Provider id `meterless`, name "Meterless Runtime", default base `http://127.0.0.1:8088/v1`; normalise pasted URLs (with/without scheme, `/v1`, `/v1/chat/completions`, `/v1/models`, `/healthz`) to `<host>/v1`, never `/v1/v1`. Also accept connect links `http://<host>:<port>/connect#k=<key>` (never log the key).
+- Token: `Authorization: Bearer <token>` on every call; token lives in `<stateDir>/proxy-token`; reject placeholder `rt-local`.
+- Headers: `meterless-app: whytrace` always; `meterless-scope: user` on chat.
+- Model ids are routing modes: `meterless/<disposition>` with dispositions auto, fast, deep, cheap, local, fusion (also `meterless/<class>` and `<class>.<disposition>`). Read them from `GET /v1/models`, keep unknown `meterless/*` ids. Use `meterless/deep` for Planner/Risk Gate/Reporter if listed, else `meterless/auto`; `meterless/fast` for Investigator/Critic.
+- Test connection: `/healthz` only proves the process; `GET /v1/models` decides — 401/403 = unauthorized (UI asks for token), 200 with meterless ids = online, anything else = offline. Auto Detect tries 127.0.0.1/localhost/[::1] ports 8088, 8090, 8787, 11434.
+- Timeout per contract: 180 s. 429/quota: retry after 2 s, 4 s, 8 s, then surface. Error body `{error:{message,type,code}}` with optional `meterless.fix[]` → show fix hints in UI.
+- Acceptance: wrong token shows "unauthorized" (not offline); Auto Detect finds the runtime; plain text on `meterless/auto` returns a string. Add a "Test connection" button in the console settings and a Vitest for each case.

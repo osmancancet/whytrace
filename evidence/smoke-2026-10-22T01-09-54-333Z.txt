@@ -1,0 +1,16 @@
+WhyTrace smoke test — 2026-10-22T01:09:53.802Z
+
+## Zetaris
+  SELECT 1          sql_id=4531145a1714  rows=1  columns=n
+  value: {"n":1}
+  SHOW DATASOURCES  sql_id=99cca41be003  total=1  rows=1  → auth_pg
+
+## Nightshift
+  testConnection    = online
+  listModels        = 77 ids (meterless/*: 18, Nemotron: 11)
+    - nvidia/nemotron-3.5-super-vl-120b-a12b
+    - nvidia/nemotron-3.5-lightning-30b-a3b
+    - nvidia/nemotron-3-ultra-550b-a55b
+    - nvidia/nemotron-3-super-120b-a12b
+  chat/fast         receipt=rcpt_req_0rohs5az model=nvidia/nemotron-3.5-super-vl-120b-a12b ms=23 retries=0
+  reply (first 200): READY

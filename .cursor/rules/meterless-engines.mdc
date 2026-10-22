@@ -1,0 +1,57 @@
+---
+description: Use when implementing, wiring, testing or explaining the Meterless engines (World Model, H-MEM, Markovian) in WhyTrace, including the vendored conformance runners, evidence-graph keys and contexts, cross-case memory and the long log sweep.
+alwaysApply: false
+---
+
+# Meterless engines in WhyTrace — verified facts
+
+Upstream `Meterless/Meterless` @ `1742dec` (Apache-2.0). Engines are specs (`engines/<x>/AGENTS.md`) + a zero-dependency TS reference + a TS conformance runner. All three runners passed against the reference on 21 Oct (Node 22, tsx 4.x), offline, ~0.9 s each, writing nothing to disk. Full notes: `notes/ENGINES_FINDINGS.md`.
+
+HackOS rule: ≥1 engine inside a working user-facing feature, conformance passing and shown. We ship three.
+
+## Layout we use
+```
+packages/engines/world-model/index.ts   exports WorldModel, entityIdFromName, normalizeName, decide
+packages/engines/hmem/index.ts          exports HMEM
+packages/engines/markovian/index.ts     exports Markovian, modelTotals, runEfficiency
+conformance/{world-model,hmem,markovian}/runner.ts   vendored runners (+ hmem/vectors/vectors.json NEXT TO its runner)
+conformance/LICENSE + PROVENANCE.md      "Vendored from Meterless/Meterless@1742dec, Apache-2.0"
+```
+Our engine code is written from the AGENTS.md specs (ESM, `.ts` imports, run with tsx). Keep the exported surface identical.
+```bash
+WORLD_MODEL_IMPL=$PWD/packages/engines/world-model/index.ts npx tsx conformance/world-model/runner.ts   # 8 checks
+HMEM_IMPL=$PWD/packages/engines/hmem/index.ts               npx tsx conformance/hmem/runner.ts          # 13 checks
+MARKOVIAN_IMPL=$PWD/packages/engines/markovian/index.ts     npx tsx conformance/markovian/runner.ts     # 8 checks
+```
+Exit 0 pass · 1 a check failed · 2 could not load / missing export. `npm run conformance` runs all three and saves `evidence/conformance-<engine>.txt`.
+
+## World Model = evidence graph (no LLM)
+- `new WorldModel({storage:"memory"|"local", namespace, clock, conflictPolicy, sourcePriority})`; `upsertEntity`, `upsertContext`, `relate`, `assertFact`, `ingest`, `view("graph"|"facts"|"snapshot"|"timeline")`, `audit()`, `stateShapeCanonical()`.
+- Conformance musts: provenance required (throw without `source`); timestamps from `source.at`, never wall clock; idempotent `ingest` (second run `changed:false`, identical canonical JSON); keyed ids exactly `type:system:id`; `decide` bands inclusive (≥0.85 auto-merge, ≥0.82 review); audit `seq` strictly increasing; bitemporal `neighborsOf(id,{via,at})`.
+- **Security pitfalls (verified by probe):**
+  1. Fuzzy name merge joins near-identical identifiers (10.0.0.15≈10.0.0.16, CVE-…094≈…095). → Always use `externalKey` for accounts, IPs, devices, mails, CVEs, ASNs: `account:idp:d.yilmaz@aegean.edu`, `ip:net:185.220.101.7`, `device:cmdb:LT-4411`, `cve:kev:CVE-2026-104935`, `mail:mx:<message_id>`.
+  2. A new edge with the same `(from,type,context)` closes the old one → multi-valued facts vanish. → One context per evidence row/query: `upsertContext({type:"evidence", externalKey:{system:"zetaris", id:sql_id}, parent: caseCtx})` and pass `context` on every `relate`.
+- Provenance on every write: `{kind:"pipeline", by:"<agent>", at:<row event ts>, url:"zetaris://sql/<sql_id>", runId, checksum:<row hash>}`.
+- Cases = contexts (`type:"case"`). The "Explain why" panel walks claim → fact/edge → evidence context → sql_id → rows.
+
+## H-MEM = cross-case memory (no LLM needed)
+- `new HMEM({clock, persistDir:"logs/hmem", actor})`; **synchronous** `add`, `query`, `feedback`, `store.*`, `conflicts.scan/autoResolve`, `sleep.preview/execute`, `dreaming.dream/approve`. Only `mine()` is async. Making `add` async dropped conformance to 2/13.
+- `add` returns the live stored record; `source` required; feedback deltas: helpful +0.05 (+1 access), not_helpful −0.03, wrong −0.20 + tag `review`, clamped to [0,1]; ledger gets exactly one entry per create/feedback.
+- Ranking: `0.35 semantic + 0.20 keyword + 0.10 tag + 0.10 domain + 0.15 entity + 0.05 layer + 0.05 recency − 0.20 superseded`, × confidence; topN 5, threshold 0.35.
+- **Tokenizer pitfall:** the reference tokenizer strips non a-z chars (breaks Turkish, splits IPs/CVEs). Ours uses `/[\p{L}\p{N}][\p{L}\p{N}._:@-]*/gu`, lowercased with `toLocaleLowerCase("tr")` for text, IOCs kept whole. Conformance texts are ASCII so this stays green.
+- Usage: after each case, `add` lessons (`type:"factual"`, `layer:"working"`, `source:"case:<id>"`, `provenance.refs:[sql_ids]`, tags `tactic:T1621`, `entity:ip:net:…`). Before planning, `query(case summary + IOCs).context` → `[MEMORY CONTEXT]` in the Planner prompt. Critic accept/reject → `feedback`. Persist: `logs/hmem/state.json` + append-only `ledger.jsonl`.
+- Demo/eval: case-003 cold (empty memory) vs warm (after case-002), report rounds, SQL calls, model calls, seconds.
+
+## Markovian = bounded long sweep
+- `new Markovian({chunkConfig, generator, clock, historyDir:"logs/markovian"})`; `run({goal, generator|stepFn, memoryContext, reflect, stopWhen})`.
+- Generator signature: `(prompt, attachments, systemPrompt?, onStream?, abortSignal?) => Promise<{text}>` — returns an object, not a string. Wrap the Nightshift client.
+- Musts: bounds throw (never clamp), `chunkSize ≥ 400 + carryover + 1200`; exact `modelTotals` (N=20 → 246000 vs 34000) and `runEfficiency` math; per-run `chunkConfig` snapshot; `tokenLabel` "estimated"/"measured"; implement `[OVERLAP]` or reject overlap; strip `[STATE_CHECKPOINT]`/`[TASK_COMPLETE]` from output; reflection errors never fail a run.
+- Usage: Investigator's long sign-in sweep — `stepFn` fetches page k of a Zetaris query (sql_id + offset), model extracts suspects; carryover holds the suspect list; memoryContext (chunk 1 only) from H-MEM. Use provider usage from Nightshift receipts → `tokenLabel:"measured"`.
+
+## Scout Intent
+No reference implementation or runner, only an eval harness (`SCOUT_IMPL=<abs> npm run evals`, CRM-flavoured corpus). Skip.
+
+## Rules
+- Engines never call a model directly; only the injected generator (see `nightshift-runtime`).
+- Persist only what an agent reads back. Bound every loop. Engine logs go to `logs/<run_id>/` or `logs/<engine>/`.
+- README + metadata.json name each engine, its files, the feature it powers and the conformance score.

@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+logs/*
+!logs/.gitkeep
+*.log
+.DS_Store
+vendor/
+_bootstrap.tgz
+notes/
+docs/hackos/
+docs/BUILD_PLAN.md
+docs/HACKATHON_BRIEF.md
+docs/KICKOFF_PROMPT.md
+
+# editor configs (keep local); .cursor/rules and AGENTS.md ARE committed
+.vscode/
+.idea/
+
+# evidence captured from real runs (git-ignored until we curate)
+data/sample/
+evidence/*.local.*

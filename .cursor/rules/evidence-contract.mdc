@@ -1,0 +1,35 @@
+---
+description: Use when building agents, the orchestrator, report schema, validator, trace logs or UI evidence views in WhyTrace: ids, finding tiers, validateReport rules, Critic rubric, Risk Gate, ATT&CK ids and the output contract.
+alwaysApply: false
+---
+
+# WhyTrace evidence contract — how a verdict is earned
+
+Applies to every agent, the orchestrator, the report and the UI. Principle: **guide strategy with prompts, enforce invariants in code.**
+
+## Ids and logs
+- `run_id` (ulid) per investigation; `sql_id` = first 12 hex of sha256(normalised SQL); `row_ref` = `${sql_id}#${rowIndex}`; `finding_id` = `F<n>`; `receipt_id` from Nightshift.
+- `logs/<run_id>/trace.jsonl`: one line per step `{ts, run_id, step_id, parent_id, agent, action, input_summary, output_summary, sql_id?, rows?, receipt_id?, routed_model?, confidence?, status, retry_count, ms}`. `parent_id` makes the causal graph.
+- `logs/<run_id>/queries.jsonl` — append-only query log (sql, sql_id, rows, ms). The validator only trusts this file.
+
+## Findings
+`{id, hypothesis, claim, status: CONFIRMED|LIKELY|SUSPECTED|UNCONFIRMED, sql_ids[], row_refs[], attack[], confidence}`
+- CONFIRMED: cited rows exist and the Critic's own re-query agrees.
+- LIKELY: rows support it, Critic re-query not run or partial. SUSPECTED: indirect evidence. UNCONFIRMED: claimed but not supported → goes to `rejected_claims`.
+- A query that hit its `limit` cannot support an absence claim ("no other sign-ins").
+- Things we could not check go to `not_checked[]` (e.g. travel calendar not connected).
+
+## `validateReport(report, queryLog)` (pure TS, unit-tested)
+Drops into `rejected_claims` with a reason when: a sql_id is not in this run's query log; a row_ref index is out of range; an ATT&CK id is not in `attack_allowlist.json`; a timeline event has no sql_id; confidence outside [0,1]; verdict not in the enum. The demo shows one rejection.
+
+## Critic rubric (GenAI Works agent spec)
+accuracy · appropriateness · actionability, 0–3 each. Total < 7 → Planner revises (≤3 rounds); still < 7 → escalate to a human. Score stored in the trace and shown in the UI.
+
+## Risk Gate
+`contain | monitor | benign | escalate`. Escalate when confidence < 0.7, when CONFIRMED findings conflict, when a cited table failed DQ, or when the model step was degraded. Actions are recommendations with an Approve button that only writes an audit entry.
+
+## ATT&CK ids used
+T1566.002 spearphishing link · T1204.001 user execution: malicious link · T1621 MFA request generation · T1078.004 valid cloud accounts · T1114.003 email forwarding rule · T1564.008 email hiding rules · T1213 data from information repositories · T1110.003 password spraying · T1133 external remote services · T1190 exploit public-facing application.
+
+## Output contract (Zod, `packages/agents/schema.ts`)
+`{run_id, case_id, verdict, confidence, summary, timeline[{ts,event,sql_id}], findings[], rejected_claims[{claim,reason}], actions[{action,attack?,requires_approval:true}], limitations[], not_checked[], dq[{table,rule,valid,invalid}], memory_used[], critic_score{accuracy,appropriateness,actionability}, models[{agent,routed_model,receipt_id}], trace_id, log_file, execution_time_seconds}`

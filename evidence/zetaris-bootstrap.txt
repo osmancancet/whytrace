@@ -1,0 +1,49 @@
+whytrace zetaris bootstrap — APPLY
+  ok      [1] prepare share dir (79 ms)
+  ok      [2] docker cp data/assets.csv (23 ms)
+  ok      [3] docker cp data/turkish_phishing_dataset.csv (38 ms)
+  ok      [4] ensure share dir readable (65 ms)
+  ok      [5] DROP DATASOURCE auth_pg (idempotency) (105 ms, rows=0)
+  ok      [6] CREATE DATASOURCE auth_pg (50 ms, rows=0)
+  ok      [7] REGISTER DATASOURCE TABLES FROM auth_pg (314 ms, rows=0)
+  ok      [8] DROP LIGHTNING DATABASE MAILGW (idempotency) (190 ms, rows=0)
+  ok      [9] CREATE LIGHTNING DATABASE MAILGW (74 ms, rows=0)
+  ok      [10] CREATE REST TABLE deliveries (266 ms, rows=0)
+  ok      [11] CREATE REST TABLE clicks (75 ms, rows=0)
+  ok      [12] CREATE REST TABLE rules (81 ms, rows=0)
+  ok      [13] CACHE TABLE MAILGW.deliveries (182 ms, rows=0)
+  ok      [14] CACHE TABLE MAILGW.clicks (147 ms, rows=0)
+  ok      [15] CACHE TABLE MAILGW.rules (87 ms, rows=0)
+  ok      [16] DROP LIGHTNING DATABASE FILES (idempotency) (41 ms, rows=0)
+  ok      [17] CREATE LIGHTNING DATABASE FILES (32 ms, rows=0)
+  ok      [18] CREATE FILESTORE TABLE assets (232 ms, rows=0)
+  ok      [19] CREATE FILESTORE TABLE phish_corpus (771 ms, rows=0)
+  ok      [20] DROP LIGHTNING DATABASE KEV (idempotency) (62 ms, rows=0)
+  ok      [21] CREATE LIGHTNING DATABASE KEV (32 ms, rows=0)
+  ok      [22] CREATE REST TABLE KEV.catalog (6991 ms, rows=0)
+  ok      [23] CACHE TABLE KEV.catalog (189 ms, rows=0)
+  ok      [24] CREATE NAMESPACE lightning.metastore (parent) (77 ms, rows=0)
+  ok      [25] CREATE NAMESPACE lightning.metastore.whytrace (34 ms, rows=0)
+  ok      [26] REMOVE USL security_usl NAMESPACE lightning.metastore.whytrace (idempotency) (44 ms, rows=1)
+  ok      [27] COMPILE USL security_usl (177 ms, rows=1)
+  ok      [28] ACTIVATE identity (112 ms, rows=1)
+  ok      [29] ACTIVATE signin_event (59 ms, rows=1)
+  ok      [30] ACTIVATE vpn_session (52 ms, rows=1)
+  ok      [31] ACTIVATE mail_event (104 ms, rows=1)
+  ok      [32] ACTIVATE device (73 ms, rows=1)
+  ok      [33] ACTIVATE vulnerability (54 ms, rows=1)
+  ok      [34] RUN DQ TABLE identity (390 ms, rows=1)
+  ok      [35] RUN DQ TABLE signin_event (1949 ms, rows=2)
+  ok      [36] RUN DQ TABLE vpn_session (882 ms, rows=2)
+  ok      [37] RUN DQ TABLE mail_event (3117 ms, rows=2)
+  ok      [38] RUN DQ TABLE device (469 ms, rows=1)
+  ok      [39] RUN DQ TABLE vulnerability (410 ms, rows=1)
+
+Extra DQ checks:
+  valid_upn            on signin_event   → invalid=0
+  ts_not_null          on signin_event   → invalid=0
+  known_result         on signin_event   → invalid=0
+  vpn_session_order    on vpn_session    → invalid=12
+  asset_seen_recent    on device         → invalid=0
+
+USL smoke: SELECT COUNT(*) FROM security_usl.signin_event → 2693

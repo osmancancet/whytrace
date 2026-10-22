@@ -1,0 +1,60 @@
+{
+  "data": [
+    {
+      "rule_id": "rule-001",
+      "ts": "2026-10-14T07:03:00.000Z",
+      "upn": "d.yilmaz@aegean.edu",
+      "action": "forward",
+      "target": "d.yilmaz.payroll@gmail.com",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "rule-005",
+      "ts": "2026-10-16T11:00:00.000Z",
+      "upn": "e.oz@aegean.edu",
+      "action": "forward",
+      "target": "e.oz.archive@aegean.edu",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-noise-0",
+      "ts": "2026-10-17T14:00:00.000Z",
+      "upn": "i.polat282@aegean.edu",
+      "action": "move",
+      "target": "i.polat282.archive@aegean.edu",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-noise-1",
+      "ts": "2026-10-10T13:00:00.000Z",
+      "upn": "z.arslan200@aegean.edu",
+      "action": "move",
+      "target": "z.arslan200.archive@aegean.edu",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-noise-2",
+      "ts": "2026-10-17T17:00:00.000Z",
+      "upn": "a.şahin256@aegean.edu",
+      "action": "move",
+      "target": "a.şahin256.archive@aegean.edu",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-noise-3",
+      "ts": "2026-10-11T16:00:00.000Z",
+      "upn": "a.barış314@aegean.edu",
+      "action": "forward",
+      "target": "a.barış314.archive@aegean.edu",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-noise-4",
+      "ts": "2026-10-16T09:00:00.000Z",
+      "upn": "g.avcı112@aegean.edu",
+      "action": "move",
+      "target": "g.avcı112.archive@aegean.edu",
+      "created_via": "owa"
+    }
+  ]
+}

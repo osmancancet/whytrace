@@ -1,0 +1,48 @@
+# WhyTrace local data services. Postgres acts as the identity/sign-in
+# source `auth_pg`. The mailgw mock serves `{data:[...]}` REST tables.
+# Both are reached from inside the Zetaris container via host.docker.internal.
+name: whytrace-data
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: whytrace-postgres
+    environment:
+      POSTGRES_DB: ${WHYTRACE_PG_DB:-authlogs}
+      POSTGRES_USER: ${WHYTRACE_PG_USER:-whytrace}
+      POSTGRES_PASSWORD: ${WHYTRACE_PG_PASSWORD:-whytrace}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${WHYTRACE_PG_USER:-whytrace} -d ${WHYTRACE_PG_DB:-authlogs}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - whytrace-pg-data:/var/lib/postgresql/data
+
+  mailgw:
+    build:
+      context: ./mailgw
+      dockerfile: Dockerfile
+    image: whytrace/mailgw:dev
+    container_name: whytrace-mailgw
+    environment:
+      MAILGW_PORT: ${MAILGW_PORT:-8090}
+      MAILGW_DATA_DIR: /data/mailgw
+    ports:
+      - "${MAILGW_PORT:-8090}:8090"
+    volumes:
+      - ../data/mailgw:/data/mailgw:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/healthz >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  whytrace-pg-data:
+    name: whytrace-pg-data

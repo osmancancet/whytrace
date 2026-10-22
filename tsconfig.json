@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./packages/engines/world-model" },
+    { "path": "./packages/engines/hmem" },
+    { "path": "./packages/engines/markovian" },
+    { "path": "./packages/adapters" },
+    { "path": "./packages/agents" },
+    { "path": "./apps/api" },
+    { "path": "./services/mailgw" },
+    { "path": "./services/postgres-seed" }
+  ]
+}

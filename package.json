@@ -1,0 +1,36 @@
+{
+  "name": "whytrace",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Evidence-backed account-compromise investigator over Zetaris; built for Open Agent Hackathon 2026 Track 02.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/engines/*",
+    "services/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "conformance": "node scripts/run_conformance.mjs",
+    "investigate": "tsx apps/api/src/cli.ts",
+    "dev": "tsx watch apps/api/src/server.ts",
+    "eval": "tsx scripts/eval.ts",
+    "bootstrap:zetaris": "tsx scripts/zetaris_bootstrap.ts",
+    "services:up": "docker compose -f services/docker-compose.data.yml up -d",
+    "services:down": "docker compose -f services/docker-compose.data.yml down",
+    "services:logs": "docker compose -f services/docker-compose.data.yml logs -f",
+    "seed": "tsx services/postgres-seed/src/seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
