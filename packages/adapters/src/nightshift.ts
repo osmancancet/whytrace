@@ -75,6 +75,12 @@ export type NightshiftOptions = {
   app?: string;
   deepModel?: string;
   fastModel?: string;
+  /** Optional Nemotron Ultra override. When set, chat calls whose `agent` is
+   *  `"reporter"` route to this model id instead of `deepModel`. We keep Super
+   *  VL on the investigation path (its tool-call latency is well-studied) and
+   *  only let Ultra narrate the final report — the trade-off is slow narration
+   *  for a smarter closing summary. Config: `METERLESS_REPORTER_MODEL` env. */
+  reporterModel?: string;
   timeoutMs?: number;
   retries?: number;
   concurrency?: number;
@@ -131,6 +137,7 @@ export class Nightshift {
   private readonly app: string;
   private readonly deepModel: string;
   private readonly fastModel: string;
+  private readonly reporterModel?: string;
   private readonly timeoutMs: number;
   private readonly retries: number;
   private readonly fetchFn: typeof fetch;
@@ -150,6 +157,8 @@ export class Nightshift {
     this.app = opts.app ?? process.env.METERLESS_APP ?? "whytrace";
     this.deepModel = opts.deepModel ?? process.env.MODEL_DEEP ?? "meterless/auto";
     this.fastModel = opts.fastModel ?? process.env.MODEL_FAST ?? "meterless/fast";
+    const reporter = opts.reporterModel ?? process.env.METERLESS_REPORTER_MODEL;
+    this.reporterModel = reporter && reporter.trim().length ? reporter.trim() : undefined;
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.retries = opts.retries ?? DEFAULT_RETRIES;
     this.fetchFn = opts.fetchFn ?? fetch;
@@ -196,7 +205,19 @@ export class Nightshift {
   }
 
   async listModels(): Promise<string[]> {
-    const res = await this.fetchFn(`${this.baseUrl}/models`, { method: "GET", headers: this.baseHeaders(false) });
+    const doFetch = async () => this.fetchFn(`${this.baseUrl}/models`, { method: "GET", headers: this.baseHeaders(false) });
+    let res = await doFetch();
+    // Mirror testConnection's 401 fallback so stale env tokens auto-recover.
+    if ((res.status === 401 || res.status === 403) && !this.proxyTokenRefreshed && this.tokenSource === "env") {
+      const refresh = this.readProxyToken();
+      this.proxyTokenRefreshed = true;
+      if (refresh && refresh !== this.token) {
+        this.token = refresh;
+        this.tokenSource = "proxy-token-file";
+        this.trace?.emit({ agent: "nightshift", action: "token_refresh", status: "ok", output_summary: `env token rejected on /models (${res.status}); switched to proxy-token-file` });
+        res = await doFetch();
+      }
+    }
     if (!res.ok) throw new Error(`Nightshift /models HTTP ${res.status}`);
     const body = (await res.json()) as { data?: Array<{ id: string }> };
     return (body.data ?? []).map((m) => m.id);
@@ -214,8 +235,12 @@ export class Nightshift {
     await this.acquire();
     const started = Date.now();
     const lane: "deep" | "fast" = opts.lane ?? "deep";
-    const model = lane === "deep" ? this.deepModel : this.fastModel;
     const agent = opts.agent ?? "model";
+    // Reporter override: when the caller is the Reporter and an Ultra lane is
+    // configured, use it only here. Investigation stays on Super VL.
+    const useReporterOverride = lane === "deep" && agent === "reporter" && this.reporterModel;
+    const model = useReporterOverride ? this.reporterModel! : (lane === "deep" ? this.deepModel : this.fastModel);
+    if (useReporterOverride) this.trace?.emit({ agent, action: "reporter_model_override", status: "ok", output_summary: `routing Reporter call to ${this.reporterModel}` });
     const messages = this.ensureNoThink(opts.messages);
     const routeFallback = opts.routeFallback !== false;
     try {
