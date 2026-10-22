@@ -112,10 +112,22 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   let feedback: string[] = [];
   let rounds = 0;
 
+  // Per-run SQL cache. Identical SQL text within a run returns the same rows
+  // without hitting Zetaris twice (the sql_id stays the same because sql_id is
+  // the hash of the SQL text — provenance is unchanged). The Critic's verifying
+  // query is always a *different* SQL from the Investigator's named query, so
+  // its re-query is never served from this cache: independence is preserved.
+  const sqlCache = new Map<string, Awaited<ReturnType<typeof opts.zetaris.runSql>>>();
   const run = async (sql: string, agent: string, parent?: string) => {
+    const cached = sqlCache.get(sql);
+    if (cached) {
+      trace.emit({ agent, action: "sql_cache_hit", parent_id: parent, sql_id: cached.sql_id, rows: cached.rows.length, status: "ok" });
+      return cached;
+    }
     if (!budget.canSql()) throw new Error("SQL budget exhausted");
     budget.sql += 1;
     const r = await opts.zetaris.runSql(sql, { limit: 200 });
+    sqlCache.set(sql, r);
     trace.emit({ agent, action: "sql", parent_id: parent, sql_id: r.sql_id, rows: r.rows.length, status: "ok" });
     return r;
   };
@@ -125,25 +137,33 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
 
   for (let round = 1; round <= LIMITS.rounds; round++) {
     rounds = round;
-    // ---- Planner (deep lane)
+    // ---- Planner (deep by default; fast when the context is small enough).
+    // Round 1 only has the catalogue + a one-sentence alert description — Lightning
+    // handles that comfortably and the deep lane adds latency without changing the
+    // plan. From round 2 onwards the feedback payload can be large (many rejected
+    // claims, memory context, …) so we stay on the deep lane. The threshold is a
+    // conservative byte count on the user message so a short follow-up round can
+    // still take the fast lane; the trace records the chosen lane for audit.
     let steps: PlannerStep[] = [];
     if (budget.canModel()) {
       budget.model += 1;
+      const userMsg = round === 1
+        ? `Case ${caseInfo.id} — alert for ${caseInfo.upn} (${caseInfo.description ?? ""}). Produce competing hypotheses (compromise vs benign explanations), then steps that could confirm OR refute each.`
+        : `Round ${round}. Queries already run: ${[...new Set([...ran.values()].map((v) => v.name))].join(", ")}.\nCritic feedback:\n${feedback.join("\n") || "(none)"}\nAdd only NEW steps that resolve the open questions (e.g. device_for, vpn_sessions_for, appliance_exposure).`;
+      const plannerLane: "deep" | "fast" = (userMsg.length + recall.context.length <= 1200) ? "fast" : "deep";
       try {
         const plan = await opts.nightshift.callTool({
           messages: [
             { role: "system", content: `You are a university SOC planner. Produce <= 5 hypotheses and <= 10 named-query steps.\nCatalogue (name(params): description):\n${catalogueDesc}\nOnly use these query names. Params: upn, device_id, appliance_id, department. Return via submit_plan.${recall.context ? `\n\n[MEMORY CONTEXT]\n${recall.context}` : ""}` },
-            { role: "user", content: round === 1
-              ? `Case ${caseInfo.id} — alert for ${caseInfo.upn} (${caseInfo.description ?? ""}). Produce competing hypotheses (compromise vs benign explanations), then steps that could confirm OR refute each.`
-              : `Round ${round}. Queries already run: ${[...new Set([...ran.values()].map((v) => v.name))].join(", ")}.\nCritic feedback:\n${feedback.join("\n") || "(none)"}\nAdd only NEW steps that resolve the open questions (e.g. device_for, vpn_sessions_for, appliance_exposure).` },
+            { role: "user", content: userMsg },
           ],
-          toolName: "submit_plan", description: "Submit the investigation plan.", schema: PLANNER_TOOL_SCHEMA, lane: "deep", maxTokens: 2000, agent: "planner",
+          toolName: "submit_plan", description: "Submit the investigation plan.", schema: PLANNER_TOOL_SCHEMA, lane: plannerLane, maxTokens: 2000, agent: "planner",
           parse: (args) => PlannerOutput.parse(args),
         });
         steps = plan.value.steps;
         plannerSucceeded = true;
         models.push({ agent: "planner", routed_model: plan.model, receipt_id: plan.receipt?.receipt_id });
-        trace.emit({ agent: "planner", action: "plan", parent_id: root.step_id, routed_model: plan.model, receipt_id: plan.receipt?.receipt_id, lane: "deep", input_summary: `round ${round}`, output_summary: `${plan.value.hypotheses.map((h) => `${h.id}:${h.label}`).join(" | ").slice(0, 300)}; ${steps.length} steps`, status: "ok" });
+        trace.emit({ agent: "planner", action: "plan", parent_id: root.step_id, routed_model: plan.model, receipt_id: plan.receipt?.receipt_id, lane: plannerLane, input_summary: `round ${round} (lane: ${plannerLane})`, output_summary: `${plan.value.hypotheses.map((h) => `${h.id}:${h.label}`).join(" | ").slice(0, 300)}; ${steps.length} steps`, status: "ok" });
       } catch (err) {
         plannerDegradedRounds += 1;
         trace.emit({ agent: "planner", action: "plan", parent_id: root.step_id, status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
