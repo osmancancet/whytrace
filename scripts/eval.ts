@@ -16,7 +16,7 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync, mkdtempSync, readdi
 import { tmpdir } from "node:os";
 import { join, resolve as resolvePath } from "node:path";
 import { Nightshift, RunTrace, Zetaris } from "../packages/adapters/src/index.ts";
-import { CaseMemory, evaluateRulesOnly, investigate, listDemoCases, type Report } from "../packages/agents/src/index.ts";
+import { CaseMemory, evaluateModelOnly, evaluateRulesOnly, investigate, listDemoCases, type Report } from "../packages/agents/src/index.ts";
 
 function loadDotenv() {
   const path = resolvePath(process.cwd(), ".env");
@@ -36,7 +36,7 @@ function loadDotenv() {
 }
 
 const arg = (name: string, def: string) => { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? process.argv[i + 1] ?? def : def; };
-type Variant = { id: string; label: string; kind: "orchestrator" | "rules"; ablate?: { critic?: boolean; dq?: boolean; memory?: boolean } };
+type Variant = { id: string; label: string; kind: "orchestrator" | "rules" | "model_only"; ablate?: { critic?: boolean; dq?: boolean; memory?: boolean } };
 type Row = {
   variant: string;
   case_id: string;
@@ -69,8 +69,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNonce?: string): Promise<Report> {
   const trace = new RunTrace();
   const zetaris = new Zetaris({ trace, agent: "investigator" });
+  const caseInfo = listDemoCases().find((c) => c.id === caseId);
+  const upn = caseInfo?.upn ?? "";
   if (v.kind === "rules") {
-    return evaluateRulesOnly({ caseId: caseId, upn: listDemoCases().find((c) => c.id === caseId)?.upn ?? "", zetaris, trace });
+    return evaluateRulesOnly({ caseId, upn, zetaris, trace });
   }
   // Per-run nonce: Nightshift's exact-prompt cache replays the same answer for
   // identical prompts, which makes `--runs > 1` return cached responses rather
@@ -80,6 +82,9 @@ async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNon
   // the eval table shows which runs were replays.
   const nightshift = new Nightshift({ trace });
   if (runNonce) trace.emit({ agent: "eval", action: "run_nonce", output_summary: runNonce, status: "ok" });
+  if (v.kind === "model_only") {
+    return evaluateModelOnly({ caseId, upn, description: caseInfo?.description, zetaris, nightshift, trace });
+  }
   return investigate({ caseId, trace, zetaris, nightshift, memory, ablate: v.ablate });
 }
 
@@ -149,6 +154,9 @@ async function main() {
   );
   if (process.argv.includes("--baseline") || process.argv.includes("--ablations")) {
     variants.push({ id: "B0", label: "rules-only baseline (Entra-style thresholds)", kind: "rules" });
+    // M0 — Nemotron alone, raw alert + event dump, one-shot verdict. The
+    // "model alone vs through the agent" ablation named in DAY3 step 3.
+    variants.push({ id: "M0", label: "model-only (Nemotron alone, no tools, no critic, no risk gate)", kind: "model_only" });
   }
   const ablationDir = resolvePath("output_examples", "ablations");
   mkdirSync(ablationDir, { recursive: true });
@@ -164,7 +172,7 @@ async function main() {
   let healthDetail = "ok";
   let healthAttempts: HealthAttempt[] = [];
   let healthTerminal = "ok";
-  if (!noHealthGate && variants.some((v) => v.kind === "orchestrator")) {
+  if (!noHealthGate && variants.some((v) => v.kind === "orchestrator" || v.kind === "model_only")) {
     const waitMinutes = Number(arg("wait-healthy", "10"));
     const h = await healthGate(waitMinutes);
     healthy = h.ok;
@@ -179,13 +187,13 @@ async function main() {
   for (const v of variants) for (let run = 1; run <= runs; run++) for (const caseId of cases) {
     const expected = listDemoCases().find((c) => c.id === caseId)?.expected ?? "?";
     const started = Date.now();
-    if (!healthy && v.kind === "orchestrator") {
+    if (!healthy && (v.kind === "orchestrator" || v.kind === "model_only")) {
       rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "infra_unavailable", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: 0, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 0, routed_models: [], model_calls_ok: 0, model_calls_total: 0, model_calls_cached: 0, decided_by: "-", failure_classes: {}, error: "nightshift unavailable" });
       console.log(`${v.id} run ${run} ${caseId}: infra_unavailable`);
       continue;
     }
     try {
-      const memory = v.kind === "rules" ? null : new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-eval-hmem-")) });
+      const memory = (v.kind === "rules" || v.kind === "model_only") ? null : new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-eval-hmem-")) });
       const runNonce = `nonce:${v.id}:${caseId}:${run}:${Date.now().toString(36)}`;
       const r = await one(caseId, v, memory, runNonce);
       writeFileSync(join(rawDir, `${v.id}-${caseId}-${run}-${r.run_id}.json`), JSON.stringify(r, null, 2));
