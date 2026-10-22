@@ -21,6 +21,19 @@ describe("Nightshift.testConnection", () => {
     const n = new Nightshift({ fetchFn, token: "t" });
     expect(await n.testConnection()).toBe("offline");
   });
+
+  it("falls back to the proxy-token file on 401 at /models too, so the eval health gate recovers from a stale env token", async () => {
+    let callN = 0;
+    const fetchFn = (async () => {
+      callN += 1;
+      if (callN === 1) return new Response("unauthorized", { status: 401 });
+      return new Response(JSON.stringify({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "stale-env", tokenSource: "env", readProxyToken: () => "fresh-proxy" });
+    expect(await n.testConnection()).toBe("online");
+    expect(callN).toBe(2);
+    expect(n.getTokenSource()).toBe("proxy-token-file");
+  });
 });
 
 describe("Nightshift.chat", () => {

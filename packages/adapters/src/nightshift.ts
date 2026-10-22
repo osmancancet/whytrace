@@ -132,11 +132,24 @@ export class Nightshift {
   getTokenSource(): "env" | "proxy-token-file" | "explicit" | "none" { return this.tokenSource; }
 
   async testConnection(): Promise<"online" | "unauthorized" | "offline"> {
+    const doFetch = async () => this.fetchFn(`${this.baseUrl}/models`, {
+      method: "GET",
+      headers: this.baseHeaders(false),
+    });
     try {
-      const res = await this.fetchFn(`${this.baseUrl}/models`, {
-        method: "GET",
-        headers: this.baseHeaders(false),
-      });
+      let res = await doFetch();
+      // Same token-source fallback as the chat endpoint: a 401/403 from an
+      // env-sourced token triggers a one-time re-read of the proxy-token file.
+      if ((res.status === 401 || res.status === 403) && !this.proxyTokenRefreshed && this.tokenSource === "env") {
+        const refresh = this.readProxyToken();
+        this.proxyTokenRefreshed = true;
+        if (refresh && refresh !== this.token) {
+          this.token = refresh;
+          this.tokenSource = "proxy-token-file";
+          this.trace?.emit({ agent: "nightshift", action: "token_refresh", status: "ok", output_summary: `env token rejected (${res.status}) on /models; switched to proxy-token-file` });
+          res = await doFetch();
+        }
+      }
       if (res.status === 401 || res.status === 403) return "unauthorized";
       if (!res.ok) return "offline";
       const body = (await res.json()) as { data?: Array<{ id: string }> };
