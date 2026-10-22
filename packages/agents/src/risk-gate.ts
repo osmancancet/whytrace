@@ -35,6 +35,18 @@ export function policy(p: PolicyInput): PolicyDecision {
   if (p.degraded) esc.push("a model step was degraded");
   if (p.dqConflicts.length) esc.push(...p.dqConflicts.map((c) => `evidence conflict: ${c}`));
 
+  // Standalone takeover: a confirmed password-spray-then-success is already a
+  // complete initial-access + valid-accounts chain (T1110.003 + T1078). The
+  // Critic has independently re-counted the victims and verified the user's
+  // success from the same IP; one such confirmed finding already means the
+  // attacker is in. Promote it to contain if there is no DQ conflict.
+  const sprayToTakeover = confirmed.filter((f) => f.kind === "password_spray");
+  if (sprayToTakeover.length >= 1 && !p.dqConflicts.length) {
+    const conf = r2(Math.min(0.95, mean(sprayToTakeover.map((f) => f.confidence))));
+    reasons.push(`confirmed password-spray-then-success: Critic re-counted victims and verified sign-in as this user`);
+    return { decision: conf < ESCALATE_BELOW ? "escalate" : "contain", confidence: conf, reasons, escalate_reasons: conf < ESCALATE_BELOW ? [...esc, `confidence ${conf} < ${ESCALATE_BELOW}`] : esc };
+  }
+
   // contain: at least two independent confirmed abuse signals, or one abuse + confirmed access chain.
   if (abuse.length >= 2 || (abuse.length >= 1 && access.length >= 2)) {
     const conf = r2(Math.min(0.98, mean([...abuse, ...access].map((f) => f.confidence)) + 0.03 * (abuse.length + access.length - 2)));

@@ -15,6 +15,17 @@ describe("Risk Gate policy", () => {
   it("contains password spray followed by success from a new ASN", () => {
     expect(policy({ ...base, findings: [f(["T1110.003", "T1078"]), f(["T1078.004"])] }).decision).toBe("contain");
   });
+  it("contains a standalone confirmed password-spray-then-success — the Critic has re-counted victims", () => {
+    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa", "bbbbbbbbbbbb"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {} };
+    const p = policy({ ...base, findings: [spray] });
+    expect(p.decision).toBe("contain");
+    expect(p.reasons.join(" ")).toMatch(/password-spray-then-success/);
+  });
+  it("still escalates a confirmed password-spray-then-success when DQ conflicts (independent evidence disagrees)", () => {
+    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {} };
+    // Fall-through to the regular 1-abuse-1-access escalate branch when DQ conflicts.
+    expect(policy({ ...base, findings: [spray], dqConflicts: ["x"] }).decision).toBe("escalate");
+  });
   it("escalates an exposed appliance without an abuse chain", () => {
     const p = policy({ ...base, findings: [f(["T1078.004"], "CONFIRMED", 0.53), f(["T1133", "T1190"], "CONFIRMED", 0.49)], dqConflicts: ["DQ vpn_session_order failing for appliance:vpn-edge-01"] });
     expect(p.decision).toBe("escalate");
