@@ -1,0 +1,1 @@
+{"headers":["session_id","upn","ts_start","ts_end","appliance_id","client_ip","assigned_ip"],"data":[["vpn-k-01","prof.kaya@aegean.edu","2026-10-15 07:10:00.0","2026-10-16 18:00:00.0","vpn-edge-02","89.180.44.17","10.20.5.17"]],"total":1,"timeUsed":417}
