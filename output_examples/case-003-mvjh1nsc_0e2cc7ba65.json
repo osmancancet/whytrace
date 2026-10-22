@@ -1,0 +1,226 @@
+{
+  "run_id": "mvjh1nsc_0e2cc7ba65",
+  "case_id": "case-003",
+  "verdict": "escalate",
+  "confidence": 0.51,
+  "summary": "Case case-003 (s.demir@aegean.edu): escalate, confidence 0.51. F1 confirms 8 suspicious sign-ins from Cloudvault VPS (DE), outside the account baseline ASN {T1078.004}. F2 confirms VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product with CISA KEV-listed CVEs including CVE-2026-104935, CVE-2025-22457, CVE-2025-0282 {T1133,T1190}. Risk Gate: sign-in path touches an exposed asset; partial chain with 0 abuse + 1 access signal; DQ vpn_session_order failing for appliance:vpn-edge-01; signals of compromise without a confirmed abuse chain.",
+  "timeline": [
+    {
+      "ts": "2026-10-17 21:31:00.0",
+      "event": "F1 Suspicious sign-ins from an ASN outside the account's baseline: Cloudvault VPS (DE), 8 event(s)",
+      "sql_id": "2c129c83b3fb"
+    },
+    {
+      "ts": "2026-10-17 21:32:00.0",
+      "event": "F1 Suspicious sign-ins from an ASN outside the account's baseline: Cloudvault VPS (DE), 8 event(s)",
+      "sql_id": "2c129c83b3fb"
+    },
+    {
+      "ts": "2026-10-17 21:37:00.0",
+      "event": "F1 Suspicious sign-ins from an ASN outside the account's baseline: Cloudvault VPS (DE), 8 event(s)",
+      "sql_id": "2c129c83b3fb"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: Cloudvault VPS (DE), 8 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "2c129c83b3fb",
+        "06b95e5ae281"
+      ],
+      "row_refs": [
+        "2c129c83b3fb#0",
+        "2c129c83b3fb#1",
+        "2c129c83b3fb#2",
+        "2c129c83b3fb#3",
+        "2c129c83b3fb#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.52,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:s.demir@aegean.edu",
+        "ip:net:45.142.10.9",
+        "device:cmdb:vpn-edge-01"
+      ],
+      "facts": {
+        "upn": "s.demir@aegean.edu",
+        "asn_org": "Cloudvault VPS",
+        "country": "DE",
+        "ip": "45.142.10.9",
+        "first_ts": "2026-10-17 21:31:00.0",
+        "via_vpn_appliance": "vpn-edge-01",
+        "events": 8
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H-infra",
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "24f361a8665e",
+        "c476be540d02"
+      ],
+      "row_refs": [
+        "24f361a8665e#0",
+        "24f361a8665e#1",
+        "24f361a8665e#2",
+        "24f361a8665e#3",
+        "24f361a8665e#4"
+      ],
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "confidence": 0.49,
+      "kind": "kev_exposure",
+      "entity_ids": [
+        "account:idp:s.demir@aegean.edu",
+        "device:cmdb:vpn-edge-01"
+      ],
+      "facts": {
+        "upn": "s.demir@aegean.edu",
+        "appliance_id": "vpn-edge-01",
+        "firmware": "22.7R2.3",
+        "cves": "CVE-2026-104935,CVE-2025-22457,CVE-2025-0282,CVE-2024-21893,CVE-2023-46805,CVE-2024-21887,CVE-2020-3433,CVE-2020-3153,CVE-2020-8218,CVE-2021-22893,CVE-2020-8243,CVE-2021-22900,CVE-2021-22894,CVE-2020-8260,CVE-2021-22899,CVE-2019-11510,CVE-2019-11539"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Reset password and force MFA re-enrollment for s.demir@aegean.edu; review and revoke active sessions/tokens originating from Cloudvault VPS (DE).",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Isolate or patch vpn-edge-01 and apply vendor mitigations for CISA KEV CVEs; validate VPN authentication and session logs for the affected account.",
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Correlate sign-in timestamps with VPN session records to resolve the DQ vpn_session_order conflict and determine whether the external DE IP traversed the appliance.",
+      "attack": [
+        "T1133",
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Hunt for lateral movement or additional credential use from the DE ASN across university SaaS and VPN authentication logs.",
+      "attack": [
+        "T1078.004",
+        "T1133"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "F1 rests on vpn_session rows where DQ rule vpn_session_order fails for appliance:vpn-edge-01 (12 invalid) — confidence × 0.7.",
+    "F2 rests on vpn_session rows where DQ rule vpn_session_order fails for appliance:vpn-edge-01 (12 invalid) — confidence × 0.7.",
+    "Confidence 0.51 reflects a partial chain: signals of compromise exist but no confirmed abuse chain has been established.",
+    "DQ vpn_session_order is failing for appliance:vpn-edge-01, preventing definitive session attribution.",
+    "Evidence is insufficient to justify containment based solely on access signals.",
+    "Escalation reason: evidence conflict: DQ vpn_session_order failing for appliance:vpn-edge-01",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [
+    "User travel calendar or approved international access windows for s.demir@aegean.edu.",
+    "EDR telemetry on the endpoint used for the suspicious sign-ins.",
+    "Full VPN appliance patch history and evidence of exploit attempts against CVE-2026-104935, CVE-2025-22457, or CVE-2025-0282.",
+    "Whether other university accounts authenticated from the same Cloudvault VPS (DE) ASN."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:s.demir@aegean.edu",
+      "sql_id": "d2423c66baca"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:s.demir@aegean.edu",
+      "sql_id": "5724ef1c022e"
+    },
+    {
+      "table": "vpn_session",
+      "rule": "vpn_session_order",
+      "valid": 1,
+      "invalid": 12,
+      "scope": "appliance:vpn-edge-01",
+      "sql_id": "7663def5e66e"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "8 sign-in(s) from Cloudvault VPS; via VPN, no managed device",
+      "check_sql_id": "06b95e5ae281"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "firmware 22.7R2.3 is below the fix for CVE-2025-22457, CVE-2025-0282 (KEV, ransomware use: Known)",
+      "check_sql_id": "c476be540d02"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "escalate",
+    "confidence": 0.51,
+    "rationale": "Case is not a confirmed account takeover chain (F1 suspicious sign-ins at 0.52 confidence are not confirmed takeover, and F2 only shows a CISA KEV-listed vulnerable VPN appliance, not confirmed exploitation), so contain does not apply. Signals are not explained away (no rejected claims), so benign does not apply. The situation exceeds a weak unexplained signal: there is active exposure (vpn-edge-01 on KEV-listed firmware with multiple CVEs) plus conflicting/insufficient evidence (DQ vpn_session_order failing), which prevents correlating the 8 non-baseline Cloudvault VPS sign-ins to VPN sessions. Exposure combined with conflicting/insufficient evidence requires human review → escalate.",
+    "escalate_reasons": [
+      "evidence conflict: DQ vpn_session_order failing for appliance:vpn-edge-01",
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 2,
+  "budget": {
+    "sql_calls": 18,
+    "model_calls": 4
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0roqnocb"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_tl37sxo0"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q3tf9cp7"
+    }
+  ],
+  "trace_id": "mvjh1nsc_0e2cc7ba65",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjh1nsc_0e2cc7ba65/trace.jsonl",
+  "execution_time_seconds": 336.87
+}
