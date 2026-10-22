@@ -1,0 +1,296 @@
+{
+  "run_id": "mviunwt5_ae6c6800d5",
+  "case_id": "case-001",
+  "verdict": "escalate",
+  "confidence": 0.93,
+  "summary": "Confirmed account compromise: user clicked/phish delivered from aegean-edu.co, MFA fatigue (7 denies then 1 approve), sign-ins from unfamiliar ASN BulwarkHost Ltd (NL), bulk SIS access (48 events), and an API-created inbox forwarding rule to d.yilmaz.payroll@gmail.com indicating exfiltration. DQ shows event IDs fully valid; 151/2693 UPNs invalid (~5.6%), slightly limiting sign-in attribution but not invalidating confirmed events. Active sensitive-data access plus exfiltration pattern warrants escalation.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 06:12:00.0",
+      "event": "mail/delivery aegean-edu.co",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 06:15:00.0",
+      "event": "clicks_for",
+      "sql_id": "be611a70a8b7"
+    },
+    {
+      "ts": "2026-10-14 06:15:00.0",
+      "event": "mail/click aegean-edu.co",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 06:52:00.0",
+      "event": "new_asn",
+      "sql_id": "43325376971a"
+    },
+    {
+      "ts": "2026-10-14 06:52:00.0",
+      "event": "mfa_fatigue",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:53:00.0",
+      "event": "new_asn",
+      "sql_id": "43325376971a"
+    },
+    {
+      "ts": "2026-10-14 06:53:00.0",
+      "event": "mfa_fatigue",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:54:00.0",
+      "event": "new_asn",
+      "sql_id": "43325376971a"
+    },
+    {
+      "ts": "2026-10-14 06:54:00.0",
+      "event": "mfa_fatigue",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:55:00.0",
+      "event": "new_asn",
+      "sql_id": "43325376971a"
+    },
+    {
+      "ts": "2026-10-14 06:55:00.0",
+      "event": "mfa_fatigue",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:56:00.0",
+      "event": "new_asn",
+      "sql_id": "43325376971a"
+    },
+    {
+      "ts": "2026-10-14 06:56:00.0",
+      "event": "mfa_fatigue",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "mail/rule target=d.yilmaz.payroll@gmail.com via=api",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "rules_for",
+      "sql_id": "c31c680010e8"
+    },
+    {
+      "ts": "2026-10-14 12:35:00.0",
+      "event": "success mail from Turkcell (TR)",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-15 13:36:00.0",
+      "event": "success mail from Turkcell (TR)",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-15 14:37:00.0",
+      "event": "success sis from Turkcell (TR)",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-16 15:38:00.0",
+      "event": "success mail from Turkcell (TR)",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-16 16:39:00.0",
+      "event": "success mail from Turkcell (TR)",
+      "sql_id": "84a920bc05ca"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-z9j25u",
+      "hypothesis_id": "H1",
+      "claim": "Bulk SIS access: 48 successful events",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84a920bc05ca"
+      ],
+      "row_refs": [
+        "84a920bc05ca#0",
+        "84a920bc05ca#1",
+        "84a920bc05ca#2"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "id": "F-853fxx",
+      "hypothesis_id": "H3",
+      "claim": "User click on delivered mail — aegean-edu.co",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "be611a70a8b7"
+      ],
+      "row_refs": [
+        "be611a70a8b7#0"
+      ],
+      "attack": [
+        "T1204.001"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "id": "F-jgfo3q",
+      "hypothesis_id": "H2",
+      "claim": "Phishing-suspect delivery from aegean-edu.co",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "873b7220b21c"
+      ],
+      "row_refs": [
+        "873b7220b21c#0",
+        "873b7220b21c#1",
+        "873b7220b21c#2"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "id": "F-srd8q4",
+      "hypothesis_id": "H2",
+      "claim": "Inbox forwarding rule — target=d.yilmaz.payroll@gmail.com via=api",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "c31c680010e8"
+      ],
+      "row_refs": [
+        "c31c680010e8#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "id": "F-t9aexv",
+      "hypothesis_id": "H1",
+      "claim": "Sign-ins from unfamiliar ASN BulwarkHost Ltd (NL)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "43325376971a"
+      ],
+      "row_refs": [
+        "43325376971a#0",
+        "43325376971a#1",
+        "43325376971a#2"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "id": "F-uwi0xg",
+      "hypothesis_id": "H4",
+      "claim": "MFA fatigue pattern: 7 denies followed by 1 approve(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "5c43abe6296d"
+      ],
+      "row_refs": [
+        "5c43abe6296d#0",
+        "5c43abe6296d#1",
+        "5c43abe6296d#2"
+      ],
+      "attack": [
+        "T1621"
+      ],
+      "confidence": 0.9
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Disable compromised account, force password reset, revoke all sessions, and require MFA re-enrollment",
+      "attack": [
+        "T1078",
+        "T1621"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Delete API inbox forwarding rule to d.yilmaz.payroll@gmail.com and audit all mailbox forwarding rules",
+      "attack": [
+        "T1114.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block aegean-edu.co, quarantine phishing message, and hunt for other recipients of same campaign",
+      "attack": [
+        "T1566"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review and preserve the 48 SIS access events; determine what data was accessed and notify data owners",
+      "attack": [
+        "T1530",
+        "T1048"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block sign-ins from BulwarkHost Ltd ASN and add unfamiliar ASNs to watchlist",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "151 invalid UPNs (~5.6%) limit full sign-in attribution",
+    "SIS data accessed not fully quantified",
+    "Phishing email content/attachments not yet analyzed"
+  ],
+  "not_checked": [
+    "Mailbox audit logs beyond forwarding rule creation",
+    "SIS object/query details",
+    "Endpoint forensics",
+    "Lateral movement to other accounts"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "event_id",
+      "valid": 2693,
+      "invalid": 0
+    },
+    {
+      "table": "signin_event",
+      "rule": "upn",
+      "valid": 2542,
+      "invalid": 151
+    }
+  ],
+  "memory_used": [],
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_uh0t6qk5"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_tuq5p1uk"
+    }
+  ],
+  "trace_id": "mviunwt5_ae6c6800d5",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mviunwt5_ae6c6800d5/trace.jsonl",
+  "execution_time_seconds": 82.501
+}

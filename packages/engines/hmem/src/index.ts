@@ -127,18 +127,19 @@ function embed(text: string): number[] {
       h ^= t.charCodeAt(i);
       h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
     }
-    vec[h % 64] += 1;
+    const idx = h % 64;
+    vec[idx] = (vec[idx] ?? 0) + 1;
   }
   let norm = 0;
   for (const v of vec) norm += v * v;
   norm = Math.sqrt(norm) || 1;
-  for (let i = 0; i < vec.length; i++) vec[i] /= norm;
+  for (let i = 0; i < vec.length; i++) vec[i] = (vec[i] ?? 0) / norm;
   return vec;
 }
 function cosine(a: number[], b: number[]): number {
   let s = 0;
   const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i++) s += a[i] * b[i];
+  for (let i = 0; i < n; i++) s += (a[i] ?? 0) * (b[i] ?? 0);
   return s;
 }
 
@@ -519,7 +520,7 @@ class SleepCycleService {
 class DreamingService {
   constructor(
     private readonly recs: Map<string, MemoryRecord>,
-    private readonly pending: DreamProposal[],
+    private readonly pendingList: DreamProposal[],
     private readonly ledgerEntries: LedgerEntry[],
     private readonly actor: string,
     private readonly clock: () => number,
@@ -533,18 +534,18 @@ class DreamingService {
       const content = `invariant: ${prefs.map((p) => p.content).join(" + ")}`;
       const prop: DreamProposal = { id: `dream_${sha256Hex(content).slice(0, 12)}`, content, layer: "long_term", derivedFrom: prefs.map((p) => p.id) };
       proposals.push(prop);
-      this.pending.push(prop);
+      this.pendingList.push(prop);
       this.ledgerEntries.push({ memoryId: prop.id, action: "dream_proposed", actor: this.actor, timestamp: now, details: { from: prop.derivedFrom } });
       this.persist();
     }
     return proposals;
   }
-  pending_(): DreamProposal[] { return [...this.pending]; }
-  pending(): DreamProposal[] { return [...this.pending]; }
+  pending_(): DreamProposal[] { return [...this.pendingList]; }
+  pending(): DreamProposal[] { return [...this.pendingList]; }
   approve(id: string): MemoryRecord | undefined {
-    const idx = this.pending.findIndex((p) => p.id === id);
+    const idx = this.pendingList.findIndex((p) => p.id === id);
     if (idx === -1) return undefined;
-    const prop = this.pending.splice(idx, 1)[0]!;
+    const prop = this.pendingList.splice(idx, 1)[0]!;
     const now = this.clock();
     const rec: MemoryRecord = {
       id: nextId(),
@@ -568,9 +569,9 @@ class DreamingService {
     return rec;
   }
   reject(id: string) {
-    const idx = this.pending.findIndex((p) => p.id === id);
+    const idx = this.pendingList.findIndex((p) => p.id === id);
     if (idx === -1) return;
-    const [prop] = this.pending.splice(idx, 1);
+    const [prop] = this.pendingList.splice(idx, 1);
     const now = this.clock();
     if (prop) this.ledgerEntries.push({ memoryId: prop.id, action: "dream_rejected", actor: this.actor, timestamp: now });
     this.persist();

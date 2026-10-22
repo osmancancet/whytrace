@@ -56,7 +56,7 @@ export class RunTrace {
 
   emit(event: Omit<TraceEvent, "run_id" | "ts" | "step_id"> & { step_id?: string }): TraceEvent {
     const step_id = event.step_id ?? this.stepId();
-    const full: TraceEvent = { ...event, run_id: this.run_id, step_id, ts: new Date().toISOString() };
+    const full = { ...event, run_id: this.run_id, step_id, ts: new Date().toISOString() } as TraceEvent;
     appendFileSync(this.traceFile, JSON.stringify(full) + "\n", "utf8");
     return full;
   }
