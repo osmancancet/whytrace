@@ -10,7 +10,7 @@ import { listCatalogue, queryFor, type QueryName } from "./sql-catalogue.ts";
 import { FindingIds, deriveFindings, type Row } from "./investigator.ts";
 import { critique, rubric } from "./critic.ts";
 import { appliancesFromRows, applyDqPenalty, runScopedDq, type DqResult } from "./dq.ts";
-import { gate, policy } from "./risk-gate.ts";
+import { canStandUnderDegrade, gate, policy } from "./risk-gate.ts";
 import { readQueryLog, validateReport, type QueryLogRecord } from "./validate.ts";
 import { CaseMemory } from "./memory.ts";
 import { EvidenceGraph } from "./evidence-graph.ts";
@@ -69,6 +69,7 @@ export function defaultSteps(upn: string): PlannerStep[] {
     { hypothesis_id: "H1", query_name: "mail_chain", params: { upn }, why: "coverage: mail gateway" },
     { hypothesis_id: "H1", query_name: "signins_for", params: { upn }, why: "coverage: identity provider" },
     { hypothesis_id: "H1", query_name: "spray_source_for", params: { upn }, why: "coverage: credential attacks behind successful sign-ins" },
+    { hypothesis_id: "H1", query_name: "rules_for", params: { upn }, why: "coverage: inbox forwarding rules (post-auth abuse)" },
   ];
 }
 
@@ -236,6 +237,47 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     }
   }
 
+  // ---- Deterministic coverage fill before the Risk Gate
+  // Even when the Planner's model step was degraded, the orchestrator must have
+  // run every *default* coverage query, so the Risk Gate decides on complete
+  // identity + mail evidence. We re-check the SQL-catalogue defaults here and
+  // run anything that didn't fire in the main loop (budget permitting). This
+  // closes the Day-2A gap where a one-shot planner failure left mail or rules
+  // unchecked and the policy had to escalate for "coverage incomplete".
+  const coverageAdded: string[] = [];
+  for (const s of defaultSteps(caseInfo.upn)) {
+    if (!budget.canSql()) break;
+    const name = s.query_name as QueryName;
+    const params = { ...s.params, upn: caseInfo.upn };
+    const entry = (() => { try { return queryFor(name, params); } catch { return undefined; } })();
+    if (!entry) continue;
+    if (ranSql.has(entry.sql)) continue;
+    try {
+      const r = await run(entry.sql, "coverage", root.step_id);
+      ran.set(r.sql_id, { name, rows: r.rows });
+      allRows.push(...r.rows);
+      ranSql.add(entry.sql);
+      if (/\.signin_event\b/.test(entry.sql)) checkedSources.add("signin_event");
+      if (/\.mail_event\b/.test(entry.sql)) checkedSources.add("mail_event");
+      if (/\.vpn_session\b/.test(entry.sql)) checkedSources.add("vpn_session");
+      if (/\.device\b/.test(entry.sql)) checkedSources.add("device");
+      await graph.ingestRows(r.sql_id, name, r.rows);
+      const derived = deriveFindings(name, { upn: caseInfo.upn, hypothesis_id: "H-coverage", params }, r.rows, r.sql_id, ids);
+      if (derived.length) {
+        const c = opts.ablate?.critic === false
+          ? { approved: derived, rejected: [] as Array<{ claim: string; reason: string }>, needsMore: [] as string[], verdicts: [] as CriticVerdictT[] }
+          : await critique(criticZ, derived, verdictsById);
+        for (const v of c.verdicts) { verdictsById.set(v.finding_id, v); trace.emit({ agent: "critic", action: `verdict_${v.status}`, sql_id: v.check_sql_id, input_summary: v.finding_id, output_summary: v.reason.slice(0, 300), lane: "code", status: "ok" }); }
+        findings.push(...c.approved);
+        rejected.push(...c.rejected);
+      }
+      coverageAdded.push(name);
+    } catch (err) {
+      trace.emit({ agent: "coverage", action: "backfill_fail", input_summary: name, status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
+    }
+  }
+  if (coverageAdded.length) trace.emit({ agent: "coverage", action: "backfill", output_summary: `ran missing default coverage: ${coverageAdded.join(", ")}`, status: "ok" });
+
   // ---- Scoped DQ (drives reasoning)
   let dq: DqResult[] = [];
   let dqConflicts: string[] = [];
@@ -254,7 +296,9 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   for (const f of findings) await graph.recordFinding(f, "critic");
 
   // Planner glitches do not mark the whole run as degraded if a later round
-  // recovered and we got a plan; the fallback coverage steps always ran.
+  // recovered and we got a plan; the fallback coverage steps always ran. The
+  // orchestrator decides later whether the standing policy can carry the
+  // verdict (chain complete, no DQ conflict) or whether the run must escalate.
   if (!plannerSucceeded && plannerDegradedRounds > 0) {
     degraded = true;
     limitations.push("Planner model degraded; investigation proceeded with coverage queries only.");
@@ -268,8 +312,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   // behaviour promised in `.cursor/rules/evidence-contract.mdc`.
   const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources] });
   let riskModelMissing = false;
-  const evidenceText = findings.map((f) => `${f.id} [${f.status} ${f.confidence}] ${f.claim} {${f.attack.join(",")}}`).join("\n") || "(no surviving findings)";
-  const rejectedText = rejected.map((r) => `- ${r.claim}: ${r.reason}`).join("\n") || "(none)";
+  // The Reporter / Risk-Gate prompts stay bounded: only CONFIRMED findings
+  // (fallback to all), top-N by confidence, each claim capped at 240 chars.
+  // Rejected claims are also capped. This is a hard upper bound regardless of
+  // how many findings an aggressive run accumulates — the Day-2A trace analysis
+  // showed oversized prompts starving the provider and amplifying 502s.
+  const evidenceText = buildEvidenceText(findings);
+  const rejectedText = buildRejectedText(rejected);
   let modelOpinion: { decision: VerdictT; confidence: number; rationale: string } | undefined;
   if (budget.canModel()) {
     budget.model += 1;
@@ -289,13 +338,18 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       trace.emit({ agent: "risk_gate", action: "model_opinion", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
     }
   }
-  // Deterministic fallback: when the model opinion is missing, use the policy as-is,
-  // lower confidence by 0.1 (honest humility), add a limitation line. Escalate only
-  // if the policy itself is uncertain or evidence conflicts.
+  // Deterministic fallback under degraded conditions.
+  // Any degraded model step (planner, risk-gate, or later reporter) is honest humility:
+  // the deterministic policy keeps the verdict iff the chain can stand on its own
+  // (core sources checked, no DQ conflict, confidence stays ≥ 0.7 after a −0.1
+  // penalty). Otherwise the case escalates to a human with the reason recorded.
+  // This is the general-policy fix for the Day-2A "6/6 run degraded → escalate"
+  // pattern on cases 001 and 004 where the chain was CONFIRMED but a model
+  // step failed.
   let effectivePolicy = basePolicy;
+  const standingProbe = canStandUnderDegrade(basePolicy, { dqConflicts, checkedSources: [...checkedSources] });
   if (riskModelMissing) {
-    const canStand = basePolicy.decision !== "escalate" && basePolicy.confidence - 0.1 >= 0.7 && basePolicy.escalate_reasons.length === 0 && dqConflicts.length === 0;
-    if (canStand) {
+    if (standingProbe) {
       effectivePolicy = { ...basePolicy, confidence: Math.max(0, Math.round((basePolicy.confidence - 0.1) * 100) / 100) };
       limitations.push("model opinion unavailable (provider error); deterministic policy stood in, confidence lowered by 0.1.");
     } else {
@@ -304,8 +358,14 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       limitations.push("model opinion unavailable (provider error); deterministic policy was not confident enough to stand alone.");
     }
   } else if (degraded && basePolicy.decision !== "escalate") {
-    // Earlier model step (planner) was degraded — route to a human.
-    effectivePolicy = { ...basePolicy, decision: "escalate", escalate_reasons: [...basePolicy.escalate_reasons, "a model step was degraded"] };
+    if (standingProbe) {
+      // A planner step was degraded but we have a complete CONFIRMED chain; keep
+      // the verdict, apply the same −0.1 humility penalty and record it.
+      effectivePolicy = { ...basePolicy, confidence: Math.max(0, Math.round((basePolicy.confidence - 0.1) * 100) / 100) };
+      limitations.push("earlier model step was degraded; deterministic policy stood in on a complete chain, confidence lowered by 0.1.");
+    } else {
+      effectivePolicy = { ...basePolicy, decision: "escalate", escalate_reasons: [...basePolicy.escalate_reasons, "a model step was degraded"] };
+    }
   }
   const pol = effectivePolicy;
   const g = gate(pol, modelOpinion);
@@ -407,6 +467,57 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
 
 export function listDemoCases(): Case[] { return Object.values(DEMO_CASES); }
 export function getCase(id: string): Case | undefined { return DEMO_CASES[id]; }
+
+const CLAIM_CAP = 240;
+const MAX_FINDINGS_IN_PROMPT = 12;
+const MAX_REJECTED_IN_PROMPT = 10;
+const PROMPT_CHAR_CAP = 8000;
+
+/** Trim the finding list into a compact text payload for the Reporter and
+ *  Risk-Gate prompts. CONFIRMED findings come first (highest confidence), then
+ *  non-CONFIRMED as filler, capped at MAX_FINDINGS_IN_PROMPT entries and
+ *  PROMPT_CHAR_CAP characters overall. Claims are truncated at CLAIM_CAP.
+ *  Exported for unit tests. */
+export function buildEvidenceText(findings: FindingT[]): string {
+  if (!findings.length) return "(no surviving findings)";
+  const sorted = [...findings].sort((a, b) => {
+    const sa = a.status === "CONFIRMED" ? 0 : a.status === "LIKELY" ? 1 : 2;
+    const sb = b.status === "CONFIRMED" ? 0 : b.status === "LIKELY" ? 1 : 2;
+    if (sa !== sb) return sa - sb;
+    return b.confidence - a.confidence;
+  });
+  const lines: string[] = [];
+  let n = 0;
+  let chars = 0;
+  for (const f of sorted) {
+    if (n >= MAX_FINDINGS_IN_PROMPT) { lines.push(`… (${sorted.length - n} more trimmed)`); break; }
+    const claim = f.claim.length > CLAIM_CAP ? `${f.claim.slice(0, CLAIM_CAP - 1)}…` : f.claim;
+    const line = `${f.id} [${f.status} ${f.confidence}] ${claim} {${f.attack.join(",")}}`;
+    if (chars + line.length > PROMPT_CHAR_CAP) { lines.push(`… (${sorted.length - n} more trimmed)`); break; }
+    lines.push(line);
+    chars += line.length + 1;
+    n += 1;
+  }
+  return lines.join("\n");
+}
+
+/** Trim the rejected-claims list the same way. Exported for unit tests. */
+export function buildRejectedText(rejected: Array<{ claim: string; reason: string }>): string {
+  if (!rejected.length) return "(none)";
+  const lines: string[] = [];
+  let chars = 0;
+  for (let i = 0; i < rejected.length; i++) {
+    if (i >= MAX_REJECTED_IN_PROMPT) { lines.push(`- … (${rejected.length - i} more rejected claims trimmed)`); break; }
+    const r = rejected[i]!;
+    const claim = r.claim.length > CLAIM_CAP ? `${r.claim.slice(0, CLAIM_CAP - 1)}…` : r.claim;
+    const reason = r.reason.length > CLAIM_CAP ? `${r.reason.slice(0, CLAIM_CAP - 1)}…` : r.reason;
+    const line = `- ${claim}: ${reason}`;
+    if (chars + line.length > PROMPT_CHAR_CAP) { lines.push(`- … (${rejected.length - i} more rejected claims trimmed)`); break; }
+    lines.push(line);
+    chars += line.length + 1;
+  }
+  return lines.join("\n");
+}
 
 /** Deterministic analyst-ready note from the surviving findings; used when the
  *  Reporter model is degraded. Clearly labelled so the UI/console can tag it. */

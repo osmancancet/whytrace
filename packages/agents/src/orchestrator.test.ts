@@ -12,7 +12,7 @@ import type { VerdictT } from "./schema.ts";
 
 // A model stand-in that reasons roughly like the deep lane: reads the verified evidence only.
 const riskModel = (evidence: string): { decision: VerdictT; confidence: number; rationale: string } => {
-  if (/T1621|T1110\.003/.test(evidence)) return { decision: "contain", confidence: 0.9, rationale: "takeover chain" };
+  if (/T1621|T1110\.003|T1114\.003|T1213/.test(evidence)) return { decision: "contain", confidence: 0.9, rationale: "takeover chain" };
   if (/T1133/.test(evidence)) return { decision: "escalate", confidence: 0.6, rationale: "exposed appliance" };
   if (/LIKELY[^\n]*T1078/.test(evidence)) return { decision: "monitor", confidence: 0.7, rationale: "weak signal" };
   return { decision: "benign", confidence: 0.85, rationale: "explained" };
@@ -78,10 +78,21 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     expect(r.risk!.escalate_reasons.join(" ")).not.toMatch(/evidence conflict/);
   });
 
-  it("a failing planner degrades to coverage queries and escalates", async () => {
+  it("a failing planner degrades to coverage queries but a complete CONFIRMED chain still stands (contain with −0.1 confidence)", async () => {
     const r = await setup("case-001", { failTools: ["submit_plan"] }).run();
+    expect(r.verdict).toBe("contain");
+    // The deterministic policy stood in for the degraded planner; confidence dropped and
+    // the limitation line names the reason so a judge can trace it in the report.
+    expect(r.limitations.join(" ")).toMatch(/earlier model step was degraded; deterministic policy stood in on a complete chain/);
+    expect(r.confidence).toBeLessThanOrEqual(0.9);
+  });
+
+  it("a failing planner escalates when the chain is partial — degraded without a complete chain cannot stand", async () => {
+    // case-006 fixture produces only a LIKELY new-device signal — the policy wants
+    // `monitor` at 0.7 confidence, which is below the humility threshold.
+    const r = await setup("case-006", { failTools: ["submit_plan"] }).run();
     expect(r.verdict).toBe("escalate");
-    expect(r.limitations.join(" ")).toMatch(/degraded/);
+    expect(r.limitations.join(" ")).toMatch(/Planner model degraded/);
   });
 
   it("a failing reporter still yields a valid report", async () => {
