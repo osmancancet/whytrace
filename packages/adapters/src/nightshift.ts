@@ -78,7 +78,11 @@ export type ChatOpts = {
   messages: NightshiftMessage[];
   lane?: "deep" | "fast";
   tools?: NightshiftTool[];
-  toolChoice?: "auto" | { type: "function"; function: { name: string } };
+  /** Only `"auto"` is honoured — the forced tool_choice shape was the main
+   *  cause of the 45 s `provider_deadline` 502s observed on 22 Oct. Callers
+   *  that need a specific tool now pass a single tool and let the model
+   *  choose; the adapter runs a repair retry if it does not call it. */
+  toolChoice?: "auto";
   maxTokens?: number;
   temperature?: number;
   agent?: string;
@@ -194,10 +198,31 @@ export class Nightshift {
         this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: sample.model, receipt_id: sample.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: 0 });
         return sample;
       }
+      // The attempt helper runs one upstream call and, if the provider replied
+      // from its exact cache with no content, re-tries once immediately with a
+      // cache-busting system message so a poisoned cache entry does not freeze
+      // the orchestrator. Nightshift has no public cache-bypass header (checked
+      // 23 Oct 2026 against the local engine's server/openai modules) so the
+      // bust is semantic — we append the run_id to the first system turn, which
+      // keeps the meaning identical but shifts the cache key. The original
+      // messages are what we record into the sample file, so replays still key
+      // off the agent's actual request.
+      const callAttempt = async (callLane: "deep" | "fast", callModel: string): Promise<NightshiftResponse> => {
+        const resp = await this.callOnce({ messages, lane: callLane, model: callModel, tools: opts.tools, maxTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, temperature: opts.temperature, abortSignal: opts.abortSignal });
+        if (!isEmptyResponse(resp)) return resp;
+        if (fromExactCache(resp)) {
+          const bustedMessages = withCacheBuster(messages, this.trace?.run_id ?? newRunStamp());
+          this.trace?.emit({ agent, action: "cache_bust", lane: callLane, status: "ok", output_summary: "exact-cache replayed an empty response; retrying with cache-busting system turn" });
+          const resp2 = await this.callOnce({ messages: bustedMessages, lane: callLane, model: callModel, tools: opts.tools, maxTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, temperature: opts.temperature, abortSignal: opts.abortSignal });
+          if (!isEmptyResponse(resp2)) return resp2;
+          throw new Error("Nightshift empty_response after cache_bust (HTTP 200, no tool_calls, no text)");
+        }
+        throw new Error("Nightshift empty_response (HTTP 200, no tool_calls, no text)");
+      };
       let lastErr: unknown;
       for (let attempt = 0; attempt <= this.retries; attempt++) {
         try {
-          const resp = await this.callOnce({ messages, lane, model, tools: opts.tools, toolChoice: opts.toolChoice, maxTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, temperature: opts.temperature, abortSignal: opts.abortSignal });
+          const resp = await callAttempt(lane, model);
           resp.retryCount = attempt;
           this.recordSample(resp, messages, opts.tools, lane);
           this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: attempt });
@@ -215,7 +240,7 @@ export class Nightshift {
       // transparently; sweep/Markovian steps already run on fast and skip the fallback.
       if (lane === "deep" && routeFallback) {
         try {
-          const resp = await this.callOnce({ messages, lane: "fast", model: this.fastModel, tools: opts.tools, toolChoice: opts.toolChoice, maxTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, temperature: opts.temperature, abortSignal: opts.abortSignal });
+          const resp = await callAttempt("fast", this.fastModel);
           resp.retryCount = this.retries + 1;
           this.recordSample(resp, messages, opts.tools, "fast");
           this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane" });
@@ -241,14 +266,18 @@ export class Nightshift {
     const conn = await this.testConnection();
     if (conn === "unauthorized") return { status: "auth_error", detail: "Nightshift /models returned 401/403 after proxy-token refresh" };
     if (conn === "offline") return { status: "provider_error", detail: "Nightshift /models offline" };
-    // At this point /models said we are online. One tiny tool-call probe decides
-    // between `online` (structured output), `format_miss` (prose response, model
-    // still alive) and `provider_error` (5xx / _empty_response / timeout).
+    // At this point /models said we are online. One small chat probe decides
+    // between `online` (tool call or recoverable JSON came back), `format_miss`
+    // (non-empty prose that doesn't fit our schema — the model is alive but
+    // our tool landed on text) and `provider_error` (5xx, timeout, or HTTP 200
+    // with no tool_calls AND no prose — the empty-cache / provider_deadline
+    // failure mode that Night 3 misread as "model up"). No forced tool_choice:
+    // we offer one tool and let the model decide, mirroring how `callTool`
+    // now runs its real agent prompts.
     try {
       const resp = await this.chat({
         messages: [{ role: "user", content: "Probe: reply with ok=true via submit_probe." }],
         tools: [{ type: "function", function: { name: "submit_probe", description: "Probe tool.", parameters: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] } } }],
-        toolChoice: { type: "function", function: { name: "submit_probe" } },
         lane: "fast",
         maxTokens: 128,
         agent: "probe",
@@ -257,9 +286,17 @@ export class Nightshift {
       const call = resp.toolCalls.find((c) => c.name === "submit_probe");
       if (call) return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id };
       if (extractJsonObject(resp.text)) return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, detail: "recovered probe JSON from text" };
-      // The provider answered HTTP 200 with prose. The model is up; our schema just
-      // did not land. We mark this `format_miss` so the health gate can log a
-      // warning and still proceed with the eval.
+      if (!resp.text || resp.text.trim().length === 0) {
+        // HTTP 200 with no tool call AND no prose — the provider is answering
+        // but with nothing. Night 3 shipped this as "format_miss / provider up";
+        // it is not. Count it as a provider error so the eval health gate
+        // retries and the sweep's provider_failures counter stays honest.
+        return { status: "provider_error", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, detail: `provider replied HTTP 200 with no tool_calls and no text${fromExactCache(resp) ? " (served from exact cache)" : ""}` };
+      }
+      // The provider answered HTTP 200 with real prose. The model is up; our
+      // schema just did not land. `format_miss` keeps the eval moving — the
+      // orchestrator's `tool_call_recovered_from_text` and repair-retry paths
+      // handle the same shape on real prompts.
       return { status: "format_miss", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, detail: `provider responded with prose (${resp.text.length} chars) instead of invoking submit_probe` };
     } catch (err) {
       const msg = (err as Error).message || String(err);
@@ -279,23 +316,40 @@ export class Nightshift {
     parse: (args: Record<string, unknown>) => T;
   }): Promise<{ value: T; receipt?: MeterlessReceipt; model: string; latencyMs: number; retryCount: number; raw: NightshiftResponse }> {
     const tool: NightshiftTool = { type: "function", function: { name: opts.toolName, description: opts.description, parameters: opts.schema } };
-    const resp = await this.chat({ messages: opts.messages, lane: opts.lane ?? "deep", tools: [tool], toolChoice: { type: "function", function: { name: opts.toolName } }, maxTokens: opts.maxTokens, agent: opts.agent });
-    const call = resp.toolCalls.find((c) => c.name === opts.toolName);
-    let args: Record<string, unknown> | undefined = call?.arguments;
+    // We deliberately do NOT pass `tool_choice`. Forcing the named tool_choice
+    // reliably produced 45 s `provider_deadline` 502s against Nemotron Super
+    // VL on 22 Oct 2026 (4/4 forced calls failed, 3/4 unforced succeeded under
+    // identical prompts). The adapter now trusts the model to invoke the one
+    // tool we offer; if it answers with prose we recover a JSON object from
+    // the text, and if that also fails we send one short repair turn.
+    const lane = opts.lane ?? "deep";
+    const resp = await this.chat({ messages: opts.messages, lane, tools: [tool], maxTokens: opts.maxTokens, agent: opts.agent });
+    let args: Record<string, unknown> | undefined = resp.toolCalls.find((c) => c.name === opts.toolName)?.arguments;
     if (!args) {
-      // The upstream model sometimes returns prose instead of a tool call even when
-      // tool_choice is forced. Try to extract a JSON object from the text — if it
-      // parses, treat it as the tool call. This recovers a large class of transient
-      // provider failures without silently changing behaviour.
       const extracted = extractJsonObject(resp.text);
       if (extracted) {
         this.trace?.emit({ agent: opts.agent ?? "model", action: "tool_call_recovered_from_text", lane: resp.lane, status: "ok", output_summary: `recovered ${opts.toolName} from text (${resp.text.length} chars)` });
         args = extracted;
       }
     }
+    let finalResp = resp;
+    if (!args) {
+      // Repair retry: nudge the model to invoke the tool. Still no tool_choice —
+      // the goal is to let the model emit a correctly-shaped call, not to force
+      // a shape the provider's tool_call_format stage can't fit into the deadline.
+      const repairMessages: NightshiftMessage[] = [
+        ...opts.messages,
+        ...(resp.text ? [{ role: "assistant", content: resp.text } as NightshiftMessage] : []),
+        { role: "user", content: `Call \`${opts.toolName}\` now with the arguments. Reply only via that function.` },
+      ];
+      this.trace?.emit({ agent: opts.agent ?? "model", action: "tool_call_repair_retry", lane: resp.lane, status: "ok", output_summary: `no tool call on first attempt; retrying with a repair user turn (text ${resp.text.length} chars)` });
+      finalResp = await this.chat({ messages: repairMessages, lane, tools: [tool], maxTokens: opts.maxTokens, agent: opts.agent });
+      args = finalResp.toolCalls.find((c) => c.name === opts.toolName)?.arguments;
+      if (!args) args = extractJsonObject(finalResp.text);
+    }
     if (!args) throw new Error(`Nightshift tool call "${opts.toolName}" missing from response`);
     const value = opts.parse(args);
-    return { value, receipt: resp.receipt, model: resp.model, latencyMs: resp.latencyMs, retryCount: resp.retryCount, raw: resp };
+    return { value, receipt: finalResp.receipt, model: finalResp.model, latencyMs: finalResp.latencyMs, retryCount: finalResp.retryCount, raw: finalResp };
   }
 
   private ensureNoThink(messages: NightshiftMessage[]): NightshiftMessage[] {
@@ -307,7 +361,7 @@ export class Nightshift {
     return [{ role: "system", content: `/no_think\n${first!.content}` }, ...rest];
   }
 
-  private async callOnce(args: { messages: NightshiftMessage[]; lane: "deep" | "fast"; model: string; tools?: NightshiftTool[]; toolChoice?: ChatOpts["toolChoice"]; maxTokens: number; temperature?: number; abortSignal?: AbortSignal }): Promise<NightshiftResponse> {
+  private async callOnce(args: { messages: NightshiftMessage[]; lane: "deep" | "fast"; model: string; tools?: NightshiftTool[]; maxTokens: number; temperature?: number; abortSignal?: AbortSignal }): Promise<NightshiftResponse> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     const signal = args.abortSignal ? mergeSignals(controller.signal, args.abortSignal) : controller.signal;
@@ -321,7 +375,7 @@ export class Nightshift {
       };
       if (args.temperature !== undefined) body.temperature = args.temperature;
       if (args.tools?.length) body.tools = args.tools;
-      if (args.toolChoice) body.tool_choice = args.toolChoice;
+      // `tool_choice` is intentionally never sent — see callTool/probe comments.
       const doFetch = async () => this.fetchFn(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { ...this.baseHeaders(true), "Content-Type": "application/json" },
@@ -395,6 +449,14 @@ export class Nightshift {
 
   private recordSample(resp: NightshiftResponse, messages: NightshiftMessage[], tools: NightshiftTool[] | undefined, lane: "deep" | "fast") {
     if (process.env.NIGHTSHIFT_RECORD_SAMPLES !== "true") return;
+    // Night 3 shipped 11 empty samples because recordSample accepted anything
+    // with HTTP 200. An empty response (no tool_calls, no text) replayed in
+    // SAMPLE_MODE looks like a provider outage to the orchestrator and poisons
+    // every subsequent `scripts/record_sample.ts` for the same case. We now
+    // refuse to persist those: the record step either sees the real response
+    // (because callAttempt busted the cache and retried) or the live step
+    // throws, and the recorder learns to re-run the case.
+    if (isEmptyResponse(resp)) return;
     const hash = chatDigest(messages, tools, lane);
     mkdirSync(this.sampleDir, { recursive: true });
     writeFileSync(resolvePath(this.sampleDir, `${hash}.json`), JSON.stringify(resp), "utf8");
@@ -480,6 +542,39 @@ function chatDigest(messages: NightshiftMessage[], tools: NightshiftTool[] | und
   const normalised = JSON.stringify({ lane, tools: tools?.map((t) => t.function.name) ?? [], messages: messages.map((m) => ({ role: m.role, content: m.content.slice(0, 2000) })) });
   return createHash("sha256").update(normalised).digest("hex").slice(0, 16);
 }
+
+/** HTTP 200 but neither a tool call nor any prose — the empty-reply shape
+ *  Nemotron Super VL emits when its tool_call_format phase times out or the
+ *  exact cache replays a poisoned entry. Treated as a provider failure. */
+export function isEmptyResponse(resp: NightshiftResponse): boolean {
+  return (!resp.text || resp.text.trim().length === 0) && resp.toolCalls.length === 0;
+}
+
+/** Nightshift's receipt reports both `cache.status: "exact"` and
+ *  `cache.from_cache: true` when the response was replayed from the exact
+ *  prompt→response cache. Either marker is enough to trigger the cache-bust
+ *  retry. */
+export function fromExactCache(resp: NightshiftResponse): boolean {
+  const c = resp.receipt?.cache as { status?: unknown; from_cache?: unknown } | undefined;
+  if (!c) return false;
+  if (c.from_cache === true || String(c.from_cache ?? "").toLowerCase() === "true") return true;
+  if (String(c.status ?? "").toLowerCase() === "exact") return true;
+  return false;
+}
+
+/** Append a cache-busting token to the first system message (adding one if
+ *  missing). Only the key — not the semantic prompt — changes, so the agent
+ *  gets the same answer with a fresh route. */
+export function withCacheBuster(messages: NightshiftMessage[], runId: string): NightshiftMessage[] {
+  const token = `[cache_bust ${runId} ${Date.now().toString(36)}]`;
+  if (messages.length === 0 || messages[0]!.role !== "system") {
+    return [{ role: "system", content: `/no_think\n${token}` }, ...messages];
+  }
+  const [first, ...rest] = messages;
+  return [{ ...first!, content: `${first!.content}\n${token}` }, ...rest];
+}
+
+function newRunStamp(): string { return `anon-${Math.random().toString(36).slice(2, 10)}`; }
 
 function mergeSignals(a: AbortSignal, b: AbortSignal): AbortSignal {
   const controller = new AbortController();

@@ -1,7 +1,7 @@
 // Unit tests for the Nightshift adapter. No live runtime required.
 import { describe, it, expect } from "vitest";
 import { Nightshift } from "./index.ts";
-import { extractJsonObject } from "./nightshift.ts";
+import { extractJsonObject, fromExactCache, isEmptyResponse, withCacheBuster } from "./nightshift.ts";
 
 describe("Nightshift.testConnection", () => {
   it("returns online when /models lists meterless/*", async () => {
@@ -60,6 +60,69 @@ describe("Nightshift.chat", () => {
     expect(r.receipt?.receipt_id).toBe("rec1");
   });
 
+  it("never sends a tool_choice field (callTool offers one tool and trusts the model to invoke it)", async () => {
+    const seenBodies: unknown[] = [];
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "", tool_calls: [{ id: "tc1", function: { name: "submit_verdict", arguments: JSON.stringify({ ok: true }) } }] } }],
+        meterless: { receipt_id: "r", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b" },
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await n.callTool({ messages: [{ role: "user", content: "decide" }], toolName: "submit_verdict", schema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] }, parse: (a) => a, lane: "fast" });
+    expect(seenBodies).toHaveLength(1);
+    expect(seenBodies[0]).not.toHaveProperty("tool_choice");
+  });
+
+  it("never sends a tool_choice field on the health probe either", async () => {
+    const seenBodies: unknown[] = [];
+    const fetchFn = (async (u: string | URL | Request, init?: RequestInit) => {
+      if (String(u).endsWith("/models")) return new Response(JSON.stringify({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] }), { status: 200 });
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "", tool_calls: [{ id: "p", function: { name: "submit_probe", arguments: "{\"ok\":true}" } }] } }], meterless: { receipt_id: "r" } }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await n.probe();
+    expect(seenBodies).toHaveLength(1);
+    expect(seenBodies[0]).not.toHaveProperty("tool_choice");
+  });
+
+  it("classifies HTTP 200 with no tool_calls AND empty text as a provider failure (empty_response)", async () => {
+    const fetchFn = (async () => new Response(JSON.stringify({
+      choices: [{ message: { content: "", tool_calls: [] } }],
+      meterless: { receipt_id: "e1", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b", cache: { status: "miss", from_cache: false } },
+    }), { status: 200 })) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await expect(n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false })).rejects.toThrow(/empty_response/);
+  });
+
+  it("retries once with a cache-busting system turn when an exact-cache hit replayed an empty response", async () => {
+    const seenBodies: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+    let call = 0;
+    const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
+      call += 1;
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      if (call === 1) {
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "", tool_calls: [] } }],
+          meterless: { receipt_id: "cached", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b", cache: { status: "exact", from_cache: true } },
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "real answer", tool_calls: [] } }],
+        meterless: { receipt_id: "fresh", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b", cache: { status: "miss", from_cache: false } },
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false });
+    expect(call).toBe(2);
+    expect(r.text).toBe("real answer");
+    // The cache-busted call must carry the extra marker in the system turn so Nightshift's exact cache key differs.
+    const bustedSystem = seenBodies[1]!.messages.find((m) => m.role === "system");
+    expect(bustedSystem?.content ?? "").toMatch(/cache_bust/);
+  });
+
   it("falls back from the deep lane to the fast lane after retries fail", async () => {
     const seenBodies: string[] = [];
     let callN = 0;
@@ -110,7 +173,41 @@ describe("Nightshift.callTool recovery", () => {
     expect(r.value.confidence).toBe(0.9);
   });
 
-  it("still throws when neither tool_calls nor extractable JSON is present", async () => {
+  it("runs ONE repair retry (nudging the model to invoke the tool) before giving up", async () => {
+    let call = 0;
+    const seenBodies: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+    const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
+      call += 1;
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      if (call === 1) {
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: "I'll help you with that, let me think…" } }],
+          meterless: { receipt_id: "r1", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "", tool_calls: [{ id: "tc", function: { name: "submit_risk", arguments: JSON.stringify({ decision: "monitor", confidence: 0.72, rationale: "repair call" }) } }] } }],
+        meterless: { receipt_id: "r2", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.callTool({
+      messages: [{ role: "user", content: "decide" }],
+      toolName: "submit_risk",
+      schema: { type: "object", properties: {}, required: [] },
+      parse: (a) => a as { decision: string; confidence: number; rationale: string },
+      lane: "deep",
+    });
+    expect(call).toBe(2);
+    expect(r.value.decision).toBe("monitor");
+    // The repair turn appends a short user message asking for the tool, and still does not send tool_choice.
+    const repairMessages = seenBodies[1]!.messages;
+    expect(repairMessages[repairMessages.length - 1]!.role).toBe("user");
+    expect(repairMessages[repairMessages.length - 1]!.content).toMatch(/submit_risk/);
+    expect(seenBodies[1]).not.toHaveProperty("tool_choice");
+  });
+
+  it("still throws when neither the first call, text recovery nor the repair retry produces a tool call", async () => {
     const fetchFn = (async () => new Response(JSON.stringify({
       choices: [{ message: { content: "no structured output here" } }],
       meterless: { receipt_id: "rec3", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
@@ -204,6 +301,17 @@ describe("Nightshift.probe classification", () => {
     expect(r.routed_model).toContain("nvidia/nemotron");
   });
 
+  it("returns `provider_error` when HTTP 200 carries no tool_calls AND no text (empty_response Night 3 misread as format_miss)", async () => {
+    const fetchFn = makeFetch((u) => {
+      if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
+      return modelsOk({ choices: [{ message: { content: "", tool_calls: [] } }], meterless: { receipt_id: "r_empty", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b", cache: { status: "exact", from_cache: true } } });
+    });
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("provider_error");
+    expect(r.detail).toMatch(/no tool_calls.*no text/i);
+  });
+
   it("returns `provider_error` on a 502", async () => {
     const fetchFn = makeFetch((u) => {
       if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
@@ -227,6 +335,31 @@ describe("Nightshift.probe classification", () => {
     const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
     const r = await n.probe();
     expect(r.status).toBe("provider_error");
+  });
+});
+
+describe("isEmptyResponse / fromExactCache / withCacheBuster", () => {
+  const base = { rawStatus: 200, latencyMs: 1, retryCount: 0, model: "m", lane: "fast" as const };
+  it("flags HTTP 200 responses with no tool_calls AND no text as empty", () => {
+    expect(isEmptyResponse({ ...base, text: "", toolCalls: [] })).toBe(true);
+    expect(isEmptyResponse({ ...base, text: "   ", toolCalls: [] })).toBe(true);
+    expect(isEmptyResponse({ ...base, text: "something", toolCalls: [] })).toBe(false);
+    expect(isEmptyResponse({ ...base, text: "", toolCalls: [{ name: "x", arguments: {} }] })).toBe(false);
+  });
+  it("reads the Nightshift receipt's cache.from_cache / cache.status field", () => {
+    expect(fromExactCache({ ...base, text: "", toolCalls: [] })).toBe(false);
+    expect(fromExactCache({ ...base, text: "", toolCalls: [], receipt: { cache: { status: "exact", from_cache: true } } })).toBe(true);
+    expect(fromExactCache({ ...base, text: "", toolCalls: [], receipt: { cache: { status: "miss", from_cache: false } } })).toBe(false);
+    expect(fromExactCache({ ...base, text: "", toolCalls: [], receipt: { cache: { status: "exact" } } })).toBe(true);
+  });
+  it("appends a cache_bust token to the first system turn (adds one when missing)", () => {
+    const addedSystem = withCacheBuster([{ role: "user", content: "hi" }], "run-abc");
+    expect(addedSystem[0]).toMatchObject({ role: "system" });
+    expect(addedSystem[0]!.content).toMatch(/cache_bust run-abc/);
+    const touchedSystem = withCacheBuster([{ role: "system", content: "/no_think\nhello" }, { role: "user", content: "hi" }], "run-abc");
+    expect(touchedSystem[0]!.content).toMatch(/\/no_think\nhello/);
+    expect(touchedSystem[0]!.content).toMatch(/cache_bust run-abc/);
+    expect(touchedSystem[1]).toEqual({ role: "user", content: "hi" });
   });
 });
 

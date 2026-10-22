@@ -85,6 +85,15 @@ export const Report = z.object({
   rounds: z.number().int().min(0).default(0),
   budget: z.object({ sql_calls: z.number(), model_calls: z.number() }).optional(),
   models: z.array(z.object({ agent: z.string(), routed_model: z.string(), receipt_id: z.string().optional() })).default([]),
+  /** Honest model-contribution telemetry. `model_steps_ok` counts planner /
+   *  risk-gate / reporter / markovian model calls that returned a usable
+   *  payload; `model_steps_total` counts every one that was attempted. A
+   *  run is `model+policy` only when the Risk Gate AND the Reporter model
+   *  steps succeeded — any other combination is a `policy_fallback`
+   *  verdict and must say so in the report JSON and in the console. */
+  decided_by: z.enum(["model+policy", "policy_fallback"]).default("model+policy"),
+  model_steps_ok: z.number().int().min(0).default(0),
+  model_steps_total: z.number().int().min(0).default(0),
   trace_id: z.string(),
   log_file: z.string(),
   execution_time_seconds: z.number(),

@@ -88,6 +88,15 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   let plannerSucceeded = false;
   let plannerDegradedRounds = 0;
   const models: Array<{ agent: string; routed_model: string; receipt_id?: string }> = [];
+  // Honest model-contribution telemetry. Each planner / risk-gate / reporter /
+  // markovian call that *attempted* the model is recorded, and each one that
+  // returned usable output is counted ok. Night 3 reported "format_miss =
+  // provider up" even when the response was 0 chars; the eval sweep now shows
+  // model-backed verdicts next to accuracy so the deterministic policy's share
+  // of the result is visible from the summary.
+  let modelStepsOk = 0;
+  let modelStepsTotal = 0;
+  let riskGateFromModel = false;
 
   const root = trace.emit({ agent: "orchestrator", action: "start", input_summary: `${caseInfo.id} / ${caseInfo.upn}`, status: "ok" });
 
@@ -147,6 +156,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     let steps: PlannerStep[] = [];
     if (budget.canModel()) {
       budget.model += 1;
+      modelStepsTotal += 1;
       const userMsg = round === 1
         ? `Case ${caseInfo.id} — alert for ${caseInfo.upn} (${caseInfo.description ?? ""}). Produce competing hypotheses (compromise vs benign explanations), then steps that could confirm OR refute each.`
         : `Round ${round}. Queries already run: ${[...new Set([...ran.values()].map((v) => v.name))].join(", ")}.\nCritic feedback:\n${feedback.join("\n") || "(none)"}\nAdd only NEW steps that resolve the open questions (e.g. device_for, vpn_sessions_for, appliance_exposure).`;
@@ -162,6 +172,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
         });
         steps = plan.value.steps;
         plannerSucceeded = true;
+        modelStepsOk += 1;
         models.push({ agent: "planner", routed_model: plan.model, receipt_id: plan.receipt?.receipt_id });
         trace.emit({ agent: "planner", action: "plan", parent_id: root.step_id, routed_model: plan.model, receipt_id: plan.receipt?.receipt_id, lane: plannerLane, input_summary: `round ${round} (lane: ${plannerLane})`, output_summary: `${plan.value.hypotheses.map((h) => `${h.id}:${h.label}`).join(" | ").slice(0, 300)}; ${steps.length} steps`, status: "ok" });
       } catch (err) {
@@ -245,6 +256,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
           ids,
         );
         budget.model += result.modelCalls;
+        modelStepsOk += result.modelCalls;
+        // Markovian only counts calls that returned usable payloads; the sweep's
+        // deterministic fallback does not count as an ok model step. We only know
+        // how many succeeded, not how many it tried — the sweep classifies them
+        // internally and does not surface a total. Attribute each success as both
+        // attempted and ok so the ratio stays honest.
+        modelStepsTotal += result.modelCalls;
         if (result.findings.length) {
           const criticOut = opts.ablate?.critic === false ? { approved: result.findings, rejected: [], needsMore: [], verdicts: [] } : await critique(criticZ, result.findings, verdictsById);
           for (const v of criticOut.verdicts) { verdictsById.set(v.finding_id, v); trace.emit({ agent: "critic", action: `verdict_${v.status}`, sql_id: v.check_sql_id, input_summary: v.finding_id, output_summary: v.reason.slice(0, 300), lane: "code", status: "ok" }); }
@@ -342,6 +360,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   let modelOpinion: { decision: VerdictT; confidence: number; rationale: string } | undefined;
   if (budget.canModel()) {
     budget.model += 1;
+    modelStepsTotal += 1;
     try {
       const rc = await opts.nightshift.callTool({
         messages: [
@@ -352,6 +371,8 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
         parse: (a) => ({ decision: Verdict.parse(a.decision), confidence: Math.min(1, Math.max(0, Number(a.confidence))), rationale: String(a.rationale ?? "") }),
       });
       modelOpinion = rc.value;
+      modelStepsOk += 1;
+      riskGateFromModel = true;
       models.push({ agent: "risk_gate", routed_model: rc.model, receipt_id: rc.receipt?.receipt_id });
     } catch (err) {
       riskModelMissing = true;
@@ -400,6 +421,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   const toArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : v ? [String(v)] : []);
   if (budget.canModel()) {
     budget.model += 1;
+    modelStepsTotal += 1;
     try {
       const rep = await opts.nightshift.callTool({
         messages: [
@@ -413,6 +435,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       // Keep deterministic actions if the model forgot them.
       if (!note.actions.length) note.actions = deterministicNote.actions;
       reporterFromModel = true;
+      modelStepsOk += 1;
       models.push({ agent: "reporter", routed_model: rep.model, receipt_id: rep.receipt?.receipt_id });
       trace.emit({ agent: "reporter", action: "report", routed_model: rep.model, receipt_id: rep.receipt?.receipt_id, lane: "deep", status: "ok" });
     } catch (err) {
@@ -421,6 +444,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     }
   }
   if (!reporterFromModel) note = deterministicNote;
+  // A verdict is "model-backed" only when BOTH the Risk Gate opinion AND the
+  // Reporter narration came from a successful model call. Any other shape
+  // (policy stood in on degraded run, planner-only, reporter-only) is a
+  // deterministic-policy verdict and must be labelled as such in the JSON
+  // and in the console. This is what Night 3's "format_miss = provider up"
+  // claim missed: the policy produced 12/18 ok results on its own.
+  const decidedBy: "model+policy" | "policy_fallback" = riskGateFromModel && reporterFromModel ? "model+policy" : "policy_fallback";
 
   // ---- Timeline from cited rows
   const timeline: Array<{ ts: string; event: string; sql_id: string }> = [];
@@ -464,6 +494,9 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     rounds,
     budget: { sql_calls: budget.sql, model_calls: budget.model },
     models,
+    decided_by: decidedBy,
+    model_steps_ok: modelStepsOk,
+    model_steps_total: modelStepsTotal,
     trace_id: trace.run_id,
     log_file: trace.files().trace,
     execution_time_seconds: Math.max(0, (now() - started) / 1000),
