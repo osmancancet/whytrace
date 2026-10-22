@@ -1,7 +1,7 @@
 // Unit tests for the Nightshift adapter. No live runtime required.
 import { describe, it, expect } from "vitest";
 import { Nightshift } from "./index.ts";
-import { extractJsonObject, fromExactCache, isEmptyResponse, withCacheBuster } from "./nightshift.ts";
+import { classifyFailure, extractJsonObject, extractRequestIds, fromExactCache, isEmptyResponse, withCacheBuster } from "./nightshift.ts";
 
 describe("Nightshift.testConnection", () => {
   it("returns online when /models lists meterless/*", async () => {
@@ -151,6 +151,40 @@ describe("Nightshift.chat", () => {
     const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
     await expect(n.chat({ messages: [{ role: "user", content: "hi" }], lane: "deep", routeFallback: false })).rejects.toThrow();
     expect(callN).toBe(1);
+  });
+});
+
+describe("Nightshift trace emission (cache_hit + failure_class + request ids)", () => {
+  it("marks cache_hit=true on the chat_nightshift trace event when the receipt says cache.from_cache=true", async () => {
+    const { RunTrace } = await import("./trace.ts");
+    const { readFileSync } = await import("node:fs");
+    const { mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const trace = new RunTrace({ logsRoot: mkdtempSync(tmpdir() + "/wt-trace-cache-") });
+    const fetchFn = (async () => new Response(JSON.stringify({
+      choices: [{ message: { content: "hello", tool_calls: [] } }],
+      meterless: { receipt_id: "r_cached", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b", cache: { status: "exact", from_cache: true } },
+    }), { status: 200, headers: { "x-request-id": "req-xyz" } })) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0, trace });
+    await n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false });
+    const line = readFileSync(trace.files().trace, "utf8").split("\n").find((l) => /"action":"chat_nightshift"/.test(l) && !/_fallback/.test(l));
+    const ev = JSON.parse(line ?? "{}");
+    expect(ev.cache_hit).toBe(true);
+    expect(ev.x_request_id).toBe("req-xyz");
+    expect(ev.status).toBe("ok");
+  });
+
+  it("marks failure_class on degraded chat_nightshift trace events (auth_error / timeout / provider_error / empty_response)", async () => {
+    const { RunTrace } = await import("./trace.ts");
+    const { readFileSync, mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const trace = new RunTrace({ logsRoot: mkdtempSync(tmpdir() + "/wt-trace-fail-") });
+    const fetchFn = (async () => new Response("unauthorized", { status: 401 })) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "caller", timeoutMs: 5000, retries: 0, trace });
+    await expect(n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false })).rejects.toThrow();
+    const line = readFileSync(trace.files().trace, "utf8").split("\n").find((l) => /"action":"chat_nightshift"/.test(l) && /degraded/.test(l));
+    const ev = JSON.parse(line ?? "{}");
+    expect(ev.failure_class).toBe("auth_error");
   });
 });
 
@@ -360,6 +394,43 @@ describe("isEmptyResponse / fromExactCache / withCacheBuster", () => {
     expect(touchedSystem[0]!.content).toMatch(/\/no_think\nhello/);
     expect(touchedSystem[0]!.content).toMatch(/cache_bust run-abc/);
     expect(touchedSystem[1]).toEqual({ role: "user", content: "hi" });
+  });
+});
+
+describe("classifyFailure", () => {
+  // Honest failure accounting (notes/DAY3_PROMPT.md step 9).
+  it("classifies HTTP 401 / unauthorized as auth_error — our stale token, not NVIDIA's fault", () => {
+    expect(classifyFailure(new Error("Nightshift HTTP 401: unauthorized"))).toBe("auth_error");
+    expect(classifyFailure("HTTP 403 forbidden")).toBe("auth_error");
+    expect(classifyFailure(new Error("unauthorized access"))).toBe("auth_error");
+  });
+  it("classifies abort / timeout as timeout — our client-side deadline, not an upstream outage", () => {
+    expect(classifyFailure(new Error("The operation was aborted"))).toBe("timeout");
+    expect(classifyFailure(new Error("ETIMEDOUT"))).toBe("timeout");
+    expect(classifyFailure(new Error("fetch timeout after 180000 ms"))).toBe("timeout");
+  });
+  it("classifies empty_response as empty_response (HTTP 200 with nothing in it)", () => {
+    expect(classifyFailure(new Error("Nightshift empty_response (HTTP 200, no tool_calls, no text)"))).toBe("empty_response");
+    expect(classifyFailure(new Error("Nightshift empty_response after cache_bust (HTTP 200, no tool_calls, no text)"))).toBe("empty_response");
+  });
+  it("classifies tool-call misses as format_miss — provider was up, our schema just did not land", () => {
+    expect(classifyFailure(new Error('Nightshift tool call "submit_risk" missing from response'))).toBe("format_miss");
+    expect(classifyFailure(new Error("format_miss on repair retry"))).toBe("format_miss");
+  });
+  it("falls back to provider_error for 5xx / network — upstream genuinely failed", () => {
+    expect(classifyFailure(new Error("Nightshift HTTP 502: bad gateway"))).toBe("provider_error");
+    expect(classifyFailure(new Error("Nightshift HTTP 500: provider_deadline"))).toBe("provider_error");
+    expect(classifyFailure(new Error("ECONNREFUSED"))).toBe("provider_error");
+  });
+});
+
+describe("extractRequestIds", () => {
+  it("pulls x-request-id, nvcf-reqid, and meterless from headers so bug reports are self-contained", () => {
+    const h = new Headers({ "x-request-id": "req-abc", "nvcf-reqid": "nv-123", "meterless": "detail-ok" });
+    expect(extractRequestIds(h)).toEqual({ x_request_id: "req-abc", nvcf_reqid: "nv-123", meterless_detail: "detail-ok" });
+  });
+  it("tolerates missing headers", () => {
+    expect(extractRequestIds(new Headers({ "content-type": "application/json" }))).toEqual({});
   });
 });
 

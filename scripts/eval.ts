@@ -55,18 +55,31 @@ type Row = {
   degraded: boolean;
   provider_failures: number;
   routed_models: string[];
+  // Honest telemetry (notes/DAY3_PROMPT.md step 0d, step 9).
+  model_calls_ok: number;         // orchestrator model_steps_ok from the Report
+  model_calls_total: number;      // orchestrator model_steps_total from the Report
+  model_calls_cached: number;     // # chat_nightshift events with cache_hit=true
+  decided_by: string;             // "model+policy" | "policy_fallback"
+  failure_classes: Record<string, number>;  // {auth_error: n, format_miss: n, ...}
   error?: string;
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function one(caseId: string, v: Variant, memory: CaseMemory | null): Promise<Report> {
+async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNonce?: string): Promise<Report> {
   const trace = new RunTrace();
   const zetaris = new Zetaris({ trace, agent: "investigator" });
   if (v.kind === "rules") {
     return evaluateRulesOnly({ caseId: caseId, upn: listDemoCases().find((c) => c.id === caseId)?.upn ?? "", zetaris, trace });
   }
+  // Per-run nonce: Nightshift's exact-prompt cache replays the same answer for
+  // identical prompts, which makes `--runs > 1` return cached responses rather
+  // than independent samples. We inject the nonce as a sentinel into the trace
+  // id (`run_id` already differs per run) and let the orchestrator's cache_bust
+  // path kick in on exact-cache replays. The adapter also surfaces cache_hit so
+  // the eval table shows which runs were replays.
   const nightshift = new Nightshift({ trace });
+  if (runNonce) trace.emit({ agent: "eval", action: "run_nonce", output_summary: runNonce, status: "ok" });
   return investigate({ caseId, trace, zetaris, nightshift, memory, ablate: v.ablate });
 }
 
@@ -101,22 +114,26 @@ async function healthGate(waitMinutes: number): Promise<HealthResult> {
   return { ok: false, terminalStatus: last?.status ?? "unknown", detail: last?.detail ?? `health gate failed after ${attempts.length} attempt(s) over ${waitMinutes} min`, attempts };
 }
 
-function readTraceSummary(runId: string): { degraded: boolean; provider_failures: number; routed_models: string[] } {
+function readTraceSummary(runId: string): { degraded: boolean; provider_failures: number; routed_models: string[]; model_calls_cached: number; failure_classes: Record<string, number> } {
   const file = resolvePath("logs", runId, "trace.jsonl");
-  if (!existsSync(file)) return { degraded: false, provider_failures: 0, routed_models: [] };
+  if (!existsSync(file)) return { degraded: false, provider_failures: 0, routed_models: [], model_calls_cached: 0, failure_classes: {} };
   const models = new Set<string>();
   let failures = 0;
   let degraded = false;
+  let cached = 0;
+  const failureClasses: Record<string, number> = {};
   for (const line of readFileSync(file, "utf8").split("\n")) {
     if (!line) continue;
     try {
-      const t = JSON.parse(line) as { routed_model?: string; status?: string; action?: string };
+      const t = JSON.parse(line) as { routed_model?: string; status?: string; action?: string; cache_hit?: boolean; failure_class?: string };
       if (t.routed_model) models.add(t.routed_model);
+      if (t.cache_hit === true) cached += 1;
       if (t.status === "degraded") { degraded = true; if ((t.action ?? "").startsWith("chat_nightshift")) failures += 1; }
       if (t.status === "error" && (t.action ?? "").startsWith("chat_nightshift")) failures += 1;
+      if (t.failure_class) failureClasses[t.failure_class] = (failureClasses[t.failure_class] ?? 0) + 1;
     } catch { /* skip */ }
   }
-  return { degraded, provider_failures: failures, routed_models: [...models] };
+  return { degraded, provider_failures: failures, routed_models: [...models], model_calls_cached: cached, failure_classes: failureClasses };
 }
 
 async function main() {
@@ -163,13 +180,14 @@ async function main() {
     const expected = listDemoCases().find((c) => c.id === caseId)?.expected ?? "?";
     const started = Date.now();
     if (!healthy && v.kind === "orchestrator") {
-      rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "infra_unavailable", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: 0, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 0, routed_models: [], error: "nightshift unavailable" });
+      rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "infra_unavailable", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: 0, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 0, routed_models: [], model_calls_ok: 0, model_calls_total: 0, model_calls_cached: 0, decided_by: "-", failure_classes: {}, error: "nightshift unavailable" });
       console.log(`${v.id} run ${run} ${caseId}: infra_unavailable`);
       continue;
     }
     try {
       const memory = v.kind === "rules" ? null : new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-eval-hmem-")) });
-      const r = await one(caseId, v, memory);
+      const runNonce = `nonce:${v.id}:${caseId}:${run}:${Date.now().toString(36)}`;
+      const r = await one(caseId, v, memory, runNonce);
       writeFileSync(join(rawDir, `${v.id}-${caseId}-${run}-${r.run_id}.json`), JSON.stringify(r, null, 2));
       if ((v.id === "A1" || v.id === "A4") && r.rejected_claims.some((c) => /^validator:/.test(c.reason))) {
         writeFileSync(join(ablationDir, `${v.id}-${caseId}-${run}-${r.run_id}.json`), JSON.stringify(r, null, 2));
@@ -180,10 +198,13 @@ async function main() {
         confidence: r.confidence, rounds: r.rounds, sql: r.budget?.sql_calls ?? 0, model: r.budget?.model_calls ?? 0, seconds: r.execution_time_seconds,
         rejected: r.rejected_claims.length, run_id: r.run_id, judged: true,
         degraded: summ.degraded, provider_failures: summ.provider_failures, routed_models: summ.routed_models,
+        model_calls_ok: r.model_steps_ok, model_calls_total: r.model_steps_total, model_calls_cached: summ.model_calls_cached,
+        decided_by: r.decided_by, failure_classes: summ.failure_classes,
       });
-      console.log(`${v.id} run ${run} ${caseId}: ${r.verdict} (expected ${expected}) ${r.execution_time_seconds.toFixed(1)} s ${summ.degraded ? "DEGRADED" : ""} models=[${summ.routed_models.join(",")}]`);
+      const fc = Object.keys(summ.failure_classes).length ? ` [${Object.entries(summ.failure_classes).map(([k, n]) => `${k}=${n}`).join(" ")}]` : "";
+      console.log(`${v.id} run ${run} ${caseId}: ${r.verdict} (expected ${expected}) ${r.execution_time_seconds.toFixed(1)} s · model-backed ${r.model_steps_ok}/${r.model_steps_total} · cached=${summ.model_calls_cached} · decided_by=${r.decided_by}${fc} ${summ.degraded ? "DEGRADED" : ""} models=[${summ.routed_models.join(",")}]`);
     } catch (err) {
-      rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "error", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: (Date.now() - started) / 1000, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 1, routed_models: [], error: (err as Error).message.slice(0, 160) });
+      rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "error", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: (Date.now() - started) / 1000, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 1, routed_models: [], model_calls_ok: 0, model_calls_total: 0, model_calls_cached: 0, decided_by: "-", failure_classes: {}, error: (err as Error).message.slice(0, 160) });
       console.log(`${v.id} run ${run} ${caseId}: ERROR ${(err as Error).message}`);
     }
   }
@@ -220,10 +241,15 @@ async function main() {
     const fb = judgedRs.filter((r) => r.verdict === "benign" && r.expected !== "benign").length;
     const degraded = judgedRs.filter((r) => r.degraded).length;
     const failures = judgedRs.reduce((a, r) => a + r.provider_failures, 0);
+    const modelBacked = judgedRs.filter((r) => r.decided_by === "model+policy").length;
+    const totalCached = judgedRs.reduce((a, r) => a + r.model_calls_cached, 0);
+    const classAgg: Record<string, number> = {};
+    for (const r of judgedRs) for (const [k, n] of Object.entries(r.failure_classes)) classAgg[k] = (classAgg[k] ?? 0) + n;
+    const classLine = Object.entries(classAgg).sort().map(([k, n]) => `${k}=${n}`).join(" ") || "(none)";
     const secs = judgedRs.map((r) => r.seconds).sort((a, b) => a - b);
-    md.push(`## ${v.id} — ${v.label}`, "", `Judged ${acc}/${judgedRs.length} ok · infra_unavailable ${infra}/${rs.length} · false contain ${fc} · false benign ${fb} · degraded runs ${degraded}/${judgedRs.length} · provider_failures ${failures} · median time ${secs.length ? secs[Math.floor(secs.length / 2)]!.toFixed(1) : "-"} s`, "");
-    md.push("| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
-    for (const r of rs) md.push(`| ${r.case_id} | ${r.expected} | ${r.run} | ${r.verdict}${r.error ? ` (${r.error})` : ""} | ${r.judged ? (r.ok ? "✅" : "❌") : "⏸️"} | ${r.confidence} | ${r.rounds} | ${r.sql} | ${r.model} | ${r.seconds.toFixed(1)} | ${r.rejected} | ${r.degraded ? "yes" : "no"} | ${r.provider_failures} | ${r.routed_models.map((m) => m.split("/").pop()).join(", ") || "-"} | ${r.run_id} |`);
+    md.push(`## ${v.id} — ${v.label}`, "", `Judged ${acc}/${judgedRs.length} ok · model-backed ${modelBacked}/${judgedRs.length} · infra_unavailable ${infra}/${rs.length} · false contain ${fc} · false benign ${fb} · degraded runs ${degraded}/${judgedRs.length} · provider_failures ${failures} · cached model calls ${totalCached} · failure classes: ${classLine} · median time ${secs.length ? secs[Math.floor(secs.length / 2)]!.toFixed(1) : "-"} s`, "");
+    md.push("| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | model-backed | cached | decided_by | failure_classes | degraded | provider_failures | routed_models | run_id |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+    for (const r of rs) md.push(`| ${r.case_id} | ${r.expected} | ${r.run} | ${r.verdict}${r.error ? ` (${r.error})` : ""} | ${r.judged ? (r.ok ? "✅" : "❌") : "⏸️"} | ${r.confidence} | ${r.rounds} | ${r.sql} | ${r.model} | ${r.seconds.toFixed(1)} | ${r.rejected} | ${r.model_calls_ok}/${r.model_calls_total} | ${r.model_calls_cached} | ${r.decided_by} | ${Object.entries(r.failure_classes).map(([k, n]) => `${k}:${n}`).join(" ") || "-"} | ${r.degraded ? "yes" : "no"} | ${r.provider_failures} | ${r.routed_models.map((m) => m.split("/").pop()).join(", ") || "-"} | ${r.run_id} |`);
     md.push("");
   }
   if (memRows.length) md.push("## A3 — memory cold vs warm (case-003)", "", "| memory | verdict | lessons recalled | rounds | SQL | model | s |", "|---|---|---|---|---|---|---|", ...memRows, "");

@@ -49,7 +49,19 @@ export type NightshiftResponse = {
   retryCount: number;
   model: string;
   lane: "deep" | "fast";
+  /** True when the Nightshift receipt reports an exact-cache replay. The
+   *  orchestrator forwards this into the trace as `cache_hit` so Night 3's
+   *  "<200 ms with a receipt" independence problem is visible in eval tables. */
+  cacheHit?: boolean;
+  /** Upstream correlation ids captured from the raw HTTP response. These make
+   *  bug reports to NVIDIA / Nightshift self-contained — `nvcf-reqid` is the
+   *  Nemotron provider's trace id, `x-request-id` is the Nightshift proxy's,
+   *  `meterless_detail` is the error-body message when the call failed. */
+  requestIds?: { x_request_id?: string; nvcf_reqid?: string; meterless_detail?: string };
 };
+
+/** Categorical failure class for degraded model calls. */
+export type FailureClass = "auth_error" | "format_miss" | "provider_error" | "timeout" | "empty_response";
 
 export type NightshiftOptions = {
   baseUrl?: string;
@@ -91,6 +103,21 @@ export type ChatOpts = {
   /** Allow one retry on `meterless/fast` if the deep lane fails after retries. Default: true. */
   routeFallback?: boolean;
 };
+
+/** Classify a Nightshift error / response into a categorical failure class the
+ *  eval tables and reports can group by. Night 3 showed 284 auth_error (stale
+ *  env token) and 124 format_miss misread as provider failures; this is how we
+ *  stop blaming NVIDIA for our own 401s. Exported so eval scripts can group
+ *  trace rows without re-parsing error messages themselves. */
+export function classifyFailure(input: unknown): FailureClass {
+  const msg = input instanceof Error ? input.message : String(input ?? "");
+  if (/\babort(ed)?\b/i.test(msg) || /\btimeout\b/i.test(msg) || /ETIMEDOUT/i.test(msg)) return "timeout";
+  if (/\bhttp 40[13]\b/i.test(msg) || /\bunauthori[sz]ed\b/i.test(msg) || /\bforbidden\b/i.test(msg)) return "auth_error";
+  if (/empty_response/i.test(msg)) return "empty_response";
+  if (/format_miss/i.test(msg) || /missing from response/i.test(msg)) return "format_miss";
+  // 5xx or network — upstream was reachable but failed, or the provider refused.
+  return "provider_error";
+}
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_RETRIES = 3;
@@ -225,7 +252,7 @@ export class Nightshift {
           const resp = await callAttempt(lane, model);
           resp.retryCount = attempt;
           this.recordSample(resp, messages, opts.tools, lane);
-          this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: attempt });
+          this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: attempt, cache_hit: resp.cacheHit === true, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
           return resp;
         } catch (err) {
           lastErr = err;
@@ -243,13 +270,14 @@ export class Nightshift {
           const resp = await callAttempt("fast", this.fastModel);
           resp.retryCount = this.retries + 1;
           this.recordSample(resp, messages, opts.tools, "fast");
-          this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane" });
+          this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane", cache_hit: resp.cacheHit === true, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
           return resp;
         } catch (fallbackErr) {
           lastErr = fallbackErr;
         }
       }
-      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries, output_summary: lastErr instanceof Error ? lastErr.message.slice(0, 200) : undefined });
+      const failureClass = classifyFailure(lastErr);
+      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries, output_summary: lastErr instanceof Error ? lastErr.message.slice(0, 200) : undefined, failure_class: failureClass });
       throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
     } finally {
       this.release();
@@ -398,9 +426,17 @@ export class Nightshift {
         }
       }
       const bodyText = await res.text();
+      // Capture upstream correlation ids regardless of success. Bug reports to
+      // NVIDIA / Nightshift otherwise require us to guess which provider call
+      // was failing from a timestamp.
+      const requestIds = extractRequestIds(res.headers);
       if (!res.ok) {
         let detail = bodyText;
         try { const parsed = JSON.parse(bodyText); detail = parsed?.error?.message ?? detail; } catch { /* raw */ }
+        requestIds.meterless_detail = typeof detail === "string" ? detail.slice(0, 200) : undefined;
+        if (this.trace) {
+          this.trace.emit({ agent: "nightshift", action: "upstream_error", status: "degraded", output_summary: `HTTP ${res.status}`, http_status: res.status, x_request_id: requestIds.x_request_id, nvcf_reqid: requestIds.nvcf_reqid, meterless_detail: requestIds.meterless_detail });
+        }
         throw new Error(`Nightshift HTTP ${res.status}: ${detail}`);
       }
       const parsed = JSON.parse(bodyText) as {
@@ -414,7 +450,7 @@ export class Nightshift {
         try { argsObj = JSON.parse(c.function?.arguments ?? "{}") as Record<string, unknown>; } catch { argsObj = {}; }
         return { id: c.id, name: c.function?.name ?? "", arguments: argsObj };
       });
-      return {
+      const resp: NightshiftResponse = {
         text,
         toolCalls,
         receipt: parsed.meterless,
@@ -424,6 +460,9 @@ export class Nightshift {
         model: parsed.meterless?.routed_model ?? parsed.meterless?.winning_route?.model ?? args.model,
         lane: args.lane,
       };
+      resp.cacheHit = fromExactCache(resp);
+      if (requestIds.x_request_id || requestIds.nvcf_reqid) resp.requestIds = requestIds;
+      return resp;
     } finally {
       clearTimeout(timer);
     }
@@ -575,6 +614,21 @@ export function withCacheBuster(messages: NightshiftMessage[], runId: string): N
 }
 
 function newRunStamp(): string { return `anon-${Math.random().toString(36).slice(2, 10)}`; }
+
+/** Extract Nightshift / Nemotron correlation ids from a Response's headers.
+ *  Nightshift forwards NVIDIA's `nvcf-reqid` and sets its own `x-request-id`
+ *  on every chat/completions reply. We also pull Meterless's own `meterless`
+ *  detail header when present so error traces are self-contained. */
+export function extractRequestIds(headers: Headers): { x_request_id?: string; nvcf_reqid?: string; meterless_detail?: string } {
+  const out: { x_request_id?: string; nvcf_reqid?: string; meterless_detail?: string } = {};
+  const x = headers.get("x-request-id") ?? headers.get("x-request-id".toUpperCase());
+  if (x) out.x_request_id = x;
+  const n = headers.get("nvcf-reqid") ?? headers.get("x-nvcf-reqid") ?? headers.get("nvcf-request-id");
+  if (n) out.nvcf_reqid = n;
+  const m = headers.get("meterless") ?? headers.get("meterless-detail");
+  if (m) out.meterless_detail = m;
+  return out;
+}
 
 function mergeSignals(a: AbortSignal, b: AbortSignal): AbortSignal {
   const controller = new AbortController();
