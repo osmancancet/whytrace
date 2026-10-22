@@ -167,6 +167,69 @@ describe("Nightshift token source fallback", () => {
   });
 });
 
+describe("Nightshift.probe classification", () => {
+  const modelsOk = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
+  const makeFetch = (handler: (url: string, init?: RequestInit) => Response | Promise<Response>) => (async (u: string | URL | Request, init?: RequestInit) => handler(String(u), init)) as unknown as typeof fetch;
+
+  it("returns `online` when the probe tool call lands", async () => {
+    const fetchFn = makeFetch((u) => {
+      if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
+      return modelsOk({ choices: [{ message: { content: "", tool_calls: [{ id: "p1", function: { name: "submit_probe", arguments: "{\"ok\":true}" } }] } }], meterless: { receipt_id: "r1", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b" } });
+    });
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("online");
+    expect(r.routed_model).toContain("nvidia/nemotron");
+  });
+
+  it("returns `online` when the model wraps the tool payload in prose that still parses", async () => {
+    const fetchFn = makeFetch((u) => {
+      if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
+      return modelsOk({ choices: [{ message: { content: "I'll reply: {\"ok\":true}" } }], meterless: { receipt_id: "r2", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b" } });
+    });
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("online");
+    expect(r.detail).toMatch(/recovered probe JSON from text/);
+  });
+
+  it("returns `format_miss` when the provider is up but answers with prose only", async () => {
+    const fetchFn = makeFetch((u) => {
+      if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
+      return modelsOk({ choices: [{ message: { content: "I am ready to help." } }], meterless: { receipt_id: "r3", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" } });
+    });
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("format_miss");
+    expect(r.routed_model).toContain("nvidia/nemotron");
+  });
+
+  it("returns `provider_error` on a 502", async () => {
+    const fetchFn = makeFetch((u) => {
+      if (u.endsWith("/models")) return modelsOk({ data: [{ id: "meterless/auto" }, { id: "meterless/fast" }] });
+      return new Response("bad gateway", { status: 502 });
+    });
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("provider_error");
+    expect(r.detail).toMatch(/502/);
+  });
+
+  it("returns `auth_error` when /models stays 401 after a proxy-token refresh", async () => {
+    const fetchFn = makeFetch(() => new Response("unauthorized", { status: 401 }));
+    const n = new Nightshift({ fetchFn, token: "bad", tokenSource: "env", readProxyToken: () => "still-bad", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("auth_error");
+  });
+
+  it("returns `provider_error` when /models is unreachable", async () => {
+    const fetchFn = (async () => { throw new Error("ECONNREFUSED"); }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.probe();
+    expect(r.status).toBe("provider_error");
+  });
+});
+
 describe("extractJsonObject", () => {
   it("finds a balanced object inside prose", () => {
     const o = extractJsonObject("hello {\"a\":1,\"b\":{\"c\":2}} world");

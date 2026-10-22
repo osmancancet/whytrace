@@ -227,24 +227,40 @@ export class Nightshift {
     }
   }
 
-  /** Health probe: /models online + one tiny tool-call probe. */
-  async probe(): Promise<{ status: "online" | "unauthorized" | "offline" | "degraded"; detail?: string; routed_model?: string; receipt_id?: string }> {
+  /** Classified health probe.
+   *  - `online`      → provider up and the model emitted a tool call (or we recovered JSON from text)
+   *  - `format_miss` → HTTP 200 but neither tool_calls nor extractable JSON (the model is responding; its output just doesn't match the probe schema). This is **not** an outage and the eval health gate treats it as healthy with a warning.
+   *  - `auth_error`  → 401/403 after the proxy-token fallback already ran
+   *  - `provider_error` → 5xx, `_empty_response`, timeout, or /models offline
+   *  Downstream callers only treat `provider_error` and `auth_error` as unhealthy. */
+  async probe(): Promise<{ status: "online" | "format_miss" | "auth_error" | "provider_error"; detail?: string; routed_model?: string; receipt_id?: string }> {
     const conn = await this.testConnection();
-    if (conn !== "online") return { status: conn };
+    if (conn === "unauthorized") return { status: "auth_error", detail: "Nightshift /models returned 401/403 after proxy-token refresh" };
+    if (conn === "offline") return { status: "provider_error", detail: "Nightshift /models offline" };
+    // At this point /models said we are online. One tiny tool-call probe decides
+    // between `online` (structured output), `format_miss` (prose response, model
+    // still alive) and `provider_error` (5xx / _empty_response / timeout).
     try {
-      const resp = await this.callTool<{ ok: boolean }>({
+      const resp = await this.chat({
         messages: [{ role: "user", content: "Probe: reply with ok=true via submit_probe." }],
-        toolName: "submit_probe",
-        description: "Probe tool.",
-        schema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] },
+        tools: [{ type: "function", function: { name: "submit_probe", description: "Probe tool.", parameters: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] } } }],
+        toolChoice: { type: "function", function: { name: "submit_probe" } },
         lane: "fast",
         maxTokens: 128,
         agent: "probe",
-        parse: (a) => ({ ok: Boolean(a.ok ?? true) }),
+        routeFallback: false,
       });
-      return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id };
+      const call = resp.toolCalls.find((c) => c.name === "submit_probe");
+      if (call) return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id };
+      if (extractJsonObject(resp.text)) return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, detail: "recovered probe JSON from text" };
+      // The provider answered HTTP 200 with prose. The model is up; our schema just
+      // did not land. We mark this `format_miss` so the health gate can log a
+      // warning and still proceed with the eval.
+      return { status: "format_miss", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, detail: `provider responded with prose (${resp.text.length} chars) instead of invoking submit_probe` };
     } catch (err) {
-      return { status: "degraded", detail: (err as Error).message.slice(0, 200) };
+      const msg = (err as Error).message || String(err);
+      if (/\b(401|403|unauthori[sz]ed)\b/i.test(msg)) return { status: "auth_error", detail: msg.slice(0, 200) };
+      return { status: "provider_error", detail: msg.slice(0, 200) };
     }
   }
 

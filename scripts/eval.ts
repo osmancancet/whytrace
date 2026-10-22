@@ -70,19 +70,35 @@ async function one(caseId: string, v: Variant, memory: CaseMemory | null): Promi
   return investigate({ caseId, trace, zetaris, nightshift, memory, ablate: v.ablate });
 }
 
-async function healthGate(): Promise<{ ok: boolean; detail?: string; routed_model?: string; receipt_id?: string }> {
+type HealthAttempt = { ts: string; attempt: number; status: string; detail?: string; routed_model?: string; receipt_id?: string };
+type HealthResult = { ok: boolean; terminalStatus: string; detail?: string; routed_model?: string; receipt_id?: string; attempts: HealthAttempt[] };
+
+/** Honest classified health gate.
+ *  Only `provider_error` and `auth_error` count as unhealthy. `format_miss`
+ *  (HTTP 200 but prose instead of a tool call) is logged as a warning but
+ *  passes — the model is up and the orchestrator's `tool_call_recovered_from_text`
+ *  path handles the real investigation prompts.
+ *  Retries every 5 min up to `waitMinutes`. Each attempt is logged (time,
+ *  class, routed_model) so the eval snapshot can quote it verbatim. */
+async function healthGate(waitMinutes: number): Promise<HealthResult> {
   const nightshift = new Nightshift();
-  // Try up to 4 times with 15 s, 30 s, 60 s, 120 s backoff (max ~ 3.5 min).
-  // The brief caps the wait at 10 min; a hard failure after this is reported.
-  const backoff = [15_000, 30_000, 60_000, 120_000];
-  for (let i = 0; i < backoff.length; i++) {
+  const attempts: HealthAttempt[] = [];
+  const maxAttempts = Math.max(1, Math.ceil(waitMinutes / 5) + 1);
+  const retryDelayMs = 5 * 60_000;
+  for (let i = 0; i < maxAttempts; i++) {
     const r = await nightshift.probe();
-    if (r.status === "online") return { ok: true, routed_model: r.routed_model, receipt_id: r.receipt_id };
-    const detail = r.detail ?? r.status;
-    console.log(`[health-gate] attempt ${i + 1}/${backoff.length}: ${r.status} ${detail ? `(${detail})` : ""}`);
-    if (i < backoff.length - 1) await sleep(backoff[i]!);
+    const attempt: HealthAttempt = { ts: new Date().toISOString(), attempt: i + 1, status: r.status, detail: r.detail, routed_model: r.routed_model, receipt_id: r.receipt_id };
+    attempts.push(attempt);
+    console.log(`[health-gate] attempt ${i + 1}/${maxAttempts} ${attempt.ts}: ${r.status} routed_model=${r.routed_model ?? "n/a"}${r.detail ? ` (${r.detail})` : ""}`);
+    if (r.status === "online") return { ok: true, terminalStatus: "online", routed_model: r.routed_model, receipt_id: r.receipt_id, attempts };
+    if (r.status === "format_miss") {
+      console.log(`[health-gate] format_miss is treated as healthy — provider is up, prompt-schema path kicked in. Proceeding with a warning.`);
+      return { ok: true, terminalStatus: "format_miss", routed_model: r.routed_model, receipt_id: r.receipt_id, detail: r.detail, attempts };
+    }
+    if (i < maxAttempts - 1) await sleep(retryDelayMs);
   }
-  return { ok: false, detail: "max backoff exhausted" };
+  const last = attempts[attempts.length - 1];
+  return { ok: false, terminalStatus: last?.status ?? "unknown", detail: last?.detail ?? `health gate failed after ${attempts.length} attempt(s) over ${waitMinutes} min`, attempts };
 }
 
 function readTraceSummary(runId: string): { degraded: boolean; provider_failures: number; routed_models: string[] } {
@@ -129,10 +145,17 @@ async function main() {
   // orchestrator runs do.
   let healthy = true;
   let healthDetail = "ok";
+  let healthAttempts: HealthAttempt[] = [];
+  let healthTerminal = "ok";
   if (!noHealthGate && variants.some((v) => v.kind === "orchestrator")) {
-    const h = await healthGate();
+    const waitMinutes = Number(arg("wait-healthy", "10"));
+    const h = await healthGate(waitMinutes);
     healthy = h.ok;
-    healthDetail = h.ok ? `online (probe routed_model=${h.routed_model ?? "n/a"}, receipt=${h.receipt_id ?? "n/a"})` : `UNAVAILABLE: ${h.detail}`;
+    healthAttempts = h.attempts;
+    healthTerminal = h.terminalStatus;
+    if (h.terminalStatus === "online") healthDetail = `online (probe routed_model=${h.routed_model ?? "n/a"}, receipt=${h.receipt_id ?? "n/a"})`;
+    else if (h.terminalStatus === "format_miss") healthDetail = `format_miss accepted — provider is up, model responded with prose (${h.detail ?? ""})`;
+    else healthDetail = `UNAVAILABLE (${h.terminalStatus}): ${h.detail ?? ""}`;
     console.log(`[health-gate] ${healthDetail}`);
   }
 
@@ -181,6 +204,12 @@ async function main() {
   const md: string[] = [`# WhyTrace evaluation — ${stamp}`, ""];
   md.push(`Live runs against the local Zetaris USL and Meterless Nightshift (Nemotron lanes). Raw reports: \`evidence/eval_raw/\`.`, "");
   md.push(`Health gate: ${healthDetail}.`, "");
+  if (healthAttempts.length) {
+    md.push(`Terminal status: \`${healthTerminal}\`. ${healthAttempts.length} probe attempt(s):`, "");
+    md.push("| # | ts | status | routed_model | detail |", "|---|---|---|---|---|");
+    for (const a of healthAttempts) md.push(`| ${a.attempt} | ${a.ts} | ${a.status} | ${a.routed_model ?? "-"} | ${(a.detail ?? "").slice(0, 160)} |`);
+    md.push("");
+  }
 
   for (const v of variants) {
     const rs = rows.filter((r) => r.variant === v.id);
