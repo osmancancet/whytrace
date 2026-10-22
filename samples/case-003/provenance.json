@@ -1,0 +1,11 @@
+{
+  "case_id": "case-003",
+  "recorded_from_run": "mvjuls37_e5a1e8eb91",
+  "verdict": "escalate",
+  "confidence": 0.5,
+  "recorded_at": "2026-10-22T18:02:35.619Z",
+  "sql_calls": 11,
+  "model_calls": 4,
+  "rounds": 2,
+  "routed_models": []
+}
