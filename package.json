@@ -24,6 +24,7 @@
     "dev:web": "npm --workspace @whytrace/web run dev",
     "build:web": "npm --workspace @whytrace/web run build",
     "eval": "tsx scripts/eval.ts",
+    "record": "tsx scripts/record_sample.ts",
     "bootstrap:zetaris": "tsx scripts/zetaris_bootstrap.ts",
     "services:up": "docker compose -f services/docker-compose.data.yml up -d",
     "services:down": "docker compose -f services/docker-compose.data.yml down",

@@ -69,6 +69,8 @@ export type NightshiftOptions = {
   fetchFn?: typeof fetch;
   sampleMode?: boolean;
   sampleDir?: string;
+  /** Optional case id — when set and sampleDir is not provided, defaults to `samples/<caseId>/nightshift`. */
+  caseId?: string;
   trace?: RunTrace;
 };
 
@@ -121,7 +123,9 @@ export class Nightshift {
     this.retries = opts.retries ?? DEFAULT_RETRIES;
     this.fetchFn = opts.fetchFn ?? fetch;
     this.sampleMode = opts.sampleMode ?? process.env.SAMPLE_MODE === "true";
-    this.sampleDir = opts.sampleDir ?? resolvePath(process.cwd(), "data", "sample", "nightshift");
+    if (opts.sampleDir) this.sampleDir = opts.sampleDir;
+    else if (opts.caseId) this.sampleDir = resolvePath(process.cwd(), "samples", opts.caseId, "nightshift");
+    else this.sampleDir = resolvePath(process.cwd(), "data", "sample", "nightshift");
     this.trace = opts.trace;
     // Serialise upstream traffic by default: concurrent deep calls through the same
     // Nightshift proxy are a frequent cause of 502/_empty_response under provider load.

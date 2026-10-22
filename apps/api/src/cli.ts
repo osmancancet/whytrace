@@ -31,11 +31,13 @@ async function main() {
     console.error(`Unknown case: ${caseId}. Known: ${listDemoCases().map((c) => c.id).join(", ")}`);
     process.exit(2);
   }
+  const sampleMode = process.env.SAMPLE_MODE === "true";
   const trace = new RunTrace();
-  const zetaris = new Zetaris({ trace, agent: "investigator" });
-  const nightshift = new Nightshift({ trace });
+  const zetaris = new Zetaris({ trace, agent: "investigator", caseId });
+  const nightshift = new Nightshift({ trace, caseId });
+  if (sampleMode) console.log(`▶ Replay recorded run (SAMPLE_MODE=true) — samples/${caseId}/`);
   console.log(`run_id = ${trace.run_id}`);
-  await nightshift.warmUp();
+  if (!sampleMode) await nightshift.warmUp();
   const memory = process.argv.includes("--no-memory") ? null : new CaseMemory({ persistDir: resolvePath(process.cwd(), "logs", "hmem") });
   const report = await investigate({ caseId, trace, zetaris, nightshift, memory });
   const outDir = resolvePath(process.cwd(), "output_examples");

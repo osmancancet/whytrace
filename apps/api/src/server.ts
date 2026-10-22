@@ -87,8 +87,9 @@ function startRun(caseId: string, opts: { ablate?: { critic?: boolean; dq?: bool
 
   (async () => {
     try {
-      const zetaris = new Zetaris({ trace, agent: "investigator" });
-      const nightshift = new Nightshift({ trace });
+      const zetaris = new Zetaris({ trace, agent: "investigator", caseId });
+      const nightshift = new Nightshift({ trace, caseId });
+      if (process.env.SAMPLE_MODE === "true") trace.emit({ agent: "orchestrator", action: "replay_mode", status: "ok", output_summary: `Replay recorded run from samples/${caseId}/` });
       const memory = opts.ablate?.memory === false ? null : new CaseMemory({ persistDir: resolvePath(ROOT, "logs", "hmem") });
       const report = await investigate({ caseId, trace, zetaris, nightshift, memory, ablate: opts.ablate });
       mkdirSync(OUTPUT_DIR, { recursive: true });
