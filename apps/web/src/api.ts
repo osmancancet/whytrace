@@ -61,6 +61,16 @@ export async function approveRun(id: string, body: { analyst: string; action: st
   if (!r.ok) throw new Error(`approve: HTTP ${r.status}`);
 }
 
+export async function sendFeedback(id: string, body: { analyst: string; verdict?: string; rejected?: string[]; confirmed?: string[]; note?: string }): Promise<{ ok: boolean; lesson_ids: string[] }> {
+  const r = await fetch(`${base}/runs/${id}/feedback`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`feedback: HTTP ${r.status}`);
+  return r.json();
+}
+
 export function subscribeStream(id: string, onEvent: (e: TraceEvent) => void, onError?: (err: Event) => void): () => void {
   const es = new EventSource(`${base}/runs/${id}/stream`);
   es.onmessage = (ev) => {

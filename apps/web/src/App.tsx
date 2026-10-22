@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { approveRun, fetchCases, fetchMarkovian, fetchQueries, fetchReport, fetchRuns, startRun, subscribeStream } from "./api.ts";
+import { approveRun, fetchCases, fetchMarkovian, fetchQueries, fetchReport, fetchRuns, sendFeedback, startRun, subscribeStream } from "./api.ts";
 import type { MarkovianSummary, Report, SavedRun, TraceEvent } from "./types.ts";
 
 type Case = { id: string; upn: string; expected?: string; description?: string };
@@ -20,6 +20,9 @@ export function App() {
   const [analyst, setAnalyst] = useState("osman.cetlenbik@aegean.edu");
   const [approvalNote, setApprovalNote] = useState("");
   const [approvalDone, setApprovalDone] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<Record<string, "confirmed" | "rejected">>({});
+  const [verdictFeedback, setVerdictFeedback] = useState<"confirmed" | "rejected" | null>(null);
+  const [feedbackLessons, setFeedbackLessons] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const stopRef = useRef<null | (() => void)>(null);
 
@@ -37,6 +40,9 @@ export function App() {
     setReplayMode(replay);
     setLiveMode(false);
     setApprovalDone(false);
+    setFeedbackState({});
+    setVerdictFeedback(null);
+    setFeedbackLessons([]);
     try {
       const [r, q, m] = await Promise.all([fetchReport(id), fetchQueries(id), fetchMarkovian(id)]);
       setReport(r);
@@ -82,6 +88,33 @@ export function App() {
   }, [selectedCase, refreshRuns]);
 
   useEffect(() => () => { if (stopRef.current) stopRef.current(); }, []);
+
+  const submitFeedback = useCallback(async (body: { verdict?: "contain" | "monitor" | "benign" | "escalate"; rejected?: string[]; confirmed?: string[]; note?: string }) => {
+    if (!selectedRunId) return;
+    try {
+      const resp = await sendFeedback(selectedRunId, { analyst, ...body });
+      setFeedbackLessons((prev) => [...prev, ...resp.lesson_ids]);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }, [analyst, selectedRunId]);
+
+  const toggleFindingFeedback = useCallback(async (fid: string, kind: "confirmed" | "rejected") => {
+    setFeedbackState((prev) => ({ ...prev, [fid]: kind }));
+    await submitFeedback(kind === "confirmed" ? { confirmed: [fid] } : { rejected: [fid] });
+  }, [submitFeedback]);
+
+  const confirmVerdict = useCallback(async () => {
+    if (!report) return;
+    setVerdictFeedback("confirmed");
+    await submitFeedback({ verdict: report.verdict as "contain" | "monitor" | "benign" | "escalate", note: approvalNote });
+  }, [approvalNote, report, submitFeedback]);
+
+  const rejectVerdict = useCallback(async (newVerdict: "contain" | "monitor" | "benign" | "escalate") => {
+    if (!report || newVerdict === report.verdict) return;
+    setVerdictFeedback("rejected");
+    await submitFeedback({ verdict: newVerdict, note: approvalNote });
+  }, [approvalNote, report, submitFeedback]);
 
   const hypothesisBuckets = useMemo(() => {
     if (!report) return [] as Array<{ id: string; support: number; opposing: number; label: string }>;
@@ -172,6 +205,7 @@ export function App() {
         <aside className="panel" aria-label="Verdict">
           <h2>Verdict</h2>
           <VerdictPanel report={report} />
+          <FeedbackPanel report={report} verdictFeedback={verdictFeedback} onConfirm={confirmVerdict} onReject={rejectVerdict} lessons={feedbackLessons} />
           <h2 style={{ marginTop: 12 }}>Markovian long sweep</h2>
           <MarkovianBlock markovian={markovian} />
           <h2 style={{ marginTop: 12 }}>Actions</h2>
@@ -183,7 +217,7 @@ export function App() {
         <h2>Evidence chain: claim → [sql_id] → SQL → rows</h2>
         <div className="evidence-chain">
           <div>
-            <ClaimList findings={report?.findings ?? []} selected={selectedFinding} onSelect={setSelectedFinding} verdicts={report?.critic_verdicts ?? []} queries={queries} />
+            <ClaimList findings={report?.findings ?? []} selected={selectedFinding} onSelect={setSelectedFinding} verdicts={report?.critic_verdicts ?? []} queries={queries} feedback={feedbackState} onFeedback={toggleFindingFeedback} />
           </div>
           <div>
             <EvidenceDetail finding={activeFinding} queries={activeQueries} verdicts={report?.critic_verdicts ?? []} />
@@ -333,30 +367,76 @@ function ActionBlock({ report, analyst, setAnalyst, note, setNote, done, setDone
   );
 }
 
-function ClaimList({ findings, selected, onSelect, verdicts, queries }: {
+function ClaimList({ findings, selected, onSelect, verdicts, queries, feedback, onFeedback }: {
   findings: Report["findings"];
   selected: string | null;
   onSelect: (id: string) => void;
   verdicts: Report["critic_verdicts"];
   queries: QueryRow[];
+  feedback: Record<string, "confirmed" | "rejected">;
+  onFeedback: (id: string, kind: "confirmed" | "rejected") => void;
 }) {
   if (!findings.length) return <p style={{ color: "var(--fg-dim)" }}>No surviving claims.</p>;
   const vmap = new Map(verdicts.map((v) => [v.finding_id, v]));
   return (
     <div className="claim-list">
-      {findings.map((f) => (
-        <button key={f.id} className="claim-card" aria-pressed={selected === f.id} onClick={() => onSelect(f.id)}>
-          <div>
-            <strong className={f.status === "CONFIRMED" ? "confirmed" : f.status === "LIKELY" ? "likely" : "suspected"}>[{f.status}]</strong> {f.claim}
+      {findings.map((f) => {
+        const criticRejected = vmap.get(f.id)?.status === "rejected";
+        const fb = feedback[f.id];
+        return (
+          <div key={f.id} className={`claim-card ${criticRejected ? "critic-rejected" : ""} ${fb === "confirmed" ? "fb-confirmed" : fb === "rejected" ? "fb-rejected" : ""}`}>
+            <button type="button" aria-pressed={selected === f.id} onClick={() => onSelect(f.id)} style={{ background: "transparent", border: "none", color: "inherit", textAlign: "left", padding: 0, cursor: "pointer", width: "100%" }}>
+              <div>
+                <strong className={f.status === "CONFIRMED" ? "confirmed" : f.status === "LIKELY" ? "likely" : "suspected"}>[{f.status}]</strong> {f.claim}
+              </div>
+              <div className="meta">
+                {f.id} · sql {f.sql_ids.map((id) => id.slice(0, 8)).join(", ")} · attack {f.attack.join(", ") || "—"} · conf {f.confidence}
+                {queries.filter((q) => f.sql_ids.includes(q.sql_id)).map((q) => <span key={q.sql_id} className="model-chip" style={{ marginLeft: 6 }}>{q.rows} rows</span>)}
+              </div>
+              {vmap.get(f.id) && (
+                <div className="meta">critic re-query: <span className={criticRejected ? "rejected" : "confirmed"}>{vmap.get(f.id)!.status}</span> — {vmap.get(f.id)!.reason}</div>
+              )}
+            </button>
+            <div className="feedback-row" style={{ marginTop: 6, display: "flex", gap: 6 }}>
+              <button type="button" className="secondary" aria-pressed={fb === "confirmed"} onClick={() => onFeedback(f.id, "confirmed")} title="Confirm this finding is correct">
+                ✓ Confirm
+              </button>
+              <button type="button" className="secondary" aria-pressed={fb === "rejected"} onClick={() => onFeedback(f.id, "rejected")} title="Reject this finding — stored as an analyst correction">
+                ✗ Reject
+              </button>
+              {fb && <span style={{ fontSize: 11, color: fb === "confirmed" ? "var(--benign)" : "var(--contain)" }}>analyst-confirmed lesson written</span>}
+            </div>
           </div>
-          <div className="meta">
-            {f.id} · sql {f.sql_ids.map((id) => id.slice(0, 8)).join(", ")} · attack {f.attack.join(", ") || "—"} · conf {f.confidence}
-          </div>
-          {vmap.get(f.id) && (
-            <div className="meta">critic re-query: <span className={vmap.get(f.id)!.status === "rejected" ? "rejected" : "confirmed"}>{vmap.get(f.id)!.status}</span> — {vmap.get(f.id)!.reason}</div>
-          )}
+        );
+      })}
+    </div>
+  );
+}
+
+function FeedbackPanel({ report, verdictFeedback, onConfirm, onReject, lessons }: {
+  report: Report | null;
+  verdictFeedback: "confirmed" | "rejected" | null;
+  onConfirm: () => void;
+  onReject: (v: "contain" | "monitor" | "benign" | "escalate") => void;
+  lessons: string[];
+}) {
+  if (!report) return null;
+  const choices: Array<"contain" | "monitor" | "benign" | "escalate"> = ["contain", "monitor", "benign", "escalate"];
+  return (
+    <div className="feedback-panel" style={{ marginTop: 10, padding: 8, background: "var(--panel-2)", border: "1px solid var(--border)", borderRadius: 6 }}>
+      <strong style={{ fontSize: 12 }}>Analyst feedback on this verdict</strong>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+        <button type="button" className="secondary" aria-pressed={verdictFeedback === "confirmed"} onClick={onConfirm} title="Agree with the agent's verdict — stored as a high-confidence lesson">
+          ✓ Confirm
         </button>
-      ))}
+        {choices.filter((v) => v !== report.verdict).map((v) => (
+          <button key={v} type="button" className="secondary" onClick={() => onReject(v)} title={`Mark the correct verdict as ${v}`}>
+            → {v}
+          </button>
+        ))}
+      </div>
+      {lessons.length > 0 && <p style={{ fontSize: 11, color: "var(--benign)", marginTop: 6 }}>{lessons.length} analyst-confirmed lesson(s) stored in H-MEM.</p>}
+      <p style={{ fontSize: 11, color: "var(--fg-dim)", marginTop: 4 }}>Lessons are stored with origin <code>user_correction</code>, higher confidence (≥0.9) and cited in future runs under <code>[MEMORY CONTEXT]</code>.</p>
     </div>
   );
 }

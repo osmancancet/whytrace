@@ -183,11 +183,15 @@ header.topbar {
   font-family: inherit;
   cursor: pointer;
 }
-.claim-card[aria-pressed="true"] { border-color: var(--accent); }
+.claim-card:has(button[aria-pressed="true"]) { border-color: var(--accent); }
+.claim-card.critic-rejected { border-left: 3px solid var(--contain); }
+.claim-card.fb-confirmed { box-shadow: 0 0 0 1px var(--benign); }
+.claim-card.fb-rejected { box-shadow: 0 0 0 1px var(--contain); }
 .claim-card .meta { color: var(--fg-dim); font-family: var(--mono); font-size: 11px; }
 .claim-card .confirmed { color: var(--benign); }
 .claim-card .likely { color: var(--monitor); }
 .claim-card .suspected { color: var(--escalate); }
+.feedback-row button[aria-pressed="true"] { border-color: var(--accent); }
 
 pre.sql {
   background: #0a0e13;

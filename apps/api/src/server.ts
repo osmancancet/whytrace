@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSy
 import { basename, resolve as resolvePath, join } from "node:path";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { Nightshift, RunTrace, Zetaris } from "@whytrace/adapters";
-import { CaseMemory, investigate, listDemoCases, type Report } from "@whytrace/agents";
+import { applyAnalystFeedback, CaseMemory, investigate, listDemoCases, type Report, Verdict } from "@whytrace/agents";
 
 const PORT = Number(process.env.PORT ?? 8000);
 const ROOT = resolvePath(process.cwd());
@@ -210,6 +210,42 @@ async function main() {
     const ablate = req.body?.ablate ?? {};
     const entry = startRun(caseId, { ablate });
     return { run_id: entry.run_id, started_at: entry.started_at, case_id: caseId };
+  });
+
+  app.post<{ Params: { id: string }; Body: { analyst?: string; verdict?: string; rejected?: string[]; confirmed?: string[]; note?: string } }>("/runs/:id/feedback", async (req, reply) => {
+    const report = await readReport(req.params.id);
+    if (!report) return reply.code(404).send({ error: "run not found" });
+    const analyst = req.body?.analyst ?? "osman.cetlenbik@aegean.edu";
+    let verdictCorrection = undefined as ReturnType<typeof Verdict.safeParse>["data"];
+    if (req.body?.verdict) {
+      const parsed = Verdict.safeParse(req.body.verdict);
+      if (!parsed.success) return reply.code(400).send({ error: `bad verdict: ${req.body.verdict}` });
+      verdictCorrection = parsed.data;
+    }
+    const memory = new CaseMemory({ persistDir: resolvePath(ROOT, "logs", "hmem") });
+    const ids = applyAnalystFeedback(memory, {
+      report,
+      verdictCorrection,
+      rejectedFindingIds: req.body?.rejected ?? [],
+      confirmedFindingIds: req.body?.confirmed ?? [],
+      analyst,
+      note: req.body?.note,
+    });
+    mkdirSync(AUDIT_DIR, { recursive: true });
+    const entry = {
+      ts: new Date().toISOString(),
+      run_id: req.params.id,
+      case_id: report.case_id,
+      analyst,
+      action: "feedback",
+      verdict_correction: verdictCorrection ?? null,
+      rejected: req.body?.rejected ?? [],
+      confirmed: req.body?.confirmed ?? [],
+      lesson_ids: ids,
+      note: req.body?.note ?? "",
+    };
+    appendFileSync(join(AUDIT_DIR, "feedback.jsonl"), JSON.stringify(entry) + "\n", "utf8");
+    return { ok: true, lesson_ids: ids, entry };
   });
 
   app.post<{ Params: { id: string }; Body: { analyst?: string; action?: string; note?: string } }>("/runs/:id/approve", async (req, reply) => {
