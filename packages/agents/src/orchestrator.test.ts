@@ -90,6 +90,21 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     expect(r.limitations.join(" ")).toMatch(/Reporter model unavailable/);
   });
 
+  it("a failing risk-gate model falls back to the deterministic policy (contain stands with -0.1 confidence)", async () => {
+    const r = await setup("case-001", { failTools: ["submit_risk"] }).run();
+    expect(r.verdict).toBe("contain");
+    expect(r.limitations.join(" ")).toMatch(/model opinion unavailable/);
+    expect(r.risk?.model_decision).toBeUndefined();
+  });
+
+  it("a failing risk-gate model escalates when the policy is not confident enough to stand alone", async () => {
+    const r = await setup("case-006", { failTools: ["submit_risk"] }).run();
+    // case-006 produces only weak LIKELY signals — the policy wants `monitor` with 0.7 confidence.
+    // Dropping confidence by 0.1 to 0.6 is below the threshold → escalate honestly.
+    expect(r.verdict).toBe("escalate");
+    expect(r.limitations.join(" ")).toMatch(/model opinion unavailable/);
+  });
+
   it("Markovian: case-004 triggers the paginated spray sweep and records a measured-token log", async () => {
     const { run, trace } = setup("case-004");
     const r = await run();

@@ -76,6 +76,8 @@ export type ChatOpts = {
   agent?: string;
   parentStep?: string;
   abortSignal?: AbortSignal;
+  /** Allow one retry on `meterless/fast` if the deep lane fails after retries. Default: true. */
+  routeFallback?: boolean;
 };
 
 const DEFAULT_TIMEOUT_MS = 180_000;
@@ -151,6 +153,7 @@ export class Nightshift {
     const model = lane === "deep" ? this.deepModel : this.fastModel;
     const agent = opts.agent ?? "model";
     const messages = this.ensureNoThink(opts.messages);
+    const routeFallback = opts.routeFallback !== false;
     try {
       if (this.sampleMode) {
         const digest = chatDigest(messages, opts.tools, lane);
@@ -173,10 +176,46 @@ export class Nightshift {
           await sleep(backoff);
         }
       }
-      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries });
+      // Route fallback: if the deep lane failed every retry, try one more call on the
+      // fast lane (same Nemotron provider, lower TTFT). The caller sees routed_model
+      // from the receipt so provenance stays honest. Reporter/Risk-Gate etc. use this
+      // transparently; sweep/Markovian steps already run on fast and skip the fallback.
+      if (lane === "deep" && routeFallback) {
+        try {
+          const resp = await this.callOnce({ messages, lane: "fast", model: this.fastModel, tools: opts.tools, toolChoice: opts.toolChoice, maxTokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, temperature: opts.temperature, abortSignal: opts.abortSignal });
+          resp.retryCount = this.retries + 1;
+          this.recordSample(resp, messages, opts.tools, "fast");
+          this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane" });
+          return resp;
+        } catch (fallbackErr) {
+          lastErr = fallbackErr;
+        }
+      }
+      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries, output_summary: lastErr instanceof Error ? lastErr.message.slice(0, 200) : undefined });
       throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
     } finally {
       this.release();
+    }
+  }
+
+  /** Health probe: /models online + one tiny tool-call probe. */
+  async probe(): Promise<{ status: "online" | "unauthorized" | "offline" | "degraded"; detail?: string; routed_model?: string; receipt_id?: string }> {
+    const conn = await this.testConnection();
+    if (conn !== "online") return { status: conn };
+    try {
+      const resp = await this.callTool<{ ok: boolean }>({
+        messages: [{ role: "user", content: "Probe: reply with ok=true via submit_probe." }],
+        toolName: "submit_probe",
+        description: "Probe tool.",
+        schema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] },
+        lane: "fast",
+        maxTokens: 128,
+        agent: "probe",
+        parse: (a) => ({ ok: Boolean(a.ok ?? true) }),
+      });
+      return { status: "online", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id };
+    } catch (err) {
+      return { status: "degraded", detail: (err as Error).message.slice(0, 200) };
     }
   }
 

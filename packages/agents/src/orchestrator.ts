@@ -255,10 +255,19 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
 
   // Planner glitches do not mark the whole run as degraded if a later round
   // recovered and we got a plan; the fallback coverage steps always ran.
-  if (!plannerSucceeded && plannerDegradedRounds > 0) degraded = true;
+  if (!plannerSucceeded && plannerDegradedRounds > 0) {
+    degraded = true;
+    limitations.push("Planner model degraded; investigation proceeded with coverage queries only.");
+  }
 
   // ---- Risk Gate: code policy + deep-lane opinion
-  const pol = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded, checkedSources: [...checkedSources] });
+  // Important: the policy is computed WITHOUT the `degraded` flag at first so a
+  // missing model opinion does not force escalation when the deterministic policy
+  // is itself confident (contain / benign / monitor on CONFIRMED findings). If the
+  // policy *itself* is uncertain, we fall back to escalate — this is the honest
+  // behaviour promised in `.cursor/rules/evidence-contract.mdc`.
+  const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources] });
+  let riskModelMissing = false;
   const evidenceText = findings.map((f) => `${f.id} [${f.status} ${f.confidence}] ${f.claim} {${f.attack.join(",")}}`).join("\n") || "(no surviving findings)";
   const rejectedText = rejected.map((r) => `- ${r.claim}: ${r.reason}`).join("\n") || "(none)";
   let modelOpinion: { decision: VerdictT; confidence: number; rationale: string } | undefined;
@@ -276,17 +285,38 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       modelOpinion = rc.value;
       models.push({ agent: "risk_gate", routed_model: rc.model, receipt_id: rc.receipt?.receipt_id });
     } catch (err) {
-      degraded = true;
+      riskModelMissing = true;
       trace.emit({ agent: "risk_gate", action: "model_opinion", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
     }
   }
-  const g = gate(degraded && pol.decision !== "escalate" ? { ...pol, decision: "escalate", escalate_reasons: [...pol.escalate_reasons, "a model step was degraded"] } : pol, modelOpinion);
-  trace.emit({ agent: "risk_gate", action: "decide", parent_id: root.step_id, output_summary: `${g.decision} @ ${g.confidence} (policy ${pol.decision}, model ${modelOpinion?.decision ?? "n/a"}) ${pol.reasons.join("; ")}`.slice(0, 400), confidence: g.confidence, status: "ok" });
+  // Deterministic fallback: when the model opinion is missing, use the policy as-is,
+  // lower confidence by 0.1 (honest humility), add a limitation line. Escalate only
+  // if the policy itself is uncertain or evidence conflicts.
+  let effectivePolicy = basePolicy;
+  if (riskModelMissing) {
+    const canStand = basePolicy.decision !== "escalate" && basePolicy.confidence - 0.1 >= 0.7 && basePolicy.escalate_reasons.length === 0 && dqConflicts.length === 0;
+    if (canStand) {
+      effectivePolicy = { ...basePolicy, confidence: Math.max(0, Math.round((basePolicy.confidence - 0.1) * 100) / 100) };
+      limitations.push("model opinion unavailable (provider error); deterministic policy stood in, confidence lowered by 0.1.");
+    } else {
+      degraded = true;
+      effectivePolicy = { ...basePolicy, decision: "escalate", escalate_reasons: [...basePolicy.escalate_reasons, "a model step was degraded"] };
+      limitations.push("model opinion unavailable (provider error); deterministic policy was not confident enough to stand alone.");
+    }
+  } else if (degraded && basePolicy.decision !== "escalate") {
+    // Earlier model step (planner) was degraded — route to a human.
+    effectivePolicy = { ...basePolicy, decision: "escalate", escalate_reasons: [...basePolicy.escalate_reasons, "a model step was degraded"] };
+  }
+  const pol = effectivePolicy;
+  const g = gate(pol, modelOpinion);
+  trace.emit({ agent: "risk_gate", action: "decide", parent_id: root.step_id, output_summary: `${g.decision} @ ${g.confidence} (policy ${basePolicy.decision}, model ${modelOpinion?.decision ?? (riskModelMissing ? "unavailable" : "n/a")}) ${pol.reasons.join("; ")}`.slice(0, 400), confidence: g.confidence, status: "ok" });
 
   // ---- Reporter (deep lane): narrates the decided verdict, cannot change it
-  let note: { summary: string; actions: Array<{ action: string; attack: string[] }>; limitations: string[]; not_checked: string[] } = {
-    summary: `${g.decision.toUpperCase()}: ${pol.reasons.join("; ")}.`, actions: [], limitations: [], not_checked: [],
-  };
+  // Deterministic fallback (used when the model is degraded) is built from the
+  // surviving findings + policy reasons so the final JSON is still useful.
+  const deterministicNote = buildDeterministicNote(g.decision, g.confidence, findings, basePolicy.reasons, g.escalate_reasons, dq);
+  let note: { summary: string; actions: Array<{ action: string; attack: string[] }>; limitations: string[]; not_checked: string[] } = deterministicNote;
+  let reporterFromModel = false;
   const toArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : v ? [String(v)] : []);
   if (budget.canModel()) {
     budget.model += 1;
@@ -294,19 +324,23 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       const rep = await opts.nightshift.callTool({
         messages: [
           { role: "system", content: `You write analyst-ready incident notes for a university SOC. The verdict is already decided by the Risk Gate: ${g.decision} (confidence ${g.confidence}). Do not change it. Summary < 150 words, cite finding ids (F1…). Actions are recommendations for the analyst, each with ATT&CK ids from the findings. List limitations and what could not be checked (e.g. travel calendar, EDR).` },
-          { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nRisk Gate reasons: ${[...pol.reasons, ...g.escalate_reasons].join("; ")}` },
+          { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nRisk Gate reasons: ${[...basePolicy.reasons, ...g.escalate_reasons].join("; ")}` },
         ],
         toolName: "submit_note", description: "Submit the incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 2000, agent: "reporter",
         parse: (a) => ({ summary: String(a.summary ?? ""), actions: (Array.isArray(a.actions) ? a.actions : []).map((x: { action?: unknown; attack?: unknown }) => ({ action: String(x.action ?? ""), attack: toArr(x.attack) })).filter((x) => x.action), limitations: toArr(a.limitations), not_checked: toArr(a.not_checked) }),
       });
       note = rep.value;
+      // Keep deterministic actions if the model forgot them.
+      if (!note.actions.length) note.actions = deterministicNote.actions;
+      reporterFromModel = true;
       models.push({ agent: "reporter", routed_model: rep.model, receipt_id: rep.receipt?.receipt_id });
       trace.emit({ agent: "reporter", action: "report", routed_model: rep.model, receipt_id: rep.receipt?.receipt_id, lane: "deep", status: "ok" });
     } catch (err) {
       trace.emit({ agent: "reporter", action: "report", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
-      limitations.push("Reporter model unavailable; summary generated from findings.");
+      limitations.push("Reporter model unavailable; deterministic summary built from findings.");
     }
   }
+  if (!reporterFromModel) note = deterministicNote;
 
   // ---- Timeline from cited rows
   const timeline: Array<{ ts: string; event: string; sql_id: string }> = [];
@@ -346,7 +380,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     memory_used: recall.lines,
     critic_score: score,
     critic_verdicts: [...verdictsById.values()],
-    risk: { decision, policy_decision: pol.decision, model_decision: modelOpinion?.decision, confidence, rationale: modelOpinion?.rationale ?? pol.reasons.join("; "), escalate_reasons },
+    risk: { decision, policy_decision: basePolicy.decision, model_decision: modelOpinion?.decision, confidence, rationale: modelOpinion?.rationale ?? basePolicy.reasons.join("; "), escalate_reasons },
     rounds,
     budget: { sql_calls: budget.sql, model_calls: budget.model },
     models,
@@ -373,3 +407,77 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
 
 export function listDemoCases(): Case[] { return Object.values(DEMO_CASES); }
 export function getCase(id: string): Case | undefined { return DEMO_CASES[id]; }
+
+/** Deterministic analyst-ready note from the surviving findings; used when the
+ *  Reporter model is degraded. Clearly labelled so the UI/console can tag it. */
+function buildDeterministicNote(decision: VerdictT, confidence: number, findings: FindingT[], reasons: string[], escalateReasons: string[], dq: DqResult[]): { summary: string; actions: Array<{ action: string; attack: string[] }>; limitations: string[]; not_checked: string[] } {
+  const label = decision.toUpperCase();
+  const confirmed = findings.filter((f) => f.status === "CONFIRMED");
+  const attack = [...new Set(findings.flatMap((f) => f.attack))];
+  const ids = confirmed.map((f) => f.id).join(", ");
+  const dqBad = dq.filter((d) => d.invalid > 0);
+  const reasonText = [...reasons, ...escalateReasons].join("; ") || "no reason recorded";
+  const summary = `${label} @ ${confidence.toFixed(2)} (deterministic summary). ${confirmed.length} confirmed signal(s)${ids ? ` [${ids}]` : ""}. Techniques: ${attack.join(", ") || "none"}. Reasons: ${reasonText}.${dqBad.length ? ` DQ invalid in ${dqBad.map((d) => `${d.table}/${d.rule}`).join(", ")}.` : ""}`.slice(0, 1200);
+  const actions: Array<{ action: string; attack: string[] }> = [];
+  if (decision === "contain") {
+    actions.push({ action: "Revoke active sessions and reset the password for the affected UPN.", attack: attack.filter((a) => a.startsWith("T1078")) });
+    actions.push({ action: "Remove suspicious inbox rules and quarantine the delivered phishing message.", attack: attack.filter((a) => a === "T1114.003" || a === "T1564.008" || a === "T1566.002") });
+    actions.push({ action: "Audit downstream SharePoint/OneDrive access from the attacker ASN.", attack: attack.filter((a) => a === "T1213") });
+  } else if (decision === "escalate") {
+    actions.push({ action: "Open a human-review ticket; attach the trace and the findings referenced above.", attack });
+    if (dqBad.length) actions.push({ action: `Investigate DQ invalid rows: ${dqBad.map((d) => `${d.table}/${d.rule}@${d.scope ?? "-"}`).join(", ")}.`, attack: [] });
+  } else if (decision === "monitor") {
+    actions.push({ action: "Watchlist the UPN for 7 days; alert on next MFA fatigue or new ASN.", attack });
+  } else {
+    actions.push({ action: "Close as benign. Keep the signal in the baseline for 30 days.", attack: [] });
+  }
+  return { summary, actions, limitations: [], not_checked: ["travel calendar (not connected)", "EDR process events (not ingested)"] };
+}
+
+/** Apply an analyst correction after a run completes.
+ *  Writes a lesson to H-MEM with origin `user_correction` and higher confidence
+ *  so later runs cite the correction in the `[MEMORY CONTEXT]` block.
+ *  Returns the ids of the lessons added. */
+export function applyAnalystFeedback(memory: CaseMemory, args: { report: Report; verdictCorrection?: VerdictT; rejectedFindingIds?: string[]; confirmedFindingIds?: string[]; analyst: string; note?: string }): string[] {
+  const { report } = args;
+  const added: string[] = [];
+  const refs = [...new Set(report.findings.flatMap((f) => f.sql_ids))];
+  if (args.verdictCorrection && args.verdictCorrection !== report.verdict) {
+    const content = `Analyst-confirmed correction (${report.case_id}): final verdict is ${args.verdictCorrection}, not ${report.verdict}. Reason: ${args.note || "analyst override"}.`;
+    added.push(memory.hmem.add({
+      content, type: "factual", layer: "working", source: `case:${report.case_id}`, confidence: 0.95,
+      tags: ["lesson", `verdict:${args.verdictCorrection}`, "analyst-confirmed", "origin:user_correction"],
+      provenance: { origin: "user_correction", label: `${args.analyst} @ ${report.run_id}`, refs },
+    }).id);
+  } else if (args.verdictCorrection) {
+    // Analyst agreed with the verdict → boost the "pattern" lesson, if we can find one.
+    const content = `Analyst-confirmed pattern (${report.case_id}): verdict ${report.verdict} at confidence ${report.confidence} was correct.`;
+    added.push(memory.hmem.add({
+      content, type: "episodic", layer: "working", source: `case:${report.case_id}`, confidence: 0.95,
+      tags: ["pattern", `verdict:${report.verdict}`, "analyst-confirmed", "origin:user_correction"],
+      provenance: { origin: "user_correction", label: `${args.analyst} @ ${report.run_id}`, refs },
+    }).id);
+  }
+  for (const fid of args.rejectedFindingIds ?? []) {
+    const f = report.findings.find((x) => x.id === fid);
+    if (!f) continue;
+    const content = `Analyst rejected finding (${report.case_id} ${f.id}): "${f.claim}". Future similar signals should be scored lower.`;
+    added.push(memory.hmem.add({
+      content, type: "factual", layer: "working", source: `case:${report.case_id}`, confidence: 0.9,
+      tags: ["lesson", "analyst-confirmed", "origin:user_correction", ...f.attack.map((a) => `tactic:${a}`)],
+      provenance: { origin: "user_correction", label: `${args.analyst} @ ${report.run_id}`, refs: f.sql_ids },
+    }).id);
+    try { memory.hmem.feedback(fid, "wrong"); } catch { /* ignore unknown id */ }
+  }
+  for (const fid of args.confirmedFindingIds ?? []) {
+    const f = report.findings.find((x) => x.id === fid);
+    if (!f) continue;
+    const content = `Analyst confirmed finding (${report.case_id} ${f.id}): "${f.claim}". Pattern is reliable for this institution.`;
+    added.push(memory.hmem.add({
+      content, type: "factual", layer: "working", source: `case:${report.case_id}`, confidence: 0.95,
+      tags: ["lesson", "analyst-confirmed", "origin:user_correction", ...f.attack.map((a) => `tactic:${a}`)],
+      provenance: { origin: "user_correction", label: `${args.analyst} @ ${report.run_id}`, refs: f.sql_ids },
+    }).id);
+  }
+  return added;
+}

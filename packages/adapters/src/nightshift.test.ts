@@ -45,4 +45,34 @@ describe("Nightshift.chat", () => {
     expect(r.model).toContain("nvidia/nemotron");
     expect(r.receipt?.receipt_id).toBe("rec1");
   });
+
+  it("falls back from the deep lane to the fast lane after retries fail", async () => {
+    const seenBodies: string[] = [];
+    let callN = 0;
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      callN += 1;
+      seenBodies.push(init?.body as string);
+      // Fail on deep (meterless/auto) all 1 attempt (retries=0), succeed on fast.
+      const body = JSON.parse((init?.body as string) ?? "{}");
+      if (body.model === "meterless/auto") return new Response("deep down", { status: 502 });
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "ok", tool_calls: [] } }],
+        meterless: { receipt_id: "fast1", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b", phases: [] },
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    const r = await n.chat({ messages: [{ role: "user", content: "please" }], lane: "deep", agent: "test" });
+    expect(callN).toBeGreaterThanOrEqual(2);
+    expect(JSON.parse(seenBodies[seenBodies.length - 1]!).model).toBe("meterless/fast");
+    expect(r.receipt?.receipt_id).toBe("fast1");
+    expect(r.model).toContain("nvidia/nemotron");
+  });
+
+  it("skips route fallback when routeFallback=false", async () => {
+    let callN = 0;
+    const fetchFn = (async () => { callN += 1; return new Response("down", { status: 502 }); }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await expect(n.chat({ messages: [{ role: "user", content: "hi" }], lane: "deep", routeFallback: false })).rejects.toThrow();
+    expect(callN).toBe(1);
+  });
 });
