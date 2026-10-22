@@ -53,7 +53,13 @@ async function main() {
   }
   if (report.findings.length) {
     console.log("findings:");
-    for (const f of report.findings) console.log(`  - [${f.status}] ${f.claim}  sql_id=${f.sql_ids.join(",")}  confidence=${f.confidence}`);
+    for (const f of report.findings) {
+      const dqMark = f.dq_flags && f.dq_flags.length ? " [DQ⚠]" : "";
+      console.log(`  - [${f.status}]${dqMark} ${f.claim}  sql_id=${f.sql_ids.join(",")}  confidence=${f.confidence}`);
+      if (f.dq_flags && f.dq_flags.length) {
+        for (const d of f.dq_flags) console.log(`      ↳ data-quality caveat: ${d.table}/${d.rule}@${d.scope} invalid=${d.invalid}`);
+      }
+    }
   }
   if (report.rejected_claims.length) {
     console.log("rejected claims:");
@@ -61,7 +67,16 @@ async function main() {
   }
   if (report.risk) console.log(`risk gate:  policy=${report.risk.policy_decision} model=${report.risk.model_decision ?? "n/a"} → ${report.risk.decision}${report.risk.escalate_reasons.length ? `  (${report.risk.escalate_reasons.join("; ")})` : ""}`);
   if (report.critic_score) console.log(`critic:     accuracy=${report.critic_score.accuracy} appropriateness=${report.critic_score.appropriateness} actionability=${report.critic_score.actionability}`);
-  if (report.dq.some((d) => d.invalid > 0)) console.log(`dq:         ${report.dq.filter((d) => d.invalid > 0).map((d) => `${d.rule}@${d.scope} invalid=${d.invalid}`).join("; ")}`);
+  // DQ flags — nothing is silently dropped. Every rule that fired with
+  // invalid > 0 is printed, named with its rule / table / scope / invalid
+  // count; findings resting on those rows carry `[DQ⚠]` above.
+  const dqFails = report.dq.filter((d) => d.invalid > 0);
+  if (dqFails.length) {
+    console.log(`dq flags:   ${dqFails.length} rule(s) failing — findings resting on these rows show [DQ⚠]`);
+    for (const d of dqFails) console.log(`  - ${d.table}/${d.rule}@${d.scope ?? "-"} invalid=${d.invalid}${d.sql_id ? ` sql_id=${d.sql_id}` : ""}`);
+  } else if (report.dq.length) {
+    console.log(`dq:         ${report.dq.length} rule(s) passed`);
+  }
   if (report.memory_used.length) console.log(`memory:     ${report.memory_used.length} lesson(s) recalled`);
   console.log(`budget:     ${report.rounds} round(s), ${report.budget?.sql_calls ?? "?"} SQL, ${report.budget?.model_calls ?? "?"} model calls`);
   console.log(`report → ${outPath}`);

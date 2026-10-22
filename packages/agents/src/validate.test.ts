@@ -7,7 +7,7 @@ const log: QueryLogRecord[] = [
   { sql_id: A, rows: 3, status: "ok" },
   { sql_id: B, rows: 0, status: "error" },
 ];
-const f = (over: Partial<FindingT> = {}): FindingT => ({ id: "F1", hypothesis_id: "H1", claim: "MFA fatigue", status: "CONFIRMED", sql_ids: [A], row_refs: [`${A}#0`, `${A}#2`], attack: ["T1621"], confidence: 0.9, entity_ids: [], facts: {}, ...over });
+const f = (over: Partial<FindingT> = {}): FindingT => ({ id: "F1", hypothesis_id: "H1", claim: "MFA fatigue", status: "CONFIRMED", sql_ids: [A], row_refs: [`${A}#0`, `${A}#2`], attack: ["T1621"], confidence: 0.9, entity_ids: [], facts: {}, dq_flags: [], ...over });
 const report = (over: Partial<Report> = {}): Report => ({
   run_id: "r", case_id: "case-001", verdict: "contain", confidence: 0.9, summary: "s",
   timeline: [{ ts: "2026-10-14 06:59:00.0", event: "approve", sql_id: A }], findings: [f()], rejected_claims: [],

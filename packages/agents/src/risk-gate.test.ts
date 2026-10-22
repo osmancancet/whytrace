@@ -3,7 +3,7 @@ import { canStandUnderDegrade, gate, policy } from "./risk-gate.ts";
 import type { FindingT } from "./schema.ts";
 
 let n = 0;
-const f = (attack: string[], status: FindingT["status"] = "CONFIRMED", confidence = 0.85): FindingT => ({ id: `F${++n}`, hypothesis_id: "H1", claim: attack.join("+"), status, sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack, confidence, entity_ids: [], facts: {} });
+const f = (attack: string[], status: FindingT["status"] = "CONFIRMED", confidence = 0.85): FindingT => ({ id: `F${++n}`, hypothesis_id: "H1", claim: attack.join("+"), status, sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack, confidence, entity_ids: [], facts: {}, dq_flags: [] });
 const base = { rejectedCount: 0, dqConflicts: [], degraded: false, checkedSources: ["signin_event", "mail_event"] };
 
 describe("Risk Gate policy", () => {
@@ -16,13 +16,13 @@ describe("Risk Gate policy", () => {
     expect(policy({ ...base, findings: [f(["T1110.003", "T1078"]), f(["T1078.004"])] }).decision).toBe("contain");
   });
   it("contains a standalone confirmed password-spray-then-success — the Critic has re-counted victims", () => {
-    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa", "bbbbbbbbbbbb"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {} };
+    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa", "bbbbbbbbbbbb"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {}, dq_flags: [] };
     const p = policy({ ...base, findings: [spray] });
     expect(p.decision).toBe("contain");
     expect(p.reasons.join(" ")).toMatch(/password-spray-then-success/);
   });
   it("still escalates a confirmed password-spray-then-success when DQ conflicts (independent evidence disagrees)", () => {
-    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {} };
+    const spray: FindingT = { id: "F1", hypothesis_id: "H1", claim: "spray", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack: ["T1110.003", "T1078"], confidence: 0.85, kind: "password_spray", entity_ids: [], facts: {}, dq_flags: [] };
     // Fall-through to the regular 1-abuse-1-access escalate branch when DQ conflicts.
     expect(policy({ ...base, findings: [spray], dqConflicts: ["x"] }).decision).toBe("escalate");
   });

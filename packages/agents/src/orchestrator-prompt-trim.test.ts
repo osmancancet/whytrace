@@ -13,6 +13,7 @@ const mk = (over: Partial<FindingT>): FindingT => ({
   confidence: 0.5,
   entity_ids: [],
   facts: {},
+  dq_flags: [],
   ...over,
 });
 

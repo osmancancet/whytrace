@@ -3,7 +3,7 @@ import { appliancesFromRows, applyDqPenalty, runScopedDq, scopedDqQueries } from
 import { FakeZetaris } from "./testing/fake-zetaris.ts";
 import type { FindingT } from "./schema.ts";
 
-const f = (over: Partial<FindingT>): FindingT => ({ id: "F1", hypothesis_id: "H", claim: "c", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack: [], confidence: 0.8, entity_ids: [], facts: {}, ...over });
+const f = (over: Partial<FindingT>): FindingT => ({ id: "F1", hypothesis_id: "H", claim: "c", status: "CONFIRMED", sql_ids: ["aaaaaaaaaaaa"], row_refs: [], attack: [], confidence: 0.8, entity_ids: [], facts: {}, dq_flags: [], ...over });
 
 describe("scoped DQ", () => {
   it("builds account checks plus one check per appliance", () => {
@@ -25,5 +25,11 @@ describe("scoped DQ", () => {
     expect(out.findings.map((x) => x.confidence)).toEqual([0.56, 0.56, 0.8]);
     expect(out.limitations).toHaveLength(2);
     expect(out.conflicts).toEqual(["DQ vpn_session_order failing for appliance:vpn-edge-01"]);
+  });
+  it("attaches a data-quality caveat to the finding itself so judges can see which rule touched which claim", () => {
+    const dq = [{ table: "vpn_session", rule: "vpn_session_order", scope: "appliance:vpn-edge-01", valid: 2, invalid: 12 }];
+    const out = applyDqPenalty([f({ id: "F1", entity_ids: ["device:cmdb:vpn-edge-01"] }), f({ id: "F3" })], dq);
+    expect(out.findings[0]!.dq_flags).toEqual([{ rule: "vpn_session_order", table: "vpn_session", scope: "appliance:vpn-edge-01", invalid: 12 }]);
+    expect(out.findings[1]!.dq_flags ?? []).toEqual([]);
   });
 });

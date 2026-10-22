@@ -39,6 +39,10 @@ export const Finding = z.object({
   entity_ids: z.array(z.string()).default([]),
   // Structured values the Critic re-checks (e.g. {asn_org, first_ts}).
   facts: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).default({}),
+  // Data-quality caveat: set when at least one DQ rule flagged the rows this
+  // finding rests on. Each entry names the failing rule, the table it ran
+  // against and the invalid-row count — nothing is silently dropped.
+  dq_flags: z.array(z.object({ rule: z.string(), table: z.string(), scope: z.string(), invalid: z.number() })).default([]),
 });
 
 export const InvestigatorOutput = z.object({

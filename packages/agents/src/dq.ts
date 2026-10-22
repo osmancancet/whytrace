@@ -84,7 +84,10 @@ export function applyDqPenalty(findings: FindingT[], dq: DqResult[]): { findings
       limitations.push(line);
       conflicts.push(`DQ ${h.rule} failing for ${h.scope}`);
     }
-    return { ...f, confidence: round2(f.confidence * DQ_PENALTY ** hits.length) };
+    // Attach the data-quality caveat to the finding itself so analysts /
+    // judges can see which rules touched which claim without reading the
+    // limitations prose.
+    return { ...f, confidence: round2(f.confidence * DQ_PENALTY ** hits.length), dq_flags: [...(f.dq_flags ?? []), ...hits.map((h) => ({ rule: h.rule, table: h.table, scope: h.scope, invalid: h.invalid }))] };
   });
   return { findings: out, limitations: [...new Set(limitations)], conflicts: [...new Set(conflicts)] };
 }

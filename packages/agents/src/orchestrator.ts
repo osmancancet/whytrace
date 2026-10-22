@@ -326,6 +326,12 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       const p = applyDqPenalty(findings, dq);
       findings = p.findings; limitations.push(...p.limitations); dqConflicts = p.conflicts;
       trace.emit({ agent: "dq", action: "scoped_checks", output_summary: dq.map((d) => `${d.rule}@${d.scope}: invalid=${d.invalid}`).join("; "), status: "ok" });
+      // Surface each failing rule as its own `dq_flag` trace row so judges / UIs
+      // can group by it. Nothing is silently dropped: even a 0-invalid rule
+      // appears above in `scoped_checks`.
+      for (const d of dq.filter((x) => x.invalid > 0)) {
+        trace.emit({ agent: "dq", action: "dq_flag", status: "degraded", sql_id: d.sql_id, output_summary: `${d.table}/${d.rule}@${d.scope} invalid=${d.invalid}`, dq_rule: d.rule, dq_table: d.table, dq_scope: d.scope, dq_invalid: d.invalid });
+      }
     } catch (err) {
       trace.emit({ agent: "dq", action: "scoped_checks", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
       limitations.push("DQ checks could not run; confidence not adjusted for data quality.");

@@ -49,6 +49,7 @@ export function deriveFindings(
     kind: p.kind,
     entity_ids: [...new Set([acct, ...(p.entities ?? [])])],
     facts: { upn: ctx.upn, ...(p.facts ?? {}) },
+    dq_flags: [],
   });
   const idxOf = (pred: (r: Row) => boolean) => rows.map((r, i) => (pred(r) ? i : -1)).filter((i) => i >= 0);
 

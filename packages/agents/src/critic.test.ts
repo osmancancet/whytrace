@@ -87,6 +87,7 @@ describe("Critic — spray-noise detection", () => {
     status: "LIKELY", sql_ids: ["aaaaaaaaaaaa"], row_refs: ["aaaaaaaaaaaa#0"], attack: ["T1110.003", "T1078"], confidence: 0.85,
     kind: "password_spray", entity_ids: [`account:idp:${upn}`, `ip:net:${ip}`],
     facts: { upn, ip, accounts: 60, failures: 65, first_ts: "2026-10-05 09:00:00.0", last_ts: "2026-10-14 17:00:00.0" },
+    dq_flags: [],
   });
 
   /** Build a fixture that puts N distinct MFA-completed sign-ins on a single IP
@@ -141,6 +142,7 @@ describe("Critic — spray-noise detection", () => {
       status: "LIKELY", sql_ids: ["aaaaaaaaaaaa"], row_refs: ["aaaaaaaaaaaa#0"], attack: ["T1110.003", "T1078"], confidence: 0.85,
       kind: "password_spray", entity_ids: ["account:idp:m.aslan@aegean.edu", "ip:net:91.240.118.5"],
       facts: { upn: "m.aslan@aegean.edu", ip: "91.240.118.5", accounts: 20, failures: 20, first_ts: "2026-10-18 02:00:00.0", last_ts: "2026-10-18 02:19:00.0" },
+      dq_flags: [],
     };
     const c = await critique(z, [f]);
     expect(c.rejected).toEqual([]);

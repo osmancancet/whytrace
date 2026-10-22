@@ -146,6 +146,7 @@ export async function runSprayMarkovian(deps: SprayMarkovianDeps, input: SprayMa
       kind: "spray_roster",
       entity_ids: [`account:idp:${input.upn}`, `ip:net:${input.ip}`],
       facts: { ip: input.ip, victims: victims.join(","), unique_victims: victims.length, windows: windows.length, token_label: run.tokenLabel, measured_tokens_total: measuredTokensIn + measuredTokensOut, model_calls: modelCalls },
+      dq_flags: [],
     });
   }
 
