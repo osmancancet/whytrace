@@ -1,0 +1,31 @@
+{
+  "run_id": "mvju3h00_fd7c324c5a",
+  "case_id": "case-004",
+  "verdict": "monitor",
+  "confidence": 0.6,
+  "summary": "B0 rules-only baseline: MONITOR. sign-in from new ASN(s): SprayNet AS",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "trace_id": "mvju3h00_fd7c324c5a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvju3h00_fd7c324c5a/trace.jsonl",
+  "execution_time_seconds": 1.867
+}

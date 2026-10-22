@@ -1,0 +1,173 @@
+{
+  "run_id": "mvjsppj5_81e33a4309",
+  "case_id": "case-006",
+  "verdict": "escalate",
+  "confidence": 0.6,
+  "summary": "Case-006 (b.cetin@aegean.edu): Escalate, confidence 0.6. Single verified signal F1 [LIKELY 0.6]: first-time sign-in from unseen device PH-9900 for account normally using LT-6002 (ATT&CK T1078). Password-spray claims from 78.187.4.44 and 193.140.10.17 were rejected; both IPs belong to shared-NAT ASN Turkcell with 72/72 and 61/61 failures respectively, consistent with background noise. Risk Gate escalates per evidence policy despite degraded model step proposing monitor.",
+  "timeline": [
+    {
+      "ts": "2026-10-18 07:15:00.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    },
+    {
+      "ts": "2026-10-18 07:15:30.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c5ff277c6a7c",
+        "f16a68d09869"
+      ],
+      "row_refs": [
+        "c5ff277c6a7c#0",
+        "c5ff277c6a7c#1"
+      ],
+      "attack": [
+        "T1078"
+      ],
+      "confidence": 0.6,
+      "kind": "new_device",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "device:cmdb:PH-9900"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "device_id": "PH-9900",
+        "usual_device": "LT-6002"
+      }
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 78.187.4.44 failed against 67 accounts (72 failures) and later signed in as this user",
+      "reason": "critic: 78.187.4.44 belongs to shared-NAT ASN \"Turkcell\" (72/72 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Password spray then success: 193.140.10.17 failed against 56 accounts (61 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.17 belongs to shared-NAT ASN \"Turkcell\" (61/61 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Verify ownership and authorization of device PH-9900 with the account holder",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review authentication and sign-in logs for PH-9900 and LT-6002 around the event",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Force password reset and MFA re-enrollment for b.cetin@aegean.edu",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Inspect for concurrent or subsequent sessions and lateral movement from this account",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Only unconfirmed signal is F1; model step was degraded; verdict driven by evidence policy rather than model confidence.",
+    "Escalation reason: a model step was degraded",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "User travel calendar, EDR endpoint telemetry, device asset inventory for PH-9900/LT-6002, physical access logs, MFA enrollment history"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 9,
+      "invalid": 0,
+      "scope": "account:b.cetin@aegean.edu",
+      "sql_id": "28cac7197bdc"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 9,
+      "invalid": 0,
+      "scope": "account:b.cetin@aegean.edu",
+      "sql_id": "956a4ceb7f8c"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "PH-9900 is registered to the user but unmanaged (phone) — worth watching, not proof of takeover",
+      "check_sql_id": "f16a68d09869"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "78.187.4.44 belongs to shared-NAT ASN \"Turkcell\" (72/72 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "bd9207530673"
+    },
+    {
+      "finding_id": "F3",
+      "status": "rejected",
+      "reason": "193.140.10.17 belongs to shared-NAT ASN \"Turkcell\" (61/61 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "1daeb359f00b"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "monitor",
+    "confidence": 0.6,
+    "rationale": "The only verified finding is F1: a sign-in from a previously unseen device PH-9900 (usual device LT-6002), LIKELY 0.6, mapped to T1078. The two password-spray-then-success claims from 78.187.4.44 and 193.140.10.17 were rejected with valid critics—both IPs belong to shared-NAT ASN Turkcell, and the high failure counts across many accounts are consistent with background noise rather than a coordinated spray. With no confirmed account takeover chain and the stronger intrusion claims explained away, the remaining new-device sign-in is a weak unexplained signal appropriate for monitoring rather than containment or escalation.",
+    "escalate_reasons": [
+      "a model step was degraded",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 13,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_czq78ag5"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_233t0699"
+    }
+  ],
+  "trace_id": "mvjsppj5_81e33a4309",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjsppj5_81e33a4309/trace.jsonl",
+  "execution_time_seconds": 99.743
+}

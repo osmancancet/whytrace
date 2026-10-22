@@ -1,0 +1,106 @@
+{
+  "run_id": "mvjt9pct_22a839d218",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "Case case-005 (e.oz@aegean.edu) assessed as benign (confidence 0.75). Risk Gate rejected both claims: alleged password spray from 193.140.10.9 (shared Turkcell NAT; 71 failures across 68 accounts treated as background noise) and an OWA forwarding rule to internal e.oz.archive@aegean.edu (not exfiltration). No verified findings or compromise signals survived; no F-IDs remain for citation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Inbox forwarding rule to e.oz.archive@aegean.edu (created via owa)",
+      "reason": "critic: forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Review authentication logs for 193.140.10.9 and compare failed sign-in patterns against baseline shared-NAT traffic before escalating.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit OWA inbox rules for e.oz@aegean.edu and confirm all forwarding targets remain internal @aegean.edu addresses.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document that sign-ins from shared-NAT ASNs are expected noise; adjust alert thresholds accordingly.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "model opinion unavailable (provider error); deterministic policy stood in, confidence lowered by 0.1.",
+    "- Assessment limited to available log sources; no endpoint telemetry was reviewed.\n- Confidence reflects absence of surviving signals, not proof of no activity.\n- Only the two rejected claims were evaluated; broader account history was not re-scanned."
+  ],
+  "not_checked": [
+    "- User travel calendar and physical location at sign-in time.\n- EDR / endpoint detection alerts for the user's devices.\n- MFA registration status and conditional access policies for e.oz@aegean.edu.\n- DNS/proxy logs and full mailbox audit history beyond the flagged forwarding rule."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "8953faaec17a"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "599c5f87ebc6"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "193.140.10.9 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "35ec5ce5bfb1"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration",
+      "check_sql_id": "01cd2ab399e9"
+    }
+  ],
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "no compromise signal survived the Critic (2 claim(s) rejected with explanations)",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 10,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_c0ibdzbw"
+    }
+  ],
+  "trace_id": "mvjt9pct_22a839d218",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjt9pct_22a839d218/trace.jsonl",
+  "execution_time_seconds": 201.905
+}

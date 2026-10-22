@@ -1,0 +1,89 @@
+{
+  "run_id": "mvjtv7pi_dbc9c88f67",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "BENIGN @ 0.75 (deterministic summary). 0 confirmed signal(s). Techniques: none. Reasons: no compromise signal survived the Critic (2 claim(s) rejected with explanations).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Inbox forwarding rule to e.oz.archive@aegean.edu (created via owa)",
+      "reason": "critic: forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Close as benign. Keep the signal in the baseline for 30 days.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "model opinion unavailable (provider error); deterministic policy stood in, confidence lowered by 0.1.",
+    "Reporter model unavailable; deterministic summary built from findings."
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "8953faaec17a"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "599c5f87ebc6"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "193.140.10.9 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "35ec5ce5bfb1"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration",
+      "check_sql_id": "01cd2ab399e9"
+    }
+  ],
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "no compromise signal survived the Critic (2 claim(s) rejected with explanations)",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 10,
+    "model_calls": 3
+  },
+  "models": [],
+  "trace_id": "mvjtv7pi_dbc9c88f67",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjtv7pi_dbc9c88f67/trace.jsonl",
+  "execution_time_seconds": 156.312
+}

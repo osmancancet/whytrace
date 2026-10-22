@@ -1,0 +1,31 @@
+{
+  "run_id": "mvju3lmy_eed4c2b11c",
+  "case_id": "case-003",
+  "verdict": "monitor",
+  "confidence": 0.6,
+  "summary": "B0 rules-only baseline: MONITOR. sign-in from new ASN(s): Cloudvault VPS",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "trace_id": "mvju3lmy_eed4c2b11c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvju3lmy_eed4c2b11c/trace.jsonl",
+  "execution_time_seconds": 0.377
+}
