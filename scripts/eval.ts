@@ -43,7 +43,13 @@ async function main() {
   const runs = Number(arg("runs", "3"));
   const cases = arg("cases", listDemoCases().map((c) => c.id).join(",")).split(",");
   const variants: Variant[] = [{ id: "A0", label: "full system" }];
-  if (process.argv.includes("--ablations")) variants.push({ id: "A1", label: "no Critic re-query", ablate: { critic: false } }, { id: "A2", label: "no DQ signal", ablate: { dq: false } });
+  if (process.argv.includes("--ablations")) variants.push(
+    { id: "A1", label: "no Critic re-query", ablate: { critic: false } },
+    { id: "A2", label: "no DQ signal", ablate: { dq: false } },
+    { id: "A4", label: "single agent (no Critic, no DQ, no memory)", ablate: { critic: false, dq: false, memory: false } },
+  );
+  const ablationDir = resolvePath("output_examples", "ablations");
+  mkdirSync(ablationDir, { recursive: true });
   const rawDir = resolvePath("evidence", "eval_raw");
   mkdirSync(rawDir, { recursive: true });
   const rows: Row[] = [];
@@ -56,6 +62,11 @@ async function main() {
       const memory = new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-eval-hmem-")) });
       const r = await one(caseId, v, memory);
       writeFileSync(join(rawDir, `${v.id}-${caseId}-${run}-${r.run_id}.json`), JSON.stringify(r, null, 2));
+      // The rejection demo: A1 / A4 outputs where the evidence contract dropped claims become
+      // showcase artifacts for judges — the Critic / validator catches what a bare agent misses.
+      if ((v.id === "A1" || v.id === "A4") && r.rejected_claims.some((c) => /^validator:/.test(c.reason))) {
+        writeFileSync(join(ablationDir, `${v.id}-${caseId}-${run}-${r.run_id}.json`), JSON.stringify(r, null, 2));
+      }
       rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: r.verdict, ok: r.verdict === expected, confidence: r.confidence, rounds: r.rounds, sql: r.budget?.sql_calls ?? 0, model: r.budget?.model_calls ?? 0, seconds: r.execution_time_seconds, rejected: r.rejected_claims.length, run_id: r.run_id });
       console.log(`${v.id} run ${run} ${caseId}: ${r.verdict} (expected ${expected}) ${r.execution_time_seconds.toFixed(1)} s`);
     } catch (err) {

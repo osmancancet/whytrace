@@ -207,8 +207,11 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     if (budget.timeUp()) break;
   }
 
-  // ---- Markovian long sweep over spray failures (only when the Investigator saw a password-spray signal)
-  const spraySignal = findings.find((f) => f.kind === "password_spray");
+  // ---- Markovian long sweep over spray failures
+  // Only fires when the Investigator saw a *strong* password-spray signal — many
+  // victims (≥15) and a bounded time window — so the sweep is a feature of the
+  // case, not noise from background failures on a shared campus IP.
+  const spraySignal = findings.find((f) => f.kind === "password_spray" && Number(f.facts?.accounts ?? 0) >= 15);
   if (spraySignal && budget.canSql() && budget.canModel()) {
     const ip = String(spraySignal.facts?.ip ?? "");
     const firstTs = String(spraySignal.facts?.first_ts ?? "");

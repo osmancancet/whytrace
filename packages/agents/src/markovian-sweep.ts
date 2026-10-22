@@ -34,21 +34,25 @@ export type SprayMarkovianResult = {
   findings: FindingT[];
 };
 
-/** Split [firstTs, lastTs] into evenly-sized windows. Clamps to ≥1 window and ≤maxWindows. */
-export function buildWindows(firstTs: string, lastTs: string, maxWindows = 24): SprayWindow[] {
+/** Split [firstTs, lastTs] into evenly-sized windows. Clamps to ≥1 window and ≤maxWindows.
+ *  Spans longer than 2 h collapse to the final 2 h — a credential spray attack burns through
+ *  its victim list fast; long tails are background noise and would stretch the sweep. */
+export function buildWindows(firstTs: string, lastTs: string, maxWindows = 10): SprayWindow[] {
   const start = toMs(firstTs);
   const end = toMs(lastTs);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
     return [{ from: firstTs, to: new Date(Number.isFinite(start) ? start + 60_000 : Date.now()).toISOString() }];
   }
+  const MAX_SPAN_MS = 2 * 60 * 60_000;
+  const spanStart = end - start > MAX_SPAN_MS ? end - MAX_SPAN_MS : start;
+  const totalMs = end - spanStart;
   // One window every ~2 minutes, capped at maxWindows and ≥ 2 windows for a sweep.
-  const totalMs = end - start;
   const target = Math.min(maxWindows, Math.max(2, Math.ceil(totalMs / (2 * 60_000))));
   const step = Math.ceil(totalMs / target);
   const out: SprayWindow[] = [];
   for (let i = 0; i < target; i++) {
-    const from = new Date(start + i * step).toISOString();
-    const to = new Date(Math.min(end + 1_000, start + (i + 1) * step)).toISOString();
+    const from = new Date(spanStart + i * step).toISOString();
+    const to = new Date(Math.min(end + 1_000, spanStart + (i + 1) * step)).toISOString();
     out.push({ from, to });
   }
   return out;

@@ -1,0 +1,73 @@
+{
+  "run_id": "mvjlg4hl_8a24309fba",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "ESCALATE: only unconfirmed signal(s): F1.",
+  "timeline": [],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "634be95e5da2"
+      ],
+      "row_refs": [
+        "634be95e5da2#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:e.oz@aegean.edu",
+        "ip:net:193.140.10.9"
+      ],
+      "facts": {
+        "upn": "e.oz@aegean.edu",
+        "ip": "193.140.10.9",
+        "accounts": 68,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:31:00.0",
+        "last_ts": "2026-10-14 14:30:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Reporter model unavailable; summary generated from findings.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 0
+  },
+  "critic_verdicts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "only unconfirmed signal(s): F1",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 13,
+    "model_calls": 3
+  },
+  "models": [],
+  "trace_id": "mvjlg4hl_8a24309fba",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjlg4hl_8a24309fba/trace.jsonl",
+  "execution_time_seconds": 188.725
+}

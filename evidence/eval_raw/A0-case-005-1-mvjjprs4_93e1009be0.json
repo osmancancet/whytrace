@@ -1,0 +1,100 @@
+{
+  "run_id": "mvjjprs4_93e1009be0",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.85,
+  "summary": "ESCALATE: partial chain: 1 abuse + 1 access signal(s), not enough to contain.",
+  "timeline": [],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "634be95e5da2",
+        "4b5c45421caf"
+      ],
+      "row_refs": [
+        "634be95e5da2#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:e.oz@aegean.edu",
+        "ip:net:193.140.10.9"
+      ],
+      "facts": {
+        "upn": "e.oz@aegean.edu",
+        "ip": "193.140.10.9",
+        "accounts": 68,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:31:00.0",
+        "last_ts": "2026-10-14 14:30:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Reporter model unavailable; summary generated from findings.",
+    "Escalation reason: a model step was degraded",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "8953faaec17a"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "599c5f87ebc6"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 0
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "193.140.10.9: failures against 68 accounts and 8 success as e.oz@aegean.edu",
+      "check_sql_id": "4b5c45421caf"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.85,
+    "rationale": "partial chain: 1 abuse + 1 access signal(s), not enough to contain",
+    "escalate_reasons": [
+      "a model step was degraded",
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 18,
+    "model_calls": 3
+  },
+  "models": [],
+  "trace_id": "mvjjprs4_93e1009be0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjjprs4_93e1009be0/trace.jsonl",
+  "execution_time_seconds": 189.572
+}

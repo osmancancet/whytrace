@@ -29,8 +29,8 @@ export function fixtureTables(): Tables {
   for (let d = 1; d <= 6; d++) s({ ts: `2026-10-0${d}T10:00:00Z`, upn: "s.demir@aegean.edu", result: "success", ip: "193.140.10.60", asn_org: "Turkcell", country: "TR", city: "Manisa", app: "portal" });
   s({ ts: "2026-10-17T21:31:00Z", upn: "s.demir@aegean.edu", result: "mfa_approved", ip: "45.142.10.9", asn_org: "Cloudvault VPS", country: "DE", city: "Frankfurt", via_vpn_appliance: "vpn-edge-01", app: "portal", mfa_prompt_count: 1 });
   for (let i = 0; i < 3; i++) s({ ts: `2026-10-17T21:${32 + i * 5}:00Z`, upn: "s.demir@aegean.edu", result: "success", ip: "45.142.10.9", asn_org: "Cloudvault VPS", country: "DE", city: "Frankfurt", via_vpn_appliance: "vpn-edge-01", app: "portal" });
-  // case-004 spray: 14 accounts, then success for m.aslan
-  for (let i = 0; i < 14; i++) s({ ts: `2026-10-18T02:${String(i).padStart(2, "0")}:00Z`, upn: `user${i}@aegean.edu`, result: "failure", ip: "91.240.118.5", asn_org: "Sprayhost", country: "RU", city: "Moscow" });
+  // case-004 spray: 20 accounts, then success for m.aslan
+  for (let i = 0; i < 20; i++) s({ ts: `2026-10-18T02:${String(i).padStart(2, "0")}:00Z`, upn: `user${i}@aegean.edu`, result: "failure", ip: "91.240.118.5", asn_org: "Sprayhost", country: "RU", city: "Moscow" });
   for (let d = 1; d <= 6; d++) s({ ts: `2026-10-0${d}T09:00:00Z`, upn: "m.aslan@aegean.edu", result: "success", ip: "193.140.10.70", asn_org: "Turkcell", country: "TR", city: "Manisa", device_id: "LT-5500", app: "portal" });
   s({ ts: "2026-10-18T02:21:00Z", upn: "m.aslan@aegean.edu", result: "success", ip: "91.240.118.5", asn_org: "Sprayhost", country: "RU", city: "Moscow", app: "portal" });
   // case-005
@@ -65,7 +65,7 @@ export function fixtureTables(): Tables {
     { session_id: "vpn-s-01", upn: "s.demir@aegean.edu", ts_start: T("2026-10-17T21:30:00Z"), ts_end: T("2026-10-17T22:15:00Z"), appliance_id: "vpn-edge-01", client_ip: "45.142.10.9", assigned_ip: "10.20.9.9" },
     ...Array.from({ length: 12 }, (_, i) => ({ session_id: `vpn-skew-${i}`, upn: "s.demir@aegean.edu", ts_start: T(`2026-10-1${5 + (i % 3)}T21:${String(10 + i).padStart(2, "0")}:00Z`), ts_end: T(`2026-10-1${5 + (i % 3)}T20:${String(10 + i).padStart(2, "0")}:00Z`), appliance_id: "vpn-edge-01", client_ip: "45.142.10.9", assigned_ip: `10.20.9.${10 + i}` })),
   ];
-  const identity: Row[] = ["d.yilmaz", "prof.kaya", "s.demir", "m.aslan", "e.oz", "b.cetin", ...Array.from({ length: 14 }, (_, i) => `user${i}`)].map((u) => ({ upn: `${u}@aegean.edu` }));
+  const identity: Row[] = ["d.yilmaz", "prof.kaya", "s.demir", "m.aslan", "e.oz", "b.cetin", ...Array.from({ length: 20 }, (_, i) => `user${i}`)].map((u) => ({ upn: `${u}@aegean.edu` }));
   return { signin_event: signin, mail_event: mail, device, vulnerability, vpn_session: vpn, identity };
 }
 
