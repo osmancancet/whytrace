@@ -139,6 +139,11 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       }
       const a = rows.find((x) => x.event_id === f.facts.from_event);
       const b = rows.find((x) => x.event_id === f.facts.to_event);
+      // Both ids unresolvable → the claim cites events that do not exist in
+      // this run's identity feed. Treat as fabricated and reject (adversarial
+      // planted-claim test, DAY3 step 2). A single missing id is still a
+      // partial-evidence case → needs_more.
+      if (!a && !b) return { status: "rejected", reason: `impossible-travel claim cites events ${f.facts.from_event} / ${f.facts.to_event} that are not in the signin feed`, sql_id };
       if (!a || !b) return { status: "needs_more", reason: "could not re-read both sign-in events", sql_id };
       const reasons: string[] = [];
       if (raw && NON_INTERACTIVE_UA.test(String(a.user_agent ?? ""))) reasons.push(`the ${a.country} event is a non-interactive mail-sync token (${a.user_agent}), not the person`);
