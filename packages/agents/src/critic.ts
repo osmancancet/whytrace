@@ -263,7 +263,7 @@ export function rubric(p: { approved: FindingT[]; rejected: number; verdict: str
   const confirmed = p.approved.filter((f) => f.status === "CONFIRMED").length;
   const total = p.approved.length + p.rejected;
   const accuracy = p.approved.length === 0 ? (total === 0 ? 2 : 3) : Math.round(3 * (confirmed + 0.5 * (p.approved.length - confirmed)) / Math.max(1, p.approved.length));
-  const severe = p.approved.some((f) => f.status === "CONFIRMED" && ["T1621", "T1114.003", "T1213"].some((t) => f.attack.includes(t)));
+  const severe = p.approved.some((f) => f.status === "CONFIRMED" && (["T1621", "T1114.003", "T1213"].some((t) => f.attack.includes(t)) || f.kind === "password_spray"));
   let appropriateness = 3;
   if (p.verdict === "contain" && !severe) appropriateness = 1;
   if (p.verdict === "benign" && severe) appropriateness = 0;

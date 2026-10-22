@@ -1,0 +1,136 @@
+{
+  "run_id": "mvjur4qi_f25f750440",
+  "case_id": "case-003",
+  "verdict": "escalate",
+  "confidence": 0.5,
+  "summary": "ESCALATE @ 0.50 (deterministic summary). 1 confirmed signal(s) [F1]. Techniques: T1133, T1190. Reasons: sign-in path touches an exposed asset (F1); evidence conflict: DQ vpn_session_order failing for appliance:vpn-edge-01; signals of compromise without a confirmed abuse chain; a model step was degraded. DQ invalid in vpn_session/vpn_session_order.",
+  "timeline": [],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H-infra",
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "24f361a8665e",
+        "c476be540d02"
+      ],
+      "row_refs": [
+        "24f361a8665e#0",
+        "24f361a8665e#1",
+        "24f361a8665e#2",
+        "24f361a8665e#3",
+        "24f361a8665e#4"
+      ],
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "confidence": 0.49,
+      "kind": "kev_exposure",
+      "entity_ids": [
+        "account:idp:s.demir@aegean.edu",
+        "device:cmdb:vpn-edge-01"
+      ],
+      "facts": {
+        "upn": "s.demir@aegean.edu",
+        "appliance_id": "vpn-edge-01",
+        "firmware": "22.7R2.3",
+        "cves": "CVE-2026-104935,CVE-2025-22457,CVE-2025-0282,CVE-2024-21893,CVE-2023-46805,CVE-2024-21887,CVE-2020-3433,CVE-2020-3153,CVE-2020-8218,CVE-2021-22893,CVE-2020-8243,CVE-2021-22900,CVE-2021-22894,CVE-2020-8260,CVE-2021-22899,CVE-2019-11510,CVE-2019-11539"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Investigate DQ invalid rows: vpn_session/vpn_session_order@appliance:vpn-edge-01.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "F1 rests on vpn_session rows where DQ rule vpn_session_order fails for appliance:vpn-edge-01 (12 invalid) — confidence × 0.7.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "model opinion unavailable (provider error); deterministic policy was not confident enough to stand alone.",
+    "Reporter model unavailable; deterministic summary built from findings.",
+    "Escalation reason: evidence conflict: DQ vpn_session_order failing for appliance:vpn-edge-01",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:s.demir@aegean.edu",
+      "sql_id": "d2423c66baca"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:s.demir@aegean.edu",
+      "sql_id": "5724ef1c022e"
+    },
+    {
+      "table": "vpn_session",
+      "rule": "vpn_session_order",
+      "valid": 1,
+      "invalid": 12,
+      "scope": "appliance:vpn-edge-01",
+      "sql_id": "7663def5e66e"
+    }
+  ],
+  "memory_used": [
+    "Rejected claim pattern (case-002): \"VPN appliance vpn-edge-02 (firmware 22.7R2.8) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)\" was wrong because firmware 22.7R2.8 already includes the fixes for the KEV entries we can version-check (CVE-2025-22457, CVE-2025-0282). Verdict: escalate.",
+    "Rejected claim pattern (case-002): \"VPN appliance vpn-edge-02 (firmware 22.7R2.8) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)\" was wrong because firmware 22.7R2.8 already includes the fixes for the KEV entries we can version-check (CVE-2025-22457, CVE-2025-0282). Verdict: benign.",
+    "Rejected claim pattern (case-002): \"VPN appliance vpn-edge-02 (firmware 22.7R2.8) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)\" was wrong because firmware 22.7R2.8 already includes the fixes for the KEV entries we can version-check (CVE-2025-22457, CVE-2025-0282). Verdict: benign."
+  ],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "firmware 22.7R2.3 is below the fix for CVE-2025-22457, CVE-2025-0282 (KEV, ransomware use: Known)",
+      "check_sql_id": "c476be540d02"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.5,
+    "rationale": "sign-in path touches an exposed asset (F1)",
+    "escalate_reasons": [
+      "evidence conflict: DQ vpn_session_order failing for appliance:vpn-edge-01",
+      "signals of compromise without a confirmed abuse chain",
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 2,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 4
+  },
+  "models": [],
+  "trace_id": "mvjur4qi_f25f750440",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjur4qi_f25f750440/trace.jsonl",
+  "execution_time_seconds": 0.01
+}

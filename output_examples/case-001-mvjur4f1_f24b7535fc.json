@@ -1,0 +1,279 @@
+{
+  "run_id": "mvjur4f1_f24b7535fc",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.75,
+  "summary": "CONTAIN @ 0.75 (deterministic summary). 4 confirmed signal(s) [F1, F2, F3, F5]. Techniques: T1566.002, T1213, T1078.004, T1114.003. Reasons: 2 confirmed post-auth abuse signal(s) + 2 confirmed access signal(s).",
+  "timeline": [
+    {
+      "ts": "2026-10-14 06:12:00.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "F5 Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "sql_id": "c31c680010e8"
+    },
+    {
+      "ts": "2026-10-14 07:37:25.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:38:36.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 11:34:00.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "873b7220b21c",
+        "d95bc458bb86"
+      ],
+      "row_refs": [
+        "873b7220b21c#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "sender_domain": "aegean-edu.co",
+        "ts": "2026-10-14 06:12:00.0"
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84a920bc05ca",
+        "6cdc5b0812dc"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#7",
+        "84a920bc05ca#8",
+        "84a920bc05ca#9",
+        "84a920bc05ca#10"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85,
+      "kind": "bulk_sis",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "185.220.101.7",
+        "events": 38
+      }
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Manisa in 234 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84a920bc05ca",
+        "8c4ee4962ceb"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#5"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "from_event": "evt_000047",
+        "to_event": "evt_000072",
+        "from_country": "NL",
+        "to_country": "TR",
+        "minutes": 234
+      }
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "c31c680010e8",
+        "5c1b4e5e432d"
+      ],
+      "row_refs": [
+        "c31c680010e8#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "target": "d.yilmaz.payroll@gmail.com",
+        "via": "api",
+        "event_id": "r:rule-001",
+        "ts": "2026-10-14 07:03:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.44 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Revoke active sessions and reset the password for the affected UPN.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Remove suspicious inbox rules and quarantine the delivered phishing message.",
+      "attack": [
+        "T1566.002",
+        "T1114.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit downstream SharePoint/OneDrive access from the attacker ASN.",
+      "attack": [
+        "T1213"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "earlier model step was degraded; deterministic policy stood in on a complete chain, confidence lowered by 0.1.",
+    "Reporter model unavailable; deterministic summary built from findings."
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:d.yilmaz@aegean.edu",
+      "sql_id": "e0da83110e88"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:d.yilmaz@aegean.edu",
+      "sql_id": "7d3087750c8c"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for aegean-edu.co",
+      "check_sql_id": "d95bc458bb86"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "38 SIS successes from 185.220.101.7",
+      "check_sql_id": "6cdc5b0812dc"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "both events are interactive and 234 min apart",
+      "check_sql_id": "8c4ee4962ceb"
+    },
+    {
+      "finding_id": "F4",
+      "status": "rejected",
+      "reason": "193.140.10.44 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "79ef8970bb0d"
+    },
+    {
+      "finding_id": "F5",
+      "status": "approved",
+      "reason": "forwards outside the university to d.yilmaz.payroll@gmail.com (created via api)",
+      "check_sql_id": "5c1b4e5e432d"
+    }
+  ],
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "model_decision": "contain",
+    "confidence": 0.75,
+    "rationale": "Verified evidence forms a confirmed account takeover chain: phishing lure from lookalike domain aegean-edu.co (F1) delivered to d.yilmaz@aegean.edu; followed by anomalous bulk SIS access (38 events in 60 min from 185.220.101.7, F2) and impossible travel Amsterdam→Manisa (F3) consistent with remote use of compromised credentials; and persistence/exfiltration via an API-created inbox forwarding rule to d.yilmaz.payroll@gmail.com (F5). The rejected password-spray claim is attributed to shared-NAT background noise and does not weaken the chain. All four key indicators are confirmed with 0.7–0.85 confidence and map to an initial-access → credential-use → persistence/exfiltration sequence.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 13,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_3n4oafx5"
+    }
+  ],
+  "trace_id": "mvjur4f1_f24b7535fc",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjur4f1_f24b7535fc/trace.jsonl",
+  "execution_time_seconds": 0.011
+}
