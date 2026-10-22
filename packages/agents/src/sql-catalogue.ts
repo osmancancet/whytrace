@@ -2,6 +2,9 @@
 // which the Investigator passes through the Zetaris adapter.
 // The USL namespace is fixed to `lightning.metastore.whytrace.security_usl`.
 export const USL = "lightning.metastore.whytrace.security_usl";
+// Home ISPs + campus egress seen in the 60-day baseline of every seeded account.
+export const BASELINE_ASNS = ["Turkcell", "TTNET", "Superonline", "AS-AEGEAN-EDU"];
+export const HOME_DOMAIN = "aegean.edu";
 
 export type QueryName =
   | "signins_for"
@@ -15,7 +18,8 @@ export type QueryName =
   | "vpn_sessions_for"
   | "peer_baseline"
   | "dq_signin_bad_vpn_order"
-  | "signin_count_by_country";
+  | "signin_count_by_country"
+  | "spray_source_for";
 
 export type SqlCatalogueEntry = { sql: string; description: string };
 
@@ -34,7 +38,7 @@ export function queryFor(name: QueryName, params: Record<string, string | number
     case "new_asn":
       return {
         description: "sign-ins from ASNs the UPN has not seen in the baseline",
-        sql: `SELECT ts, asn_org, country, ip, result FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND asn_org NOT IN ('Turkcell','TTNET','Superonline') ORDER BY ts`,
+        sql: `SELECT ts, asn_org, country, ip, result, device_id, via_vpn_appliance FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND asn_org NOT IN (${BASELINE_ASNS.map((a) => `'${a}'`).join(",")}) ORDER BY ts`,
       };
     case "mail_chain":
       return {
@@ -76,6 +80,11 @@ export function queryFor(name: QueryName, params: Record<string, string | number
         description: "VPN sessions where ts_end < ts_start (clock skew DQ defect)",
         sql: `SELECT session_id, upn, appliance_id, ts_start, ts_end FROM ${USL}.vpn_session WHERE ts_end IS NOT NULL AND ts_end < ts_start`,
       };
+    case "spray_source_for":
+      return {
+        description: "failed sign-ins across many accounts from the IPs this UPN later signed in from",
+        sql: `SELECT s.ip, COUNT(DISTINCT s.upn) AS accounts, COUNT(*) AS failures, MIN(s.ts) AS first_ts, MAX(s.ts) AS last_ts FROM ${USL}.signin_event s WHERE s.result = 'failure' AND s.ip IN (SELECT ip FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND result = 'success') GROUP BY s.ip ORDER BY accounts DESC`,
+      };
     case "signin_count_by_country":
       return {
         description: "sign-in distribution by country for a UPN",
@@ -97,11 +106,12 @@ export function listCatalogue(): Array<{ name: QueryName; description: string; p
     { name: "vpn_sessions_for", description: "VPN sessions for a UPN", params: ["upn"] },
     { name: "peer_baseline", description: "department sign-in baseline", params: ["department"] },
     { name: "signin_count_by_country", description: "sign-in counts by country", params: ["upn"] },
+    { name: "spray_source_for", description: "password-spray sources behind this UPN's successful sign-ins", params: ["upn"] },
     { name: "dq_signin_bad_vpn_order", description: "VPN sessions with ts_end < ts_start", params: [] },
   ];
 }
 
-function esc(v: string | number | null | undefined): string {
+export function esc(v: string | number | null | undefined): string {
   if (v === null || v === undefined) return "";
   const s = String(v);
   return s.replace(/'/g, "''");

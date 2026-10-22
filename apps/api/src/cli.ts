@@ -1,10 +1,10 @@
-// `npm run investigate -- case-001`
+// `npm run investigate -- case-001 [--no-memory]`
 // Loads env, runs the orchestrator against a demo case, writes the report to
 // output_examples/<case>-<run_id>.json and prints a human-friendly summary.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 import { Nightshift, RunTrace, Zetaris } from "@whytrace/adapters";
-import { investigate, listDemoCases } from "@whytrace/agents";
+import { CaseMemory, investigate, listDemoCases } from "@whytrace/agents";
 
 function loadDotenv() {
   const path = resolvePath(process.cwd(), ".env");
@@ -36,7 +36,8 @@ async function main() {
   const nightshift = new Nightshift({ trace });
   console.log(`run_id = ${trace.run_id}`);
   await nightshift.warmUp();
-  const report = await investigate({ caseId, trace, zetaris, nightshift });
+  const memory = process.argv.includes("--no-memory") ? null : new CaseMemory({ persistDir: resolvePath(process.cwd(), "logs", "hmem") });
+  const report = await investigate({ caseId, trace, zetaris, nightshift, memory });
   const outDir = resolvePath(process.cwd(), "output_examples");
   mkdirSync(outDir, { recursive: true });
   const outPath = resolvePath(outDir, `${caseId}-${trace.run_id}.json`);
@@ -52,6 +53,15 @@ async function main() {
     console.log("findings:");
     for (const f of report.findings) console.log(`  - [${f.status}] ${f.claim}  sql_id=${f.sql_ids.join(",")}  confidence=${f.confidence}`);
   }
+  if (report.rejected_claims.length) {
+    console.log("rejected claims:");
+    for (const r of report.rejected_claims) console.log(`  - ${r.claim}\n      ↳ ${r.reason}`);
+  }
+  if (report.risk) console.log(`risk gate:  policy=${report.risk.policy_decision} model=${report.risk.model_decision ?? "n/a"} → ${report.risk.decision}${report.risk.escalate_reasons.length ? `  (${report.risk.escalate_reasons.join("; ")})` : ""}`);
+  if (report.critic_score) console.log(`critic:     accuracy=${report.critic_score.accuracy} appropriateness=${report.critic_score.appropriateness} actionability=${report.critic_score.actionability}`);
+  if (report.dq.some((d) => d.invalid > 0)) console.log(`dq:         ${report.dq.filter((d) => d.invalid > 0).map((d) => `${d.rule}@${d.scope} invalid=${d.invalid}`).join("; ")}`);
+  if (report.memory_used.length) console.log(`memory:     ${report.memory_used.length} lesson(s) recalled`);
+  console.log(`budget:     ${report.rounds} round(s), ${report.budget?.sql_calls ?? "?"} SQL, ${report.budget?.model_calls ?? "?"} model calls`);
   console.log(`report → ${outPath}`);
   console.log(`trace  → ${trace.files().trace}`);
   console.log(`queries→ ${trace.files().queries}`);
