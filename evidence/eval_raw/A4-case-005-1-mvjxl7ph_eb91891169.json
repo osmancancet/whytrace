@@ -1,0 +1,119 @@
+{
+  "run_id": "mvjxl7ph_eb91891169",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "ESCALATE @ 0.70 (deterministic summary). 0 confirmed signal(s). Techniques: T1110.003, T1078, T1114.003. Reasons: only unconfirmed signal(s): F1,F2; a model step was degraded.",
+  "timeline": [
+    {
+      "ts": "2026-10-16 11:00:00.0",
+      "event": "F2 Inbox forwarding rule to e.oz.archive@aegean.edu (created via owa)",
+      "sql_id": "8e214bc04dcd"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "634be95e5da2"
+      ],
+      "row_refs": [
+        "634be95e5da2#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:e.oz@aegean.edu",
+        "ip:net:193.140.10.9"
+      ],
+      "facts": {
+        "upn": "e.oz@aegean.edu",
+        "ip": "193.140.10.9",
+        "accounts": 68,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:31:00.0",
+        "last_ts": "2026-10-14 14:30:00.0"
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to e.oz.archive@aegean.edu (created via owa)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "8e214bc04dcd"
+      ],
+      "row_refs": [
+        "8e214bc04dcd#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:e.oz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "e.oz@aegean.edu",
+        "target": "e.oz.archive@aegean.edu",
+        "via": "owa",
+        "event_id": "r:rule-005",
+        "ts": "2026-10-16 11:00:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1110.003",
+        "T1078",
+        "T1114.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "confidence": 0.7,
+    "rationale": "only unconfirmed signal(s): F1,F2",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 8,
+    "model_calls": 3
+  },
+  "models": [],
+  "trace_id": "mvjxl7ph_eb91891169",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjxl7ph_eb91891169/trace.jsonl",
+  "execution_time_seconds": 592.277
+}

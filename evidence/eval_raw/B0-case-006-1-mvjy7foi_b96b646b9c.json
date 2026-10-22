@@ -1,0 +1,31 @@
+{
+  "run_id": "mvjy7foi_b96b646b9c",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "B0 rules-only baseline: BENIGN. no sign-in / mail rule triggered.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "trace_id": "mvjy7foi_b96b646b9c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjy7foi_b96b646b9c/trace.jsonl",
+  "execution_time_seconds": 0.388
+}

@@ -1,4 +1,4 @@
-# WhyTrace evaluation — 2026-10-22T17:48:47.767Z
+# WhyTrace evaluation — 2026-10-22T19:43:14.421Z
 
 Live runs against the local Zetaris USL and Meterless Nightshift (Nemotron lanes). Raw reports: `evidence/eval_raw/`.
 
@@ -8,64 +8,79 @@ Terminal status: `format_miss`. 1 probe attempt(s):
 
 | # | ts | status | routed_model | detail |
 |---|---|---|---|---|
-| 1 | 2026-10-22T16:47:48.391Z | format_miss | nvidia/nemotron-3.5-super-vl-120b-a12b | provider responded with prose (0 chars) instead of invoking submit_probe |
+| 1 | 2026-10-22T18:06:45.970Z | format_miss | nvidia/nemotron-3.5-super-vl-120b-a12b | provider responded with prose (0 chars) instead of invoking submit_probe |
 
 ## A0 — full system
 
-Judged 12/18 ok · infra_unavailable 0/18 · false contain 0 · false benign 0 · degraded runs 18/18 · provider_failures 13 · median time 190.4 s
+Judged 4/6 ok · infra_unavailable 0/6 · false contain 0 · false benign 0 · degraded runs 6/6 · provider_failures 1 · median time 70.4 s
 
 | case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| case-001 | contain | 1 | contain | ✅ | 0.75 | 1 | 13 | 3 | 264.9 | 1 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjry9pk_77e86ef404 |
-| case-002 | benign | 1 | benign | ✅ | 0.85 | 2 | 18 | 4 | 371.5 | 3 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjs3y4x_8bd4e7e9e2 |
-| case-003 | escalate | 1 | escalate | ✅ | 0.5 | 2 | 11 | 4 | 113.6 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b, nemotron-3.5-lightning-30b-a3b | mvjsbwt8_63806c21b5 |
-| case-004 | contain | 1 | escalate | ❌ | 0.85 | 1 | 22 | 13 | 179.8 | 0 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjsechk_0330b8008d |
-| case-005 | benign | 1 | benign | ✅ | 0.75 | 1 | 10 | 3 | 350.3 | 2 | yes | 2 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjsi78l_750f0cf31f |
-| case-006 | monitor | 1 | escalate | ❌ | 0.6 | 1 | 13 | 3 | 99.7 | 2 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjsppj5_81e33a4309 |
-| case-001 | contain | 2 | contain | ✅ | 0.75 | 1 | 13 | 3 | 113.1 | 1 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjsrui0_640f9c37aa |
-| case-002 | benign | 2 | benign | ✅ | 0.75 | 2 | 15 | 4 | 215.9 | 3 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjsu9qy_0fcd21f93e |
-| case-003 | escalate | 2 | escalate | ✅ | 0.51 | 2 | 18 | 4 | 313.8 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjsywbb_578f9a8047 |
-| case-004 | contain | 2 | escalate | ❌ | 0.85 | 1 | 22 | 13 | 190.4 | 0 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjt5mgz_5472ac0a81 |
-| case-005 | benign | 2 | benign | ✅ | 0.75 | 1 | 10 | 3 | 201.9 | 2 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjt9pct_22a839d218 |
-| case-006 | monitor | 2 | escalate | ❌ | 0.7 | 1 | 13 | 3 | 159.5 | 2 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjte15g_cfde2dece1 |
-| case-001 | contain | 3 | contain | ✅ | 0.75 | 1 | 13 | 3 | 44.6 | 1 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjthg9j_5de0ba8a2f |
-| case-002 | benign | 3 | benign | ✅ | 0.75 | 2 | 15 | 4 | 149.8 | 3 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjtieq7_2f0f27ba89 |
-| case-003 | escalate | 3 | escalate | ✅ | 0.5 | 2 | 11 | 4 | 3.8 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjtlmcq_fccf404ae9 |
-| case-004 | contain | 3 | escalate | ❌ | 0.85 | 1 | 25 | 13 | 443.8 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjtlp9x_d92d7137b7 |
-| case-005 | benign | 3 | benign | ✅ | 0.75 | 1 | 10 | 3 | 156.3 | 2 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjtv7pi_dbc9c88f67 |
-| case-006 | monitor | 3 | escalate | ❌ | 0.7 | 1 | 13 | 3 | 227.1 | 2 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjtykbq_fc53e39562 |
+| case-001 | contain | 1 | contain | ✅ | 0.75 | 1 | 13 | 3 | 70.4 | 1 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjurt91_f3c72a68db |
+| case-002 | benign | 1 | benign | ✅ | 0.75 | 2 | 15 | 4 | 4.3 | 3 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjutbmi_1fad0d67a8 |
+| case-003 | escalate | 1 | escalate | ✅ | 0.5 | 2 | 11 | 4 | 4.2 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjutewu_29eafda9c4 |
+| case-004 | contain | 1 | escalate | ❌ | 0.75 | 1 | 22 | 13 | 45.2 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjuti5y_7e6ba95684 |
+| case-005 | benign | 1 | benign | ✅ | 0.75 | 1 | 10 | 3 | 197.2 | 2 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjuuh2t_41d0969ead |
+| case-006 | monitor | 1 | escalate | ❌ | 0.7 | 1 | 13 | 3 | 76.6 | 2 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjuyp97_c803181f2c |
+
+## A1 — no Critic re-query
+
+Judged 1/6 ok · infra_unavailable 0/6 · false contain 0 · false benign 0 · degraded runs 6/6 · provider_failures 4 · median time 484.2 s
+
+| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| case-001 | contain | 1 | escalate | ❌ | 0.6 | 1 | 16 | 13 | 224.7 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjv0cd3_b512a22998 |
+| case-002 | benign | 1 | escalate | ❌ | 0.6 | 2 | 18 | 13 | 558.2 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b, nemotron-3.5-lightning-30b-a3b | mvjv55s1_4807dec61c |
+| case-003 | escalate | 1 | escalate | ✅ | 0.4 | 2 | 8 | 4 | 108.9 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjvh4gp_fb773860e9 |
+| case-004 | contain | 1 | escalate | ❌ | 0.6 | 1 | 16 | 13 | 112.5 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjvjggx_40e874ac96 |
+| case-005 | benign | 1 | escalate | ❌ | 0.7 | 1 | 9 | 6 | 484.2 | 0 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjvlvbd_7f4f0bea5d |
+| case-006 | monitor | 1 | escalate | ❌ | 0.7 | 1 | 16 | 13 | 578.2 | 0 | yes | 2 | nemotron-3.5-super-vl-120b-a12b | mvjvw8xh_bd00d78c79 |
+
+## A2 — no DQ signal
+
+Judged 4/6 ok · infra_unavailable 0/6 · false contain 0 · false benign 0 · degraded runs 6/6 · provider_failures 1 · median time 200.6 s
+
+| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| case-001 | contain | 1 | contain | ✅ | 0.75 | 1 | 11 | 3 | 315.7 | 1 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjw8n34_e9f17f74ce |
+| case-002 | benign | 1 | benign | ✅ | 0.75 | 2 | 12 | 4 | 5.3 | 3 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjwfeoy_2c4c537fec |
+| case-003 | escalate | 1 | escalate | ✅ | 0.7 | 2 | 8 | 4 | 243.7 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjwfir5_a34664e17b |
+| case-004 | contain | 1 | escalate | ❌ | 0.75 | 1 | 20 | 13 | 6.4 | 0 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjwkqtv_7858a7f6c3 |
+| case-005 | benign | 1 | benign | ✅ | 0.75 | 1 | 8 | 3 | 200.6 | 2 | yes | 1 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjwkvrd_c14d27ac64 |
+| case-006 | monitor | 1 | escalate | ❌ | 0.7 | 1 | 11 | 3 | 5.1 | 2 | yes | 0 | nemotron-3.5-super-vl-120b-a12b | mvjwp6k2_f00f270cdd |
+
+## A4 — single agent (no Critic, no DQ, no memory)
+
+Judged 1/6 ok · infra_unavailable 0/6 · false contain 0 · false benign 0 · degraded runs 6/6 · provider_failures 10 · median time 439.1 s
+
+| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| case-001 | contain | 1 | escalate | ❌ | 0.6 | 1 | 14 | 13 | 361.1 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjwpagk_506cb9b809 |
+| case-002 | benign | 1 | escalate | ❌ | 0.7 | 2 | 15 | 13 | 438.9 | 0 | yes | 2 | nemotron-3.5-super-vl-120b-a12b, nemotron-3.5-lightning-30b-a3b | mvjwx14e_bf8316cf8a |
+| case-003 | escalate | 1 | escalate | ✅ | 0.7 | 2 | 5 | 4 | 440.8 | 0 | yes | 2 | nemotron-3.5-super-vl-120b-a12b | mvjx6frl_9289e54f50 |
+| case-004 | contain | 1 | escalate | ❌ | 0.7 | 1 | 14 | 13 | 248.6 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjxfvw5_bbfdc1abff |
+| case-005 | benign | 1 | escalate | ❌ | 0.7 | 1 | 8 | 3 | 592.3 | 0 | yes | 3 | nemotron-3.5-lightning-30b-a3b, nemotron-3.5-super-vl-120b-a12b | mvjxl7ph_eb91891169 |
+| case-006 | monitor | 1 | escalate | ❌ | 0.6 | 1 | 14 | 13 | 439.1 | 0 | yes | 1 | nemotron-3.5-super-vl-120b-a12b | mvjxxwpx_7a828aa771 |
 
 ## B0 — rules-only baseline (Entra-style thresholds)
 
-Judged 6/18 ok · infra_unavailable 0/18 · false contain 3 · false benign 3 · degraded runs 0/18 · provider_failures 0 · median time 0.4 s
+Judged 2/6 ok · infra_unavailable 0/6 · false contain 1 · false benign 1 · degraded runs 0/6 · provider_failures 0 · median time 0.6 s
 
 | case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | degraded | provider_failures | routed_models | run_id |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| case-001 | contain | 1 | contain | ✅ | 0.8 | 0 | 2 | 0 | 1.0 | 0 | no | 0 | - | mvju3fk2_50f90df975 |
-| case-002 | benign | 1 | contain | ❌ | 0.8 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3gc7_ba93fdb04e |
-| case-003 | escalate | 1 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3gnq_13bf0f792f |
-| case-004 | contain | 1 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 1.9 | 0 | no | 0 | - | mvju3h00_fd7c324c5a |
-| case-005 | benign | 1 | benign | ✅ | 0.75 | 0 | 2 | 0 | 0.8 | 0 | no | 0 | - | mvju3ify_2b70605e0f |
-| case-006 | monitor | 1 | benign | ❌ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3j12_1802a72802 |
-| case-001 | contain | 2 | contain | ✅ | 0.8 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3jc2_1eb18ecce3 |
-| case-002 | benign | 2 | contain | ❌ | 0.8 | 0 | 2 | 0 | 0.3 | 0 | no | 0 | - | mvju3jme_93719482b3 |
-| case-003 | escalate | 2 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3jvt_96fa13b09c |
-| case-004 | contain | 2 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.3 | 0 | no | 0 | - | mvju3k5o_d084a95558 |
-| case-005 | benign | 2 | benign | ✅ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3kf2_00cd13a06c |
-| case-006 | monitor | 2 | benign | ❌ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3krf_be6c761d99 |
-| case-001 | contain | 3 | contain | ✅ | 0.8 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3l38_89db12557b |
-| case-002 | benign | 3 | contain | ❌ | 0.8 | 0 | 2 | 0 | 0.3 | 0 | no | 0 | - | mvju3ldp_52b7793a9f |
-| case-003 | escalate | 3 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3lmy_eed4c2b11c |
-| case-004 | contain | 3 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.3 | 0 | no | 0 | - | mvju3lxf_cd3550310e |
-| case-005 | benign | 3 | benign | ✅ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvju3m70_d1bf4f4d5d |
-| case-006 | monitor | 3 | benign | ❌ | 0.75 | 0 | 2 | 0 | 0.3 | 0 | no | 0 | - | mvju3mh3_9489fd568e |
+| case-001 | contain | 1 | contain | ✅ | 0.8 | 0 | 2 | 0 | 1.6 | 0 | no | 0 | - | mvjy7bk2_98b40fec31 |
+| case-002 | benign | 1 | contain | ❌ | 0.8 | 0 | 2 | 0 | 2.3 | 0 | no | 0 | - | mvjy7cs4_66f34c145f |
+| case-003 | escalate | 1 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.6 | 0 | no | 0 | - | mvjy7ek3_457828156d |
+| case-004 | contain | 1 | monitor | ❌ | 0.6 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvjy7f0g_db21c0fd03 |
+| case-005 | benign | 1 | benign | ✅ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvjy7fcv_3f8f91a02c |
+| case-006 | monitor | 1 | benign | ❌ | 0.75 | 0 | 2 | 0 | 0.4 | 0 | no | 0 | - | mvjy7foi_b96b646b9c |
 
 ## A3 — memory cold vs warm (case-003)
 
 | memory | verdict | lessons recalled | rounds | SQL | model | s |
 |---|---|---|---|---|---|---|
-| cold | escalate | 0 | 2 | 11 | 4 | 4.2 |
-| warm | escalate | 1 | 2 | 11 | 4 | 4.7 |
+| cold | escalate | 0 | 2 | 11 | 4 | 5.0 |
+| warm | escalate | 1 | 2 | 11 | 4 | 6.1 |
 
 ## Why rules-only (B0) is not enough
 

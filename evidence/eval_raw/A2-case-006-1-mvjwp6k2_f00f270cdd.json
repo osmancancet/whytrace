@@ -1,0 +1,123 @@
+{
+  "run_id": "mvjwp6k2_f00f270cdd",
+  "case_id": "case-006",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "ESCALATE @ 0.70 (deterministic summary). 0 confirmed signal(s). Techniques: T1078. Reasons: only unconfirmed signal(s): F1; a model step was degraded.",
+  "timeline": [
+    {
+      "ts": "2026-10-18 07:15:00.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    },
+    {
+      "ts": "2026-10-18 07:15:30.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c5ff277c6a7c",
+        "f16a68d09869"
+      ],
+      "row_refs": [
+        "c5ff277c6a7c#0",
+        "c5ff277c6a7c#1"
+      ],
+      "attack": [
+        "T1078"
+      ],
+      "confidence": 0.6,
+      "kind": "new_device",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "device:cmdb:PH-9900"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "device_id": "PH-9900",
+        "usual_device": "LT-6002"
+      }
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 78.187.4.44 failed against 67 accounts (72 failures) and later signed in as this user",
+      "reason": "critic: 78.187.4.44 belongs to shared-NAT ASN \"Turkcell\" (72/72 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Password spray then success: 193.140.10.17 failed against 56 accounts (61 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.17 belongs to shared-NAT ASN \"Turkcell\" (61/61 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "model opinion unavailable (provider error); deterministic policy was not confident enough to stand alone.",
+    "Reporter model unavailable; deterministic summary built from findings.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "PH-9900 is registered to the user but unmanaged (phone) — worth watching, not proof of takeover",
+      "check_sql_id": "f16a68d09869"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "78.187.4.44 belongs to shared-NAT ASN \"Turkcell\" (72/72 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "bd9207530673"
+    },
+    {
+      "finding_id": "F3",
+      "status": "rejected",
+      "reason": "193.140.10.17 belongs to shared-NAT ASN \"Turkcell\" (61/61 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "1daeb359f00b"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "confidence": 0.7,
+    "rationale": "only unconfirmed signal(s): F1",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 3
+  },
+  "models": [],
+  "trace_id": "mvjwp6k2_f00f270cdd",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjwp6k2_f00f270cdd/trace.jsonl",
+  "execution_time_seconds": 5.051
+}

@@ -1,0 +1,246 @@
+{
+  "run_id": "mvjwpagk_506cb9b809",
+  "case_id": "case-001",
+  "verdict": "escalate",
+  "confidence": 0.6,
+  "summary": "ESCALATE @ 0.60 (deterministic summary). 0 confirmed signal(s). Techniques: T1566.002, T1213, T1078.004, T1110.003, T1078, T1114.003. Reasons: only unconfirmed signal(s): F1,F2,F3,F4,F5; a model step was degraded; model proposed contain, evidence policy says escalate.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 06:12:00.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "F5 Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "sql_id": "c31c680010e8"
+    },
+    {
+      "ts": "2026-10-14 07:37:25.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:38:36.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 11:34:00.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "873b7220b21c"
+      ],
+      "row_refs": [
+        "873b7220b21c#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "sender_domain": "aegean-edu.co",
+        "ts": "2026-10-14 06:12:00.0"
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84a920bc05ca"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#7",
+        "84a920bc05ca#8",
+        "84a920bc05ca#9",
+        "84a920bc05ca#10"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85,
+      "kind": "bulk_sis",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "185.220.101.7",
+        "events": 38
+      }
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Manisa in 234 min",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84a920bc05ca"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#5"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "from_event": "evt_000047",
+        "to_event": "evt_000072",
+        "from_country": "NL",
+        "to_country": "TR",
+        "minutes": 234
+      }
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "87d3e67f95c6"
+      ],
+      "row_refs": [
+        "87d3e67f95c6#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:193.140.10.44"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "193.140.10.44",
+        "accounts": 66,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:17:00.0",
+        "last_ts": "2026-10-13 14:14:00.0"
+      }
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c31c680010e8"
+      ],
+      "row_refs": [
+        "c31c680010e8#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "target": "d.yilmaz.payroll@gmail.com",
+        "via": "api",
+        "event_id": "r:rule-001",
+        "ts": "2026-10-14 07:03:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1566.002",
+        "T1213",
+        "T1078.004",
+        "T1110.003",
+        "T1078",
+        "T1114.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Reporter model unavailable; deterministic summary built from findings.",
+    "Escalation reason: a model step was degraded",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "contain",
+    "confidence": 0.6,
+    "rationale": "Verified evidence forms a coherent confirmed account takeover chain: phishing email delivered (T1566.002), password spray against 66 accounts culminating in successful sign-in as the user (T1110.003/T1078), impossible travel consistent with remote credential use (T1078.004), adversary-created inbox forwarding rule to an external Gmail (T1114.003), and bulk SIS access within 60 minutes from an unrelated IP (T1213). All signals reinforce each other with no rejected claims or data-quality conflicts. This meets the contain criteria rather than monitor (weak signal), benign (explained away), or escalate (conflicting/insufficient).",
+    "escalate_reasons": [
+      "a model step was degraded",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 14,
+    "model_calls": 13
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_v2b5bzqq"
+    }
+  ],
+  "trace_id": "mvjwpagk_506cb9b809",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjwpagk_506cb9b809/trace.jsonl",
+  "execution_time_seconds": 361.126
+}
