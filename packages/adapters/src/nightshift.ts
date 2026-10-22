@@ -54,6 +54,12 @@ export type NightshiftResponse = {
 export type NightshiftOptions = {
   baseUrl?: string;
   token?: string;
+  /** Explicit source label when `token` is provided — used so the adapter knows
+   *  whether to try the proxy-token file on 401. Defaults to "explicit". */
+  tokenSource?: "env" | "proxy-token-file" | "explicit";
+  /** Optional override that returns the current proxy-token file contents. Lets
+   *  tests inject a value without touching the real filesystem. */
+  readProxyToken?: () => string;
   app?: string;
   deepModel?: string;
   fastModel?: string;
@@ -86,7 +92,9 @@ const DEFAULT_MAX_TOKENS = 2000;
 
 export class Nightshift {
   private readonly baseUrl: string;
-  private readonly token: string;
+  private token: string;
+  private tokenSource: "env" | "proxy-token-file" | "explicit" | "none";
+  private proxyTokenRefreshed = false;
   private readonly app: string;
   private readonly deepModel: string;
   private readonly fastModel: string;
@@ -99,10 +107,13 @@ export class Nightshift {
   private readonly concurrency: number;
   private inflight = 0;
   private readonly wait: Array<() => void> = [];
+  private readonly readProxyToken: () => string;
 
   constructor(opts: NightshiftOptions = {}) {
     this.baseUrl = (opts.baseUrl ?? process.env.METERLESS_BASE_URL ?? "http://127.0.0.1:8088/v1").replace(/\/+$/, "");
-    this.token = opts.token ?? readRuntimeToken();
+    this.readProxyToken = opts.readProxyToken ?? readProxyTokenFile;
+    if (opts.token) { this.token = opts.token; this.tokenSource = opts.tokenSource ?? "explicit"; }
+    else { const t = resolveRuntimeToken(); this.token = t.token; this.tokenSource = t.source; }
     this.app = opts.app ?? process.env.METERLESS_APP ?? "whytrace";
     this.deepModel = opts.deepModel ?? process.env.MODEL_DEEP ?? "meterless/auto";
     this.fastModel = opts.fastModel ?? process.env.MODEL_FAST ?? "meterless/fast";
@@ -112,8 +123,13 @@ export class Nightshift {
     this.sampleMode = opts.sampleMode ?? process.env.SAMPLE_MODE === "true";
     this.sampleDir = opts.sampleDir ?? resolvePath(process.cwd(), "data", "sample", "nightshift");
     this.trace = opts.trace;
-    this.concurrency = opts.concurrency ?? 2;
+    // Serialise upstream traffic by default: concurrent deep calls through the same
+    // Nightshift proxy are a frequent cause of 502/_empty_response under provider load.
+    this.concurrency = opts.concurrency ?? 1;
   }
+
+  /** Which token source is currently in use. */
+  getTokenSource(): "env" | "proxy-token-file" | "explicit" | "none" { return this.tokenSource; }
 
   async testConnection(): Promise<"online" | "unauthorized" | "offline"> {
     try {
@@ -232,8 +248,20 @@ export class Nightshift {
     const tool: NightshiftTool = { type: "function", function: { name: opts.toolName, description: opts.description, parameters: opts.schema } };
     const resp = await this.chat({ messages: opts.messages, lane: opts.lane ?? "deep", tools: [tool], toolChoice: { type: "function", function: { name: opts.toolName } }, maxTokens: opts.maxTokens, agent: opts.agent });
     const call = resp.toolCalls.find((c) => c.name === opts.toolName);
-    if (!call) throw new Error(`Nightshift tool call "${opts.toolName}" missing from response`);
-    const value = opts.parse(call.arguments);
+    let args: Record<string, unknown> | undefined = call?.arguments;
+    if (!args) {
+      // The upstream model sometimes returns prose instead of a tool call even when
+      // tool_choice is forced. Try to extract a JSON object from the text — if it
+      // parses, treat it as the tool call. This recovers a large class of transient
+      // provider failures without silently changing behaviour.
+      const extracted = extractJsonObject(resp.text);
+      if (extracted) {
+        this.trace?.emit({ agent: opts.agent ?? "model", action: "tool_call_recovered_from_text", lane: resp.lane, status: "ok", output_summary: `recovered ${opts.toolName} from text (${resp.text.length} chars)` });
+        args = extracted;
+      }
+    }
+    if (!args) throw new Error(`Nightshift tool call "${opts.toolName}" missing from response`);
+    const value = opts.parse(args);
     return { value, receipt: resp.receipt, model: resp.model, latencyMs: resp.latencyMs, retryCount: resp.retryCount, raw: resp };
   }
 
@@ -261,12 +289,27 @@ export class Nightshift {
       if (args.temperature !== undefined) body.temperature = args.temperature;
       if (args.tools?.length) body.tools = args.tools;
       if (args.toolChoice) body.tool_choice = args.toolChoice;
-      const res = await this.fetchFn(`${this.baseUrl}/chat/completions`, {
+      const doFetch = async () => this.fetchFn(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { ...this.baseHeaders(true), "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal,
       });
+      let res = await doFetch();
+      // Token source fallback: if the ENV-sourced token is rejected (401/403) and
+      // we have not tried the proxy-token file yet in this process, re-read it and
+      // retry once with the fresh value. Explicit tokens are not auto-refreshed —
+      // the caller is in charge there. We never log or print the token itself.
+      if ((res.status === 401 || res.status === 403) && !this.proxyTokenRefreshed && this.tokenSource === "env") {
+        const refresh = this.readProxyToken();
+        this.proxyTokenRefreshed = true;
+        if (refresh && refresh !== this.token) {
+          this.token = refresh;
+          this.tokenSource = "proxy-token-file";
+          this.trace?.emit({ agent: "nightshift", action: "token_refresh", status: "ok", output_summary: `env token rejected (${res.status}); switched to proxy-token-file` });
+          res = await doFetch();
+        }
+      }
       const bodyText = await res.text();
       if (!res.ok) {
         let detail = bodyText;
@@ -337,8 +380,22 @@ export class Nightshift {
 }
 
 function readRuntimeToken(): string {
+  return resolveRuntimeToken().token;
+}
+
+/** Resolve the Nightshift runtime token and remember the source so operators and
+ *  judges can see where it came from in the trace (env variable or the
+ *  Nightshift-installed proxy-token file). The token value itself is never
+ *  logged or persisted outside this process. */
+export function resolveRuntimeToken(): { token: string; source: "env" | "proxy-token-file" | "none" } {
   const envToken = process.env.METERLESS_RUNTIME_TOKEN;
-  if (envToken && envToken.trim() && envToken !== "rt-local") return envToken.trim();
+  if (envToken && envToken.trim() && envToken !== "rt-local") return { token: envToken.trim(), source: "env" };
+  const proxy = readProxyTokenFile();
+  if (proxy) return { token: proxy, source: "proxy-token-file" };
+  return { token: "", source: "none" };
+}
+
+function readProxyTokenFile(): string {
   const candidates = [
     resolvePath(homedir(), "Library", "Application Support", "ai.meterless.runtime", "proxy-token"),
     resolvePath(homedir(), ".config", "ai.meterless.runtime", "proxy-token"),
@@ -352,6 +409,38 @@ function readRuntimeToken(): string {
     } catch { /* ignore */ }
   }
   return "";
+}
+
+/** Extract the first balanced JSON object from a text blob. Used to recover a
+ *  tool call when the upstream model returns prose containing JSON instead of
+ *  invoking the forced tool. Returns the parsed object or undefined. */
+export function extractJsonObject(text: string): Record<string, unknown> | undefined {
+  if (!text) return undefined;
+  const start = text.indexOf("{");
+  if (start < 0) return undefined;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]!;
+    if (escape) { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth += 1;
+    else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        const slice = text.slice(start, i + 1);
+        try {
+          const parsed = JSON.parse(slice);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+        } catch { return undefined; }
+        return undefined;
+      }
+    }
+  }
+  return undefined;
 }
 
 function chatDigest(messages: NightshiftMessage[], tools: NightshiftTool[] | undefined, lane: "deep" | "fast"): string {
