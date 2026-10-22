@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gate, policy } from "./risk-gate.ts";
+import { canStandUnderDegrade, gate, policy } from "./risk-gate.ts";
 import type { FindingT } from "./schema.ts";
 
 let n = 0;
@@ -55,5 +55,35 @@ describe("gate", () => {
   it("the model cannot turn weak evidence into contain", () => {
     const g = gate({ decision: "monitor", confidence: 0.7, reasons: [], escalate_reasons: [] }, { decision: "contain", confidence: 0.99, rationale: "" });
     expect(g.decision).toBe("escalate");
+  });
+
+  it("the model proposing contain against a partial-chain escalate stays escalate (never contain)", () => {
+    const partial = { decision: "escalate" as const, confidence: 0.6, reasons: ["partial chain"], escalate_reasons: ["signals of compromise without a confirmed abuse chain"] };
+    const g = gate(partial, { decision: "contain", confidence: 0.95, rationale: "" });
+    expect(g.decision).toBe("escalate");
+    expect(g.escalate_reasons.join(" ")).toMatch(/model proposed contain/);
+  });
+});
+
+describe("canStandUnderDegrade", () => {
+  const base = { dqConflicts: [] as string[], checkedSources: ["signin_event", "mail_event"] };
+  it("accepts a confident, DQ-clean, source-complete non-escalate policy", () => {
+    expect(canStandUnderDegrade({ decision: "contain", confidence: 0.9, reasons: [], escalate_reasons: [] }, base)).toBe(true);
+    expect(canStandUnderDegrade({ decision: "benign", confidence: 0.85, reasons: [], escalate_reasons: [] }, base)).toBe(true);
+  });
+  it("rejects a policy that already wanted to escalate", () => {
+    expect(canStandUnderDegrade({ decision: "escalate", confidence: 0.9, reasons: [], escalate_reasons: [] }, base)).toBe(false);
+  });
+  it("rejects a policy with its own escalation reasons", () => {
+    expect(canStandUnderDegrade({ decision: "monitor", confidence: 0.9, reasons: [], escalate_reasons: ["signals of compromise without a confirmed abuse chain"] }, base)).toBe(false);
+  });
+  it("rejects when DQ conflicts exist", () => {
+    expect(canStandUnderDegrade({ decision: "contain", confidence: 0.9, reasons: [], escalate_reasons: [] }, { ...base, dqConflicts: ["x"] })).toBe(false);
+  });
+  it("rejects when a core source was not checked", () => {
+    expect(canStandUnderDegrade({ decision: "contain", confidence: 0.9, reasons: [], escalate_reasons: [] }, { ...base, checkedSources: ["signin_event"] })).toBe(false);
+  });
+  it("rejects when confidence is thin — the humility penalty would drop below 0.7", () => {
+    expect(canStandUnderDegrade({ decision: "monitor", confidence: 0.75, reasons: [], escalate_reasons: [] }, base)).toBe(false);
   });
 });

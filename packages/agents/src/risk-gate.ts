@@ -67,6 +67,21 @@ export function policy(p: PolicyInput): PolicyDecision {
   return { decision: p.degraded ? "escalate" : "benign", confidence: conf, reasons, escalate_reasons: esc };
 }
 
+/** True when the deterministic policy is confident enough that it is honest to
+ *  stand on it alone — the chain is complete (core sources checked, no DQ
+ *  conflict), the decision is itself non-escalate, and the confidence stays
+ *  above the escalate threshold after a −0.1 humility penalty. Used by the
+ *  orchestrator when a model step (planner, risk-gate, reporter) was degraded
+ *  to decide whether to honour the policy or route to a human. */
+export function canStandUnderDegrade(pol: PolicyDecision, p: { dqConflicts: string[]; checkedSources: string[] }): boolean {
+  if (pol.decision === "escalate") return false;
+  if (pol.escalate_reasons.length) return false;
+  if (p.dqConflicts.length) return false;
+  const core = ["signin_event", "mail_event"];
+  if (core.some((c) => !p.checkedSources.includes(c))) return false;
+  return pol.confidence - 0.1 >= ESCALATE_BELOW;
+}
+
 /** Combine the policy decision with the model's opinion. */
 export function gate(pol: PolicyDecision, model?: { decision: VerdictT; confidence: number; rationale: string }): { decision: VerdictT; confidence: number; escalate_reasons: string[]; agreed: boolean } {
   const escalate_reasons = [...pol.escalate_reasons];
