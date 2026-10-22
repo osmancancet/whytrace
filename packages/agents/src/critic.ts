@@ -17,17 +17,38 @@ export const VENDOR_FIXED_IN: Record<string, { product: RegExp; fixedIn: string 
   "CVE-2025-22457": { product: /connect secure/i, fixedIn: "22.7R2.6" },
 };
 
-/** ASNs we assume are shared campus / consumer-ISP NAT ranges. A single IP in
- *  one of these ASNs will see many distinct accounts fail over long windows
- *  as a *background* pattern, not a coordinated spray. The Critic uses this
- *  to reject spray claims that are really shared-NAT noise. Kept small on
- *  purpose: if a new ISP appears in production data, the operator extends it. */
-export const SHARED_NAT_ASNS = new Set(["Turkcell", "TTNET", "Superonline", "AS-AEGEAN-EDU"]);
+/** Shared-egress threshold: an IP is treated as a shared exit (campus NAT,
+ *  consumer-ISP CGNAT, mail-gateway relay) when at least this many *distinct*
+ *  UPNs completed MFA successfully from it in the prior 30 days. Those sign-ins
+ *  are the strongest evidence that the IP is not an attacker-controlled host —
+ *  real users across many accounts legitimately used it. The threshold is
+ *  intentionally conservative; the operator can tighten it in config. */
+export const SHARED_EGRESS_MFA_COMPLETED_UPNS = 10;
+/** The 30-day lookback for the shared-egress test. 30 d matches both FERPA
+ *  retention norms and the Markovian spray window; longer would drift into
+ *  rotated-DHCP noise, shorter would miss weekend/holiday patterns. */
+export const SHARED_EGRESS_LOOKBACK_DAYS = 30;
+/** @deprecated Kept for 1 release so external callers do not break. The
+ *  shared-NAT check is now data-derived via SHARED_EGRESS_MFA_COMPLETED_UPNS
+ *  (see `isSharedEgressIp()`); no ISP / org name appears in product code. */
+export const SHARED_NAT_ASNS = new Set<string>();
 /** A real password-spray burst is bounded. We consider > 24 h between first
  *  and last failure from the same source IP to be noise (shared NAT, scanner
  *  dwelling, etc.), not a coordinated attack. The value is intentionally
  *  conservative — honest noise rejection, not aggressive filtering. */
 export const SPRAY_BURST_WINDOW_HOURS = 24;
+
+/** Data-derived shared-egress test. Runs its own Zetaris query and returns
+ *  true when at least SHARED_EGRESS_MFA_COMPLETED_UPNS distinct UPNs have
+ *  mfa_approved (or `success` with mfa_prompt_count > 0 as a USL-only
+ *  fallback) results from this IP in the prior SHARED_EGRESS_LOOKBACK_DAYS.
+ *  No ISP/org name is used; the signal is "many real humans finished MFA
+ *  from this IP". Exported for the Critic + its unit tests. */
+export async function isSharedEgressIp(z: SqlRunner, ip: string): Promise<{ shared: boolean; sql_id: string; distinct_mfa_upns: number; threshold: number }> {
+  const r = await z.runSql(`SELECT COUNT(DISTINCT upn) AS n FROM ${USL}.signin_event WHERE ip = '${esc(ip)}' AND result IN ('success','mfa_approved') AND ts >= CURRENT_DATE - INTERVAL '${SHARED_EGRESS_LOOKBACK_DAYS}' DAY`);
+  const n = Number(r.rows[0]?.n ?? 0) || 0;
+  return { shared: n >= SHARED_EGRESS_MFA_COMPLETED_UPNS, sql_id: r.sql_id, distinct_mfa_upns: n, threshold: SHARED_EGRESS_MFA_COMPLETED_UPNS };
+}
 
 /** Compare Ivanti-style versions like 22.7R2.3 < 22.7R2.8. */
 export function versionLt(a: string, b: string): boolean {
@@ -155,22 +176,19 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       if (!(n(fail?.accounts) >= 10 && n(succ.rows[0]?.n) >= 1)) {
         return { status: "rejected", reason: `${ip} does not show a spray-then-success pattern on re-query`, sql_id: succ.sql_id };
       }
-      // Shared-NAT noise: campus or consumer-ISP IPs will see dozens of failed
-      // accounts over weeks because that one IP is a NAT exit for thousands of
-      // users. If every failure from this IP is on a shared-NAT ASN, this is
-      // background noise, not a spray. Checking per-IP so a single rogue IP
-      // on a campus /24 that *does* behave like a sprayer is still caught.
+      // Shared-egress noise: a single IP that already serves many distinct
+      // real users (MFA-completed sign-ins) is a campus NAT or CGNAT exit, not
+      // an attacker-controlled host. We derive this from the data itself —
+      // "N distinct UPNs finished MFA from this IP in the last 30 days" —
+      // instead of hard-coding ISP names. A single rogue host on a campus /24
+      // that *does* behave like a sprayer is still caught (it will not have
+      // that MFA-success history). The threshold lives in config, not in code.
       try {
-        const asnRows = await z.runSql(`SELECT asn_org, COUNT(*) AS n FROM ${USL}.signin_event WHERE ip = '${esc(ip)}' AND result = 'failure' GROUP BY asn_org ORDER BY n DESC`);
-        if (asnRows.rows.length) {
-          const topAsn = String(asnRows.rows[0]!.asn_org ?? "");
-          const sharedShare = asnRows.rows.filter((x) => SHARED_NAT_ASNS.has(String(x.asn_org ?? ""))).reduce((a, x) => a + n(x.n), 0);
-          const total = asnRows.rows.reduce((a, x) => a + n(x.n), 0);
-          if (total > 0 && sharedShare / total >= 0.9 && SHARED_NAT_ASNS.has(topAsn)) {
-            return { status: "rejected", reason: `${ip} belongs to shared-NAT ASN "${topAsn}" (${sharedShare}/${total} failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray`, sql_id: asnRows.sql_id };
-          }
+        const sh = await isSharedEgressIp(z, ip);
+        if (sh.shared) {
+          return { status: "rejected", reason: `${ip} looks like shared egress: ${sh.distinct_mfa_upns} distinct accounts completed MFA from this IP in the last ${SHARED_EGRESS_LOOKBACK_DAYS} days (threshold ${sh.threshold}); failures across many accounts are expected background noise, not a coordinated spray`, sql_id: sh.sql_id };
         }
-      } catch { /* if asn_org isn't selectable here, fall through to the window check */ }
+      } catch { /* if the lookback query is not supported here, fall through to the window check */ }
       // Burst-window check: a real spray clusters in time. If first→last failure
       // from this IP spans more than SPRAY_BURST_WINDOW_HOURS, treat as noise.
       try {

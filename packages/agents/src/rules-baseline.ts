@@ -8,7 +8,7 @@
 // how a cheaper tool would decide — and why it mishandles case-002 (impossible
 // travel by distance ignores the known-device + VPN explanation → false contain)
 // and case-003 (no KEV lookup → misses the escalation).
-import { queryFor, BASELINE_ASNS } from "./sql-catalogue.ts";
+import { BASELINE_LOOKBACK_DAYS, USL, esc, queryFor } from "./sql-catalogue.ts";
 import { toMs } from "./investigator.ts";
 import { Report, Verdict, type VerdictT } from "./schema.ts";
 import { RunTrace } from "@whytrace/adapters";
@@ -36,8 +36,20 @@ export async function evaluateRulesOnly(input: RulesInput): Promise<Report> {
   trace.emit({ agent: "rules_baseline", action: "start", input_summary: `${input.caseId} / ${input.upn}`, status: "ok" });
   const signinsEntry = queryFor("signins_for", { upn: input.upn });
   const mailEntry = queryFor("mail_chain", { upn: input.upn });
+  // Data-derived ASN baseline: ASNs this UPN has completed MFA from in the
+  // last BASELINE_LOOKBACK_DAYS. Replaces the former hard-coded
+  // BASELINE_ASNS list so no ISP / org name sits in product code.
+  const baselineSql = `SELECT asn_org FROM ${USL}.signin_event WHERE upn = '${esc(input.upn)}' AND result IN ('success','mfa_approved') AND ts >= CURRENT_DATE - INTERVAL '${BASELINE_LOOKBACK_DAYS}' DAY AND asn_org IS NOT NULL GROUP BY asn_org HAVING COUNT(DISTINCT CAST(ts AS DATE)) >= 2`;
   const signinRes = await input.zetaris.runSql(signinsEntry.sql, { limit: 200 });
   const mailRes = await input.zetaris.runSql(mailEntry.sql, { limit: 200 });
+  let baselineAsns = new Set<string>();
+  try {
+    const b = await input.zetaris.runSql(baselineSql, { limit: 200 });
+    baselineAsns = new Set(b.rows.map((r) => String(r.asn_org ?? "")).filter(Boolean));
+    trace.emit({ agent: "rules_baseline", action: "sql", sql_id: b.sql_id, rows: b.rows.length, status: "ok", output_summary: `baseline ASNs: ${[...baselineAsns].join(", ") || "(none)"}` });
+  } catch (err) {
+    trace.emit({ agent: "rules_baseline", action: "baseline_query", status: "degraded", output_summary: (err as Error).message.slice(0, 160) });
+  }
   trace.emit({ agent: "rules_baseline", action: "sql", sql_id: signinRes.sql_id, rows: signinRes.rows.length, status: "ok" });
   trace.emit({ agent: "rules_baseline", action: "sql", sql_id: mailRes.sql_id, rows: mailRes.rows.length, status: "ok" });
 
@@ -60,12 +72,12 @@ export async function evaluateRulesOnly(input: RulesInput): Promise<Report> {
     }
   }
 
-  // Rule 2: new ASN (not in the baseline list).
+  // Rule 2: new ASN (not in the user's own data-derived baseline).
   const newAsns = new Set<string>();
   for (const r of signins) {
     const asn = String(r.asn_org ?? "");
     if (!asn) continue;
-    if (!BASELINE_ASNS.some((b) => asn.includes(b))) newAsns.add(asn);
+    if (!baselineAsns.has(asn)) newAsns.add(asn);
   }
   if (newAsns.size) {
     reasons.push(`sign-in from new ASN(s): ${[...newAsns].slice(0, 3).join(", ")}`);

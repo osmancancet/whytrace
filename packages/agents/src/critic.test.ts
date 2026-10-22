@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { critique, rubric, SHARED_NAT_ASNS, SPRAY_BURST_WINDOW_HOURS } from "./critic.ts";
+import { critique, isSharedEgressIp, rubric, SHARED_EGRESS_LOOKBACK_DAYS, SHARED_EGRESS_MFA_COMPLETED_UPNS, SHARED_NAT_ASNS, SPRAY_BURST_WINDOW_HOURS } from "./critic.ts";
 import { deriveFindings, FindingIds } from "./investigator.ts";
 import { queryFor, type QueryName } from "./sql-catalogue.ts";
 import { FakeZetaris } from "./testing/fake-zetaris.ts";
@@ -89,7 +89,12 @@ describe("Critic — spray-noise detection", () => {
     facts: { upn, ip, accounts: 60, failures: 65, first_ts: "2026-10-05 09:00:00.0", last_ts: "2026-10-14 17:00:00.0" },
   });
 
-  function tablesWithSharedNat(upn: string, ip: string, asn: string, days: number) {
+  /** Build a fixture that puts N distinct MFA-completed sign-ins on a single IP
+   *  within the shared-egress lookback window, plus a spray-shaped success for
+   *  the alerting user. The Critic should reject the spray claim because that
+   *  IP already serves many legitimate accounts — it is shared egress, data-
+   *  derived, not from a hard-coded ISP list. */
+  function tablesWithSharedEgress(upn: string, ip: string, distinctMfaUsers: number) {
     const base = {
       signin_event: [] as Record<string, string | number | null>[],
       mail_event: [] as Record<string, string | number | null>[],
@@ -100,29 +105,36 @@ describe("Critic — spray-noise detection", () => {
     };
     let seq = 0;
     const push = (r: Record<string, string | number | null>) => { seq += 1; base.signin_event.push({ event_id: `evt_${seq}`, device_id: null, country: "TR", city: "Manisa", app: "portal", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0", ...r }); };
-    for (let d = 0; d < days; d++) {
-      for (let i = 0; i < 20; i++) push({ ts: `2026-10-${String(5 + d).padStart(2, "0")} 09:${String(i).padStart(2, "0")}:00.0`, upn: `student${d}_${i}@aegean.edu`, result: "failure", ip, asn_org: asn });
-    }
-    push({ ts: `2026-10-${String(5 + days - 1).padStart(2, "0")} 17:00:00.0`, upn, result: "success", ip, asn_org: asn, device_id: "LT-X", app: "portal" });
+    // Yesterday-ish timestamps so CURRENT_DATE - INTERVAL '30' DAY includes them.
+    const soon = (d: number, h = 9, m = 0) => new Date(Date.now() - d * 86_400_000 + h * 3_600_000 + m * 60_000).toISOString().replace("T", " ").replace("Z", ".0");
+    for (let i = 0; i < distinctMfaUsers; i++) push({ ts: soon(2, 9, i), upn: `student${i}@aegean.edu`, result: "mfa_approved", ip, asn_org: "campus-net", mfa_prompt_count: 1 });
+    // The alerting user also fails many times from the same IP; this is the pattern we are testing against.
+    for (let i = 0; i < 20; i++) push({ ts: soon(1, 2, i), upn: `student${i}@aegean.edu`, result: "failure", ip, asn_org: "campus-net" });
+    push({ ts: soon(0, 17), upn, result: "success", ip, asn_org: "campus-net", device_id: "LT-X" });
     return base;
   }
 
-  it("rejects spray claim when the source IP is on a shared-NAT ASN (campus/consumer ISP)", async () => {
-    const z = new FakeZetaris(tablesWithSharedNat("b.cetin@aegean.edu", "193.140.10.17", "AS-AEGEAN-EDU", 9));
+  it("rejects spray claim when the IP looks like shared egress (many distinct accounts completed MFA from it)", async () => {
+    // 12 ≥ SHARED_EGRESS_MFA_COMPLETED_UPNS (10 default) → data-derived shared-egress.
+    const z = new FakeZetaris(tablesWithSharedEgress("b.cetin@aegean.edu", "193.140.10.17", 12));
     const c = await critique(z, [synthFinding("b.cetin@aegean.edu", "193.140.10.17")]);
     expect(c.approved).toEqual([]);
-    expect(c.rejected[0]!.reason).toMatch(/shared-NAT ASN/);
+    expect(c.rejected[0]!.reason).toMatch(/shared egress/i);
+    expect(c.rejected[0]!.reason).toMatch(/\d+ distinct accounts completed MFA/);
+    // The reason must NOT name an ISP / org — the test guards against regressions.
+    expect(c.rejected[0]!.reason).not.toMatch(/Turkcell|TTNET|Superonline|AS-AEGEAN-EDU/);
   });
 
-  it("rejects spray claim when failures span more than the burst window — background noise, not a spray", async () => {
-    // Use a non-shared ASN so the ASN branch does not fire; the window branch should.
-    const z = new FakeZetaris(tablesWithSharedNat("x@aegean.edu", "203.0.113.9", "SomeOtherISP", 5));
-    const c = await critique(z, [synthFinding("x@aegean.edu", "203.0.113.9")]);
-    expect(c.approved).toEqual([]);
-    expect(c.rejected[0]!.reason).toMatch(/span.*h.*background noise/i);
+  it("isSharedEgressIp returns shared=false when the MFA-completed account count is below threshold", async () => {
+    const z = new FakeZetaris(tablesWithSharedEgress("x@aegean.edu", "203.0.113.9", 3));
+    const r = await isSharedEgressIp(z, "203.0.113.9");
+    expect(r.shared).toBe(false);
+    // 3 students with mfa_approved + the alerting user's later success → 4.
+    expect(r.distinct_mfa_upns).toBe(4);
+    expect(r.threshold).toBe(SHARED_EGRESS_MFA_COMPLETED_UPNS);
   });
 
-  it("approves a tight-burst spray with a bursty window from a non-shared ASN (case-004 shape)", async () => {
+  it("approves a tight-burst spray with a bursty window from a fresh non-shared IP (case-004 shape)", async () => {
     const z = new FakeZetaris();
     const f: FindingT = {
       id: "F1", hypothesis_id: "H1", claim: "Password spray then success: 91.240.118.5 failed against 20 accounts (20 failures) and later signed in as this user",
@@ -135,10 +147,11 @@ describe("Critic — spray-noise detection", () => {
     expect(c.approved[0]!.status).toBe("CONFIRMED");
   });
 
-  it("has sane constants", () => {
-    expect(SHARED_NAT_ASNS.has("Turkcell")).toBe(true);
-    expect(SHARED_NAT_ASNS.has("AS-AEGEAN-EDU")).toBe(true);
+  it("has sane constants and no ISP names in SHARED_NAT_ASNS (data-derived shared-egress replaced it)", () => {
+    expect(SHARED_NAT_ASNS.size).toBe(0);
     expect(SPRAY_BURST_WINDOW_HOURS).toBeGreaterThan(0);
+    expect(SHARED_EGRESS_LOOKBACK_DAYS).toBeGreaterThan(0);
+    expect(SHARED_EGRESS_MFA_COMPLETED_UPNS).toBeGreaterThan(0);
   });
 });
 

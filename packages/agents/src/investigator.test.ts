@@ -56,7 +56,12 @@ describe("deriveFindings", () => {
     const out = deriveFindings("signins_for", ctx("u"), rows, SID, new FindingIds());
     expect(out.find((f) => f.kind === "new_device")?.facts.device_id).toBe("PH-9");
   });
-  it("ignores baseline ASNs", () => {
-    expect(deriveFindings("new_asn", ctx("u"), [{ asn_org: "Turkcell" }], SID, new FindingIds())).toEqual([]);
+  it("ignores rows with no asn_org — SQL has already filtered to the user's data-derived baseline", () => {
+    expect(deriveFindings("new_asn", ctx("u"), [{ asn_org: null }], SID, new FindingIds())).toEqual([]);
+  });
+  it("emits a new_asn finding for any ASN that reached the Investigator (SQL filtered it)", () => {
+    const out = deriveFindings("new_asn", ctx("u"), [{ asn_org: "SomeNewProvider", country: "DE", ts: "2026-10-14T08:00:00Z" }], SID, new FindingIds());
+    expect(out).toHaveLength(1);
+    expect(out[0]!.facts.asn_org).toBe("SomeNewProvider");
   });
 });

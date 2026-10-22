@@ -2,9 +2,18 @@
 // which the Investigator passes through the Zetaris adapter.
 // The USL namespace is fixed to `lightning.metastore.whytrace.security_usl`.
 export const USL = "lightning.metastore.whytrace.security_usl";
-// Home ISPs + campus egress seen in the 60-day baseline of every seeded account.
-export const BASELINE_ASNS = ["Turkcell", "TTNET", "Superonline", "AS-AEGEAN-EDU"];
+// The user's own ASN baseline is now derived from the data — ASNs they have
+// *successfully* signed in from (with MFA) in the past N days. No ISP / org
+// name is hard-coded. `BASELINE_LOOKBACK_DAYS` is intentionally conservative:
+// shorter would miss conference / holiday patterns, longer would drift into
+// rotated-CGNAT noise. Config-tunable but not operator-tunable at run time —
+// changes go through code review so the baseline cannot be silently widened.
+export const BASELINE_LOOKBACK_DAYS = 60;
 export const HOME_DOMAIN = "aegean.edu";
+/** @deprecated Kept as an empty array for one release so external callers do
+ *  not break. The baseline is now data-derived per UPN (see `new_asn` query).
+ *  No ISP / org names appear in product code. */
+export const BASELINE_ASNS: string[] = [];
 
 export type QueryName =
   | "signins_for"
@@ -38,8 +47,15 @@ export function queryFor(name: QueryName, params: Record<string, string | number
       };
     case "new_asn":
       return {
-        description: "sign-ins from ASNs the UPN has not seen in the baseline",
-        sql: `SELECT ts, asn_org, country, ip, result, device_id, via_vpn_appliance FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND asn_org NOT IN (${BASELINE_ASNS.map((a) => `'${a}'`).join(",")}) ORDER BY ts`,
+        description: "sign-ins from ASNs the UPN has not seen on ≥ 2 distinct days in the last 60 d (data-derived baseline)",
+        // Data-derived baseline: the subquery returns the user's own historical
+        // ASN set — any ASN they have signed into successfully (with MFA) on
+        // ≥ 2 distinct calendar days in the last BASELINE_LOOKBACK_DAYS. The
+        // "distinct days" threshold stops an attacker's one-day cluster of
+        // MFA-fatigue sign-ins from accidentally becoming the baseline (which
+        // the simpler "≥ 2 events" check would allow when the compromise
+        // itself produced several successes). No ISP / org name is hard-coded.
+        sql: `SELECT ts, asn_org, country, ip, result, device_id, via_vpn_appliance FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND asn_org NOT IN (SELECT asn_org FROM ${USL}.signin_event WHERE upn = '${esc(params.upn)}' AND result IN ('success','mfa_approved') AND ts >= CURRENT_DATE - INTERVAL '${BASELINE_LOOKBACK_DAYS}' DAY AND asn_org IS NOT NULL GROUP BY asn_org HAVING COUNT(DISTINCT CAST(ts AS DATE)) >= 2) ORDER BY ts`,
       };
     case "mail_chain":
       return {

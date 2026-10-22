@@ -3,7 +3,7 @@
 // (Planner), code decides what the rows say. Every finding starts as LIKELY;
 // only the Critic's independent re-query can promote it to CONFIRMED.
 import type { FindingT } from "./schema.ts";
-import { BASELINE_ASNS, HOME_DOMAIN, type QueryName } from "./sql-catalogue.ts";
+import { HOME_DOMAIN, type QueryName } from "./sql-catalogue.ts";
 
 export type Row = Record<string, string | number | null>;
 
@@ -63,7 +63,9 @@ export function deriveFindings(
       return [];
     }
     case "new_asn": {
-      const foreign = idxOf((r) => !!str(r.asn_org) && !BASELINE_ASNS.includes(String(r.asn_org)));
+      // The SQL already filters to ASNs outside the user's data-derived
+      // baseline (see sql-catalogue.ts). We only need a null guard here.
+      const foreign = idxOf((r) => !!str(r.asn_org));
       if (!foreign.length) return [];
       const byAsn = new Map<string, number[]>();
       for (const i of foreign) { const a = String(rows[i]!.asn_org); byAsn.set(a, [...(byAsn.get(a) ?? []), i]); }

@@ -187,6 +187,34 @@ export class FakeZetaris {
       return [{ actual: new Set(rs.map((r) => r.upn)).size }];
     }
     if (sql.includes("result IN ('mfa_denied','mfa_approved')")) return pick(S.filter((r) => r.result === "mfa_denied" || r.result === "mfa_approved").sort(byTs("ts")), colsOf(sql));
+    // Data-derived shared-egress check (Critic step 0e): distinct MFA-completed
+    // UPNs from one IP within the 30-day lookback window.
+    if (sql.includes("COUNT(DISTINCT upn) AS n") && sql.includes("result IN ('success','mfa_approved')") && sql.includes("ip = '")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.ip === ip && (r.result === "success" || r.result === "mfa_approved"));
+      const n = new Set(rs.map((r) => r.upn)).size;
+      return [{ n }];
+    }
+    // Data-derived baseline for `new_asn` (B0 top-level call + nested subquery):
+    // ASNs the user has been in on ≥ 2 distinct calendar days as success /
+    // mfa_approved. The "≥ 2 distinct days" threshold mirrors the real
+    // catalogue — a single-day attacker cluster cannot become baseline, even
+    // if it produced several successful sign-ins.
+    const daysOf = (asn: string, keyUpn: string): Set<string> => {
+      const rs = t.signin_event.filter((r) => r.upn === keyUpn && (r.result === "success" || r.result === "mfa_approved") && r.asn_org === asn);
+      return new Set(rs.map((r) => String(r.ts).slice(0, 10)));
+    };
+    if (sql.includes("GROUP BY asn_org") && sql.includes("HAVING COUNT(DISTINCT") && sql.includes("result IN ('success','mfa_approved')") && sql.includes("asn_org IS NOT NULL") && !sql.includes("NOT IN")) {
+      const rs = t.signin_event.filter((r) => r.upn === upn && (r.result === "success" || r.result === "mfa_approved") && r.asn_org);
+      const asns = [...new Set(rs.map((r) => String(r.asn_org)))];
+      return asns.filter((a) => daysOf(a, upn).size >= 2).map((asn_org) => ({ asn_org }));
+    }
+    if (sql.includes("asn_org NOT IN (SELECT asn_org")) {
+      const rs = t.signin_event.filter((r) => r.upn === upn && (r.result === "success" || r.result === "mfa_approved") && r.asn_org);
+      const asns = [...new Set(rs.map((r) => String(r.asn_org)))];
+      const baseline = new Set(asns.filter((a) => daysOf(a, upn).size >= 2));
+      return pick(S.filter((r) => r.asn_org && !baseline.has(String(r.asn_org))).sort(byTs("ts")), colsOf(sql));
+    }
     if (sql.includes("asn_org NOT IN")) {
       const excl = list(/asn_org NOT IN \(([^)]*)\)/.exec(sql)![1]!);
       return pick(S.filter((r) => !excl.includes(String(r.asn_org))).sort(byTs("ts")), colsOf(sql));
