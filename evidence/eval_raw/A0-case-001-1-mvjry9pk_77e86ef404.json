@@ -1,0 +1,298 @@
+{
+  "run_id": "mvjry9pk_77e86ef404",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.75,
+  "summary": "User d.yilmaz@aegean.edu (case-001) shows confirmed compromise indicators: phishing mail from aegean-edu.co (F1), bulk SIS access from 185.220.101.7 (F2), mail forwarding to personal Gmail via API (F5), and impossible travel Amsterdam→Manisa (F3). Password-spray claim rejected due to shared-NAT noise. Risk Gate verdict: contain (0.75). Immediate containment recommended.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 06:12:00.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "F5 Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "sql_id": "c31c680010e8"
+    },
+    {
+      "ts": "2026-10-14 07:37:25.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:38:36.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F2 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 11:34:00.0",
+      "event": "F3 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "873b7220b21c",
+        "d95bc458bb86"
+      ],
+      "row_refs": [
+        "873b7220b21c#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "sender_domain": "aegean-edu.co",
+        "ts": "2026-10-14 06:12:00.0"
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84a920bc05ca",
+        "6cdc5b0812dc"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#7",
+        "84a920bc05ca#8",
+        "84a920bc05ca#9",
+        "84a920bc05ca#10"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85,
+      "kind": "bulk_sis",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "185.220.101.7",
+        "events": 38
+      }
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Manisa in 234 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84a920bc05ca",
+        "8c4ee4962ceb"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#5"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "from_event": "evt_000047",
+        "to_event": "evt_000072",
+        "from_country": "NL",
+        "to_country": "TR",
+        "minutes": 234
+      }
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "c31c680010e8",
+        "5c1b4e5e432d"
+      ],
+      "row_refs": [
+        "c31c680010e8#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "target": "d.yilmaz.payroll@gmail.com",
+        "via": "api",
+        "event_id": "r:rule-001",
+        "ts": "2026-10-14 07:03:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.44 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Disable d.yilmaz@aegean.edu account, force password reset, and revoke all active sessions/tokens.",
+      "attack": [
+        "T1078.004",
+        "T1213"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Delete inbox forwarding rule to d.yilmaz.payroll@gmail.com and audit all API-created mailbox rules.",
+      "attack": [
+        "T1114.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block 185.220.101.7 at perimeter/CASB and quarantine/block aegean-edu.co sender domain.",
+      "attack": [
+        "T1566.002",
+        "T1213"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review SIS access logs for 38 events to identify viewed/exported student records and notify data steward.",
+      "attack": [
+        "T1213"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Hunt for lateral use of d.yilmaz credentials across other cloud/SaaS applications.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "earlier model step was degraded; deterministic policy stood in on a complete chain, confidence lowered by 0.1.",
+    "- User travel calendar unavailable to confirm legitimacy of Amsterdam→Manisa movement.\n- EDR/endpoint telemetry not checked; no host-level process or artifact data reviewed.\n- MFA enrollment, device compliance, and conditional access policy state for the account unknown.\n- Full SIS query/export/download logs not reviewed beyond event count.\n- Recipient Gmail mailbox (d.yilmaz.payroll@gmail.com) compromise status not checked."
+  ],
+  "not_checked": [
+    "- Travel calendar for d.yilmaz\n- EDR alerts for hosts used by the account\n- SIS data export/download logs\n- MFA/conditional access policy state\n- Gmail recipient mailbox compromise"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:d.yilmaz@aegean.edu",
+      "sql_id": "e0da83110e88"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:d.yilmaz@aegean.edu",
+      "sql_id": "7d3087750c8c"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for aegean-edu.co",
+      "check_sql_id": "d95bc458bb86"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "38 SIS successes from 185.220.101.7",
+      "check_sql_id": "6cdc5b0812dc"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "both events are interactive and 234 min apart",
+      "check_sql_id": "8c4ee4962ceb"
+    },
+    {
+      "finding_id": "F4",
+      "status": "rejected",
+      "reason": "193.140.10.44 belongs to shared-NAT ASN \"Turkcell\" (71/71 failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "79ef8970bb0d"
+    },
+    {
+      "finding_id": "F5",
+      "status": "approved",
+      "reason": "forwards outside the university to d.yilmaz.payroll@gmail.com (created via api)",
+      "check_sql_id": "5c1b4e5e432d"
+    }
+  ],
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "model_decision": "contain",
+    "confidence": 0.75,
+    "rationale": "Confirmed account takeover chain for d.yilmaz@aegean.edu: (F1) phishing/spearphishing link delivered from typosquatting domain aegean-edu.co; (F3) valid-account login with impossible travel Amsterdam→Manisa in 234 min; (F2) bulk SIS access (38 events in 60 min from 185.220.101.7); (F5) API-created inbox forwarding rule to external d.yilmaz.payroll@gmail.com. Together these confirm initial access, credential use, data access, and persistence/exfiltration. The rejected password-spray claim (shared NAT background noise) does not undermine the confirmed chain. Meets contain criteria: confirmed ATO chain.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 13,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_8447pqi9"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_o8ku03ls"
+    }
+  ],
+  "trace_id": "mvjry9pk_77e86ef404",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjry9pk_77e86ef404/trace.jsonl",
+  "execution_time_seconds": 264.918
+}

@@ -18,7 +18,7 @@ Universities run on disconnected systems: identity in Entra, mail in a gateway, 
 
 ## Quick start
 
-Prerequisites: Docker, Node 22, [Meterless Nightshift](https://meterless.ai) installed locally (or set `SAMPLE_MODE=true` to replay recorded traces).
+Prerequisites: Docker, Node 22, [Meterless Nightshift](https://meterless.ai) installed locally (only required for the live pipeline; sample mode needs neither).
 
 ```bash
 # Clone, install, start Zetaris + Postgres + mail-gateway containers.
@@ -34,7 +34,14 @@ npm run investigate -- case-002
 npm run dev
 ```
 
-**Sample mode (no keys, no provider needed):** `SAMPLE_MODE=true npm run investigate -- case-002`. Replays recorded Zetaris and Nightshift responses from `data/sample/`.
+**Zero-dependency replay with the Docker image.** The default image boots the API in `SAMPLE_MODE=true` so a judge can run it with no keys, no local containers and no Nightshift:
+
+```bash
+docker build -t whytrace .
+docker run -p 8000:8000 whytrace     # → http://localhost:8000/healthz
+```
+
+**Shell wrapper for the CLI.** `./run <case-id> [--sample]` is a thin wrapper around `npm run investigate`; `--sample` sets `SAMPLE_MODE=true` so the adapters replay from `samples/<case>/` instead of hitting Zetaris or Nightshift. Samples are only present for cases we have deliberately recorded (see [Sample mode](#sample-mode)); a case without a `samples/<case>/` directory in a clean clone cannot replay yet.
 
 ## How a verdict is earned
 
@@ -98,9 +105,16 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 
 ## Evaluation
 
-Run `npm run eval -- --runs 3 --ablations` for the full matrix (A0 full · A1 no Critic · A2 no DQ · A3 memory cold/warm · A4 single-agent · B0 rules-only baseline), or `npm run eval -- --runs 1 --baseline` for a quick A0 + B0 sweep.
+Run `npm run eval -- --runs 3 --ablations` for the full matrix (A0 full · A1 no Critic · A2 no DQ · A3 memory cold/warm · A4 single-agent · B0 rules-only baseline), or `npm run eval -- --runs 1 --baseline` for a quick A0 + B0 sweep. The optional `--wait-healthy <minutes>` flag (default 10) controls how long the eval waits for Nightshift to come back if the health gate reports `provider_error` or `auth_error`.
 
-The script runs a health gate against Nightshift first. If the provider is unhealthy, the orchestrator rows are marked `infra_unavailable` and **not** counted against accuracy. Snapshots land in `evidence/eval_history/<ISO>.md`; the latest sweep is always at `evidence/eval.md`.
+**Classified health gate.** Before every eval run we probe Nightshift and classify the result:
+
+- `online` — the model returned a tool call (or we recovered JSON from the response text). Full A0 proceeds.
+- `format_miss` — HTTP 200 but prose instead of a tool call. The model is up; it just skipped our schema. The eval proceeds with a logged warning, because the orchestrator's `tool_call_recovered_from_text` path handles this on real prompts.
+- `provider_error` — 5xx, `_empty_response`, or timeout. A0 rows are marked `infra_unavailable` and not counted against accuracy; `B0` runs anyway.
+- `auth_error` — 401/403 after the proxy-token fallback has already run. Same treatment as `provider_error`.
+
+Every probe attempt (time, class, routed model) is written into the eval snapshot, so a judge can see exactly what the provider did during the sweep.
 
 **The latest live sweep is in `evidence/eval.md`.** The B0 baseline is a classic Entra-style rules-only system (impossible travel by centroid distance, new ASN, MFA deny burst, external forwarding rule) — the story is that WhyTrace solves cases B0 cannot (case-002 "benign faculty travel" where B0 over-contains, case-003 "KEV-vulnerable appliance" where B0 under-reacts) because of the USL cross-source join, the Critic's independent re-query, and H-MEM.
 
@@ -139,7 +153,16 @@ Every run writes to `logs/<run_id>/`:
 - `world-model-audit.jsonl` — the engine's record of every finding, hypothesis and entity.
 - `markovian.json` + `markovian-history/` — the long-sweep chunk journal.
 
-Replay a run deterministically with `SAMPLE_MODE=true`. The server exposes an SSE stream at `GET /runs/:id/stream` for the live console; the final JSON report goes to `output_examples/`.
+Replay a recorded run deterministically with `SAMPLE_MODE=true`. The server exposes an SSE stream at `GET /runs/:id/stream` for the live console; the final JSON report goes to `output_examples/`.
+
+## Sample mode
+
+Sample mode replays a *previously recorded* investigation without touching Zetaris or Nightshift. It is how a judge exercises the full agent stack from a clean clone without the local Docker setup or a Nightshift account.
+
+- **Where samples live.** Tracked under `samples/<case-id>/{zetaris,nightshift}/`. The adapters read from this directory when `SAMPLE_MODE=true` and a `caseId` is passed (both the CLI and the API do this).
+- **How to record a sample.** `npm run record -- <case-id>` runs the orchestrator end-to-end against the live stack, writes every Zetaris result and Nightshift response under `samples/<case-id>/`, and scrubs Bearer tokens, Meterless `rt-*` tokens, `/Users/<name>` paths and UUIDs before anything is written to disk. A `samples/<case-id>/provenance.json` records the originating run id, verdict, confidence and routed models.
+- **How to replay.** `SAMPLE_MODE=true npm run investigate -- <case-id>` or `./run <case-id> --sample`. The adapter reads the recorded responses from disk and the full orchestrator pipeline (planner, investigator, critic, risk gate, reporter) runs on them. The CLI banner clearly labels the run as "Replay recorded run".
+- **Guard-rail test.** `scripts/samples.test.ts` is part of the regular test suite and fails if any file in `samples/` contains a Bearer token, an `rt-*` runtime token, a `/Users/*` path or a `/home/*` path.
 
 ## Data & licences
 
@@ -151,9 +174,10 @@ Replay a run deterministically with `SAMPLE_MODE=true`. The server exposes an SS
 ## Limitations
 
 - The Critic cannot verify what Zetaris did not ingest: travel calendars, EDR process events, physical access logs. These show up in `not_checked[]`.
-- Case-005 and case-006 are "grey-area" scenarios: a weak signal plus a benign-looking context. The Critic can only verify what the queries return; richer signals (new-device + spray-vs-noise disambiguation) are future work.
+- Password-spray noise rejection is heuristic. The Critic rejects a spray claim when the source IP's failures are ≥90 % from shared-NAT ASNs (campus / consumer-ISP) or span more than 24 h. This handles case-005/006 campus-IP background noise honestly, but a determined attacker on a shared-NAT ASN who still bursts in minutes could slip through — see `packages/agents/src/critic.ts` for the exact rule and tune `SHARED_NAT_ASNS` and `SPRAY_BURST_WINDOW_HOURS` for your environment.
 - The Markovian long-sweep caps at 24 time-windowed chunks (`markovian-sweep.ts`); very long campaigns would need an extension.
 - B0 is a deliberately simple rules-only baseline; it is not meant to be competitive, only to make the "why rules alone fail" case concrete.
+- Sample mode only replays cases we have recorded. A case without a `samples/<case>/` directory on a clean clone will not run in `SAMPLE_MODE=true`; record it with `npm run record -- <case>` against a healthy stack first.
 
 ## AI disclosure
 
@@ -161,8 +185,10 @@ Runtime models are **NVIDIA Nemotron** (`nemotron-3.5-super-vl-120b-a12b` for de
 
 ## Entry points
 
-- CLI: `npm run investigate -- <case-id>`
+- CLI: `npm run investigate -- <case-id>` or `./run <case-id> [--sample]`
 - API: `npm run dev` → `POST /run`, SSE `GET /runs/:id/stream`
+- Docker: `docker build -t whytrace . && docker run -p 8000:8000 whytrace` (sample mode by default)
 - Data: `npm run services:up` + `npm run bootstrap:zetaris`
 - Conformance: `npm run conformance`
-- Evaluation: `npm run eval -- --runs 1 --baseline`
+- Evaluation: `npm run eval -- --runs 1 --baseline [--wait-healthy <minutes>]`
+- Record: `npm run record -- <case-id>` (write `samples/<case-id>/`)
