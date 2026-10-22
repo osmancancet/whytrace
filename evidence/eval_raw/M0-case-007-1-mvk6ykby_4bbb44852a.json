@@ -1,0 +1,42 @@
+{
+  "run_id": "mvk6ykby_4bbb44852a",
+  "case_id": "case-007",
+  "verdict": "monitor",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: MONITOR @ 1.00. The raw dump contains zero sign-in events and zero mail events, so there is no corroborating activity for the alert about a prompt-injection payload hidden in a mail-rule name for a.sahin@aegean.edu. No account takeover is confirmed (no anomalous sign-ins/MFA), so contain is not warranted. The signal cannot be explained as benign with no event detail. There is also no confirmed exposure (data access, mail forwarding, etc.) that would require immediate human escalation. The alert is therefore a weak, unexplained signal best handled by continued monitoring for follow-on mail-rule or sign-in activity.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_tgpq5qsp"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvk6ykby_4bbb44852a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6ykby_4bbb44852a/trace.jsonl",
+  "execution_time_seconds": 16.508
+}

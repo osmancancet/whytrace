@@ -1,0 +1,42 @@
+{
+  "run_id": "mvk6xkiv_b2ebfe7778",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.87,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.87. Multiple successful authentications for s.demir@aegean.edu (lab-admin) from a foreign Cloudvault VPS IP (45.142.10.9, Frankfurt, DE) via the explicitly vulnerable vpn-edge-01 appliance, with no device_id recorded. MFA was approved only once (21:31) and then seven subsequent portal/LMS successes occurred with zero MFA prompts over ~30 minutes, indicating session/MFA bypass after initial compromise. The rapid alternating portal/lms access pattern is consistent with automated attacker activity rather than normal admin use. This meets the threshold for confirmed account takeover: disable the account, reset credentials, re-enroll MFA, revoke all sessions, and investigate the vulnerable VPN appliance.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_b71zgw52"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvk6xkiv_b2ebfe7778",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6xkiv_b2ebfe7778/trace.jsonl",
+  "execution_time_seconds": 7.173
+}

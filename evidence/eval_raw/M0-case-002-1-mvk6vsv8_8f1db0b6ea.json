@@ -1,0 +1,42 @@
+{
+  "run_id": "mvk6vsv8_8f1db0b6ea",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: MONITOR @ 1.00. Baseline (10 events) matches the stated context: faculty abroad using known device LT-3104 via university VPN appliance vpn-edge-02 from Lisbon, Portugal (MEO), across mail and LMS, all successful with no MFA challenges. The single outlier (2026-10-15 06:40) is a direct mail login from 193.140.10.21 (Turkcell, Manisa, Turkey) with empty device_id, no VPN, and MFA prompt count 0 — a weak deviation in geolocation/ASN/auth method. It is isolated (one success, no failed logins, no MFA fatigue, no mail events indicating exfiltration), so it is not confirmed account takeover (contain). It is not fully explained by the given context either (Turkey location, missing device_id, non-VPN access are unaccounted for), so not benign. No exposure or evidence gap requiring human intervention, so not escalate. Verdict: monitor for recurrence or correlation with additional alerts.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_wuk1dpex"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvk6vsv8_8f1db0b6ea",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6vsv8_8f1db0b6ea/trace.jsonl",
+  "execution_time_seconds": 82.496
+}

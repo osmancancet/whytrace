@@ -1,0 +1,42 @@
+{
+  "run_id": "mvk6vjku_0f87bc8375",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: CONTAIN @ 1.00. Confirmed account takeover for d.yilmaz@aegean.edu. Evidence chain: (1) phishing email from typosquat domain aegean-edu.co delivered and clicked at 06:12-06:15 on 2026-10-14; (2) MFA fatigue attack from 185.220.101.7 (BulwarkHost Ltd, Amsterdam, NL) — 7 MFA denials then an approval at 06:59, followed by successful mail login from that IP with no known device; (3) immediately after, a mail forwarding rule was created via API to external address d.yilmaz.payroll@gmail.com (07:03), indicating persistence/exfiltration; (4) rapid-fire successful SIS logins from the same Amsterdam IP with no device_id and no MFA (07:34-07:39), showing access to payroll/student systems. The legitimate baseline is IP 193.140.10.44 (Turkcell, Manisa, TR) on device LT-2207. This is not explainable as benign and is more than a weak signal — compromise is confirmed. Immediate containment required: disable account, force password reset, revoke all sessions, remove the forwarding rule, and inspect mail/SIS for data access.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_hp14o2i9"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvk6vjku_0f87bc8375",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6vjku_0f87bc8375/trace.jsonl",
+  "execution_time_seconds": 12.035
+}

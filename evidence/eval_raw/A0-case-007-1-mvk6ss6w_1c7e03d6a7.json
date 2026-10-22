@@ -1,0 +1,98 @@
+{
+  "run_id": "mvk6ss6w_1c7e03d6a7",
+  "case_id": "case-007",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "Case-007 (a.sahin@aegean.edu). Risk Gate verdict: escalate (confidence 0.65). No compromise signal survived the Critic; no surviving findings and no finding IDs (F1...) available. Model proposed benign but was degraded; evidence policy mandates escalation despite absence of confirmed indicators. No rejected claims.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Review account sign-in and authentication logs for a.sahin@aegean.edu for anomalous logins",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Inspect mailbox inbox rules, forwarding rules, and delegate access for unauthorized changes",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Check recent email interactions for phishing indicators or suspicious links/attachments",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "No surviving findings to correlate; no finding IDs available for citation.",
+    "Escalation reason: a model step was degraded",
+    "Escalation reason: model proposed benign, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Travel calendar, EDR telemetry, full mailbox audit log, endpoint telemetry, VPN/remote access logs"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 0,
+      "invalid": 0,
+      "scope": "account:a.sahin@aegean.edu",
+      "sql_id": "87b5b22ff848"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 0,
+      "invalid": 0,
+      "scope": "account:a.sahin@aegean.edu",
+      "sql_id": "ea6cdc04cbb2"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.65,
+    "rationale": "Case case-007 (a.sahin@aegean.edu) has no surviving verified findings, no rejected claims, and no data-quality conflicts. There is no confirmed account takeover chain (rules out contain), no weak unexplained residual signal (rules out monitor), and no exposure or conflicting/insufficient evidence requiring human review (rules out escalate). The absence of any substantiated evidence means the case presents no confirmed risk and is assessed as benign.",
+    "escalate_reasons": [
+      "a model step was degraded",
+      "model proposed benign, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 6,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2r0b8vmt"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_qwzac14b"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 2,
+  "model_steps_total": 3,
+  "trace_id": "mvk6ss6w_1c7e03d6a7",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6ss6w_1c7e03d6a7/trace.jsonl",
+  "execution_time_seconds": 117.16
+}

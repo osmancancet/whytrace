@@ -1,0 +1,42 @@
+{
+  "run_id": "mvk6y5yr_f7e2a01469",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.78,
+  "summary": "M0 model-only verdict: BENIGN @ 0.78. New-device sign-in is the only signal. It occurred from the same IP/ASN/country/city as the established device (LT-6002), with a single MFA approval and no impossible travel, VPN appliance use, repeated MFA prompts, or mailbox events. This is consistent with a legitimate device change rather than confirmed account takeover; raw data lack user/device enrollment confirmation, so confidence is moderate, but no containment-worthy evidence is present.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6oujzj83"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvk6y5yr_f7e2a01469",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk6y5yr_f7e2a01469/trace.jsonl",
+  "execution_time_seconds": 18.617
+}
