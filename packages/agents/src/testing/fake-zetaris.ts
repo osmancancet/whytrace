@@ -141,6 +141,20 @@ export class FakeZetaris {
       for (const r of t.signin_event.filter((r) => r.ip === ip)) g.set(String(r.result), [...(g.get(String(r.result)) ?? []), r]);
       return [...g.entries()].map(([result, rs]) => ({ result, accounts: new Set(rs.map((r) => r.upn)).size, n: rs.length }));
     }
+    // spray-noise checks: ASN distribution of failures from one IP
+    if (sql.includes(".signin_event") && sql.includes("GROUP BY asn_org") && sql.includes("result = 'failure'") && sql.includes("ip = '")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.ip === ip && r.result === "failure");
+      const g = new Map<string, number>();
+      for (const r of rs) g.set(String(r.asn_org ?? ""), (g.get(String(r.asn_org ?? "")) ?? 0) + 1);
+      return [...g.entries()].sort((a, b) => b[1] - a[1]).map(([asn_org, n]) => ({ asn_org, n }));
+    }
+    // spray-noise checks: time window of failures from one IP
+    if (sql.includes(".signin_event") && sql.includes("MIN(ts) AS first_ts") && sql.includes("MAX(ts) AS last_ts") && sql.includes("ip = '") && sql.includes("result = 'failure'")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.ip === ip && r.result === "failure").map((r) => String(r.ts)).sort();
+      return rs.length ? [{ first_ts: rs[0]!, last_ts: rs[rs.length - 1]! }] : [{ first_ts: null, last_ts: null }];
+    }
     if (sql.includes("GROUP BY result")) {
       const rs = S.filter((r) => r.result === "mfa_denied" || r.result === "mfa_approved").sort(byTs("ts"));
       return ["mfa_approved", "mfa_denied"].map((k) => rs.filter((r) => r.result === k)).filter((x) => x.length).map((x) => ({ result: x[0]!.result ?? null, n: x.length, first_ts: x[0]!.ts ?? null, last_ts: x[x.length - 1]!.ts ?? null }));

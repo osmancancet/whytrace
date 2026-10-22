@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { critique, rubric } from "./critic.ts";
+import { critique, rubric, SHARED_NAT_ASNS, SPRAY_BURST_WINDOW_HOURS } from "./critic.ts";
 import { deriveFindings, FindingIds } from "./investigator.ts";
 import { queryFor, type QueryName } from "./sql-catalogue.ts";
 import { FakeZetaris } from "./testing/fake-zetaris.ts";
@@ -78,6 +78,67 @@ describe("Critic", () => {
     expect(c.verdicts[0]!.status).toBe("needs_more");
     expect(c.needsMore).toHaveLength(1);
     expect(c.approved[0]!.status).toBe("SUSPECTED");
+  });
+});
+
+describe("Critic — spray-noise detection", () => {
+  const synthFinding = (upn: string, ip: string): FindingT => ({
+    id: "F1", hypothesis_id: "H1", claim: `Password spray then success: ${ip} failed against 60 accounts (65 failures) and later signed in as this user`,
+    status: "LIKELY", sql_ids: ["aaaaaaaaaaaa"], row_refs: ["aaaaaaaaaaaa#0"], attack: ["T1110.003", "T1078"], confidence: 0.85,
+    kind: "password_spray", entity_ids: [`account:idp:${upn}`, `ip:net:${ip}`],
+    facts: { upn, ip, accounts: 60, failures: 65, first_ts: "2026-10-05 09:00:00.0", last_ts: "2026-10-14 17:00:00.0" },
+  });
+
+  function tablesWithSharedNat(upn: string, ip: string, asn: string, days: number) {
+    const base = {
+      signin_event: [] as Record<string, string | number | null>[],
+      mail_event: [] as Record<string, string | number | null>[],
+      device: [] as Record<string, string | number | null>[],
+      vulnerability: [] as Record<string, string | number | null>[],
+      vpn_session: [] as Record<string, string | number | null>[],
+      identity: [{ upn }],
+    };
+    let seq = 0;
+    const push = (r: Record<string, string | number | null>) => { seq += 1; base.signin_event.push({ event_id: `evt_${seq}`, device_id: null, country: "TR", city: "Manisa", app: "portal", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0", ...r }); };
+    for (let d = 0; d < days; d++) {
+      for (let i = 0; i < 20; i++) push({ ts: `2026-10-${String(5 + d).padStart(2, "0")} 09:${String(i).padStart(2, "0")}:00.0`, upn: `student${d}_${i}@aegean.edu`, result: "failure", ip, asn_org: asn });
+    }
+    push({ ts: `2026-10-${String(5 + days - 1).padStart(2, "0")} 17:00:00.0`, upn, result: "success", ip, asn_org: asn, device_id: "LT-X", app: "portal" });
+    return base;
+  }
+
+  it("rejects spray claim when the source IP is on a shared-NAT ASN (campus/consumer ISP)", async () => {
+    const z = new FakeZetaris(tablesWithSharedNat("b.cetin@aegean.edu", "193.140.10.17", "AS-AEGEAN-EDU", 9));
+    const c = await critique(z, [synthFinding("b.cetin@aegean.edu", "193.140.10.17")]);
+    expect(c.approved).toEqual([]);
+    expect(c.rejected[0]!.reason).toMatch(/shared-NAT ASN/);
+  });
+
+  it("rejects spray claim when failures span more than the burst window — background noise, not a spray", async () => {
+    // Use a non-shared ASN so the ASN branch does not fire; the window branch should.
+    const z = new FakeZetaris(tablesWithSharedNat("x@aegean.edu", "203.0.113.9", "SomeOtherISP", 5));
+    const c = await critique(z, [synthFinding("x@aegean.edu", "203.0.113.9")]);
+    expect(c.approved).toEqual([]);
+    expect(c.rejected[0]!.reason).toMatch(/span.*h.*background noise/i);
+  });
+
+  it("approves a tight-burst spray with a bursty window from a non-shared ASN (case-004 shape)", async () => {
+    const z = new FakeZetaris();
+    const f: FindingT = {
+      id: "F1", hypothesis_id: "H1", claim: "Password spray then success: 91.240.118.5 failed against 20 accounts (20 failures) and later signed in as this user",
+      status: "LIKELY", sql_ids: ["aaaaaaaaaaaa"], row_refs: ["aaaaaaaaaaaa#0"], attack: ["T1110.003", "T1078"], confidence: 0.85,
+      kind: "password_spray", entity_ids: ["account:idp:m.aslan@aegean.edu", "ip:net:91.240.118.5"],
+      facts: { upn: "m.aslan@aegean.edu", ip: "91.240.118.5", accounts: 20, failures: 20, first_ts: "2026-10-18 02:00:00.0", last_ts: "2026-10-18 02:19:00.0" },
+    };
+    const c = await critique(z, [f]);
+    expect(c.rejected).toEqual([]);
+    expect(c.approved[0]!.status).toBe("CONFIRMED");
+  });
+
+  it("has sane constants", () => {
+    expect(SHARED_NAT_ASNS.has("Turkcell")).toBe(true);
+    expect(SHARED_NAT_ASNS.has("AS-AEGEAN-EDU")).toBe(true);
+    expect(SPRAY_BURST_WINDOW_HOURS).toBeGreaterThan(0);
   });
 });
 

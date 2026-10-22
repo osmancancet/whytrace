@@ -17,6 +17,18 @@ export const VENDOR_FIXED_IN: Record<string, { product: RegExp; fixedIn: string 
   "CVE-2025-22457": { product: /connect secure/i, fixedIn: "22.7R2.6" },
 };
 
+/** ASNs we assume are shared campus / consumer-ISP NAT ranges. A single IP in
+ *  one of these ASNs will see many distinct accounts fail over long windows
+ *  as a *background* pattern, not a coordinated spray. The Critic uses this
+ *  to reject spray claims that are really shared-NAT noise. Kept small on
+ *  purpose: if a new ISP appears in production data, the operator extends it. */
+export const SHARED_NAT_ASNS = new Set(["Turkcell", "TTNET", "Superonline", "AS-AEGEAN-EDU"]);
+/** A real password-spray burst is bounded. We consider > 24 h between first
+ *  and last failure from the same source IP to be noise (shared NAT, scanner
+ *  dwelling, etc.), not a coordinated attack. The value is intentionally
+ *  conservative — honest noise rejection, not aggressive filtering. */
+export const SPRAY_BURST_WINDOW_HOURS = 24;
+
 /** Compare Ivanti-style versions like 22.7R2.3 < 22.7R2.8. */
 export function versionLt(a: string, b: string): boolean {
   const parse = (v: string) => v.split(/[^0-9]+/).filter(Boolean).map(Number);
@@ -143,6 +155,35 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       if (!(n(fail?.accounts) >= 10 && n(succ.rows[0]?.n) >= 1)) {
         return { status: "rejected", reason: `${ip} does not show a spray-then-success pattern on re-query`, sql_id: succ.sql_id };
       }
+      // Shared-NAT noise: campus or consumer-ISP IPs will see dozens of failed
+      // accounts over weeks because that one IP is a NAT exit for thousands of
+      // users. If every failure from this IP is on a shared-NAT ASN, this is
+      // background noise, not a spray. Checking per-IP so a single rogue IP
+      // on a campus /24 that *does* behave like a sprayer is still caught.
+      try {
+        const asnRows = await z.runSql(`SELECT asn_org, COUNT(*) AS n FROM ${USL}.signin_event WHERE ip = '${esc(ip)}' AND result = 'failure' GROUP BY asn_org ORDER BY n DESC`);
+        if (asnRows.rows.length) {
+          const topAsn = String(asnRows.rows[0]!.asn_org ?? "");
+          const sharedShare = asnRows.rows.filter((x) => SHARED_NAT_ASNS.has(String(x.asn_org ?? ""))).reduce((a, x) => a + n(x.n), 0);
+          const total = asnRows.rows.reduce((a, x) => a + n(x.n), 0);
+          if (total > 0 && sharedShare / total >= 0.9 && SHARED_NAT_ASNS.has(topAsn)) {
+            return { status: "rejected", reason: `${ip} belongs to shared-NAT ASN "${topAsn}" (${sharedShare}/${total} failures from shared-NAT ASNs); failures across many accounts are expected background noise, not a coordinated spray`, sql_id: asnRows.sql_id };
+          }
+        }
+      } catch { /* if asn_org isn't selectable here, fall through to the window check */ }
+      // Burst-window check: a real spray clusters in time. If first→last failure
+      // from this IP spans more than SPRAY_BURST_WINDOW_HOURS, treat as noise.
+      try {
+        const windowRow = await z.runSql(`SELECT MIN(ts) AS first_ts, MAX(ts) AS last_ts FROM ${USL}.signin_event WHERE ip = '${esc(ip)}' AND result = 'failure'`);
+        const first = String(windowRow.rows[0]?.first_ts ?? "");
+        const last = String(windowRow.rows[0]?.last_ts ?? "");
+        if (first && last) {
+          const spanHours = (toMs(last) - toMs(first)) / 3_600_000;
+          if (spanHours > SPRAY_BURST_WINDOW_HOURS) {
+            return { status: "rejected", reason: `${ip}: failures span ${spanHours.toFixed(1)} h (first ${first.slice(0, 16)} → last ${last.slice(0, 16)}); a password spray is a short burst, this looks like background noise from a shared source`, sql_id: windowRow.sql_id };
+          }
+        }
+      } catch { /* ignore and fall through */ }
       // A "success" from the spray source is only a takeover if it was interactive.
       // Non-interactive mail-sync tokens share the exit IP but do not prove credential abuse.
       try {
