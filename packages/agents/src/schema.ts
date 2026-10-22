@@ -78,6 +78,20 @@ export const Report = z.object({
   memory_used: z.array(z.string()).default([]),
   critic_score: z.object({ accuracy: z.number(), appropriateness: z.number(), actionability: z.number() }).optional(),
   critic_verdicts: z.array(CriticVerdict).default([]),
+  /** Scout Intent findings. Each entry names the finding, field, which policy
+   *  pack's rule fired, why it fired, and the matching substring. Non-empty
+   *  only when the Scout gate caught a prompt-injection payload inside
+   *  attacker-controlled text (mail-rule name/target/detail, user_agent,
+   *  ASN name, device name). The agent never follows the quarantined text —
+   *  it is only cited in the Report so the analyst sees the attempt. */
+  prompt_injection_attempts: z.array(z.object({
+    finding_id: z.string(),
+    field: z.string(),
+    policy: z.string(),
+    rule: z.string(),
+    reason: z.string(),
+    match: z.string(),
+  })).default([]),
   risk: z.object({
     decision: Verdict,
     policy_decision: Verdict,

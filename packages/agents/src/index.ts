@@ -10,3 +10,4 @@ export * from "./memory.ts";
 export * from "./evidence-graph.ts";
 export * from "./markovian-sweep.ts";
 export * from "./rules-baseline.ts";
+export * from "./scout-gate.ts";

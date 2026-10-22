@@ -5,6 +5,7 @@
     { "path": "./packages/engines/world-model" },
     { "path": "./packages/engines/hmem" },
     { "path": "./packages/engines/markovian" },
+    { "path": "./packages/engines/scout-intent" },
     { "path": "./packages/adapters" },
     { "path": "./packages/agents" },
     { "path": "./apps/api" },

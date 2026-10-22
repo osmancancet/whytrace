@@ -12,6 +12,7 @@
     "@whytrace/adapters": "*",
     "@whytrace/world-model": "*",
     "@whytrace/hmem": "*",
-    "@whytrace/markovian": "*"
+    "@whytrace/markovian": "*",
+    "@whytrace/scout-intent": "*"
   }
 }

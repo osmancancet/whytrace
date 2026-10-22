@@ -21,11 +21,15 @@ export function toMs(ts: unknown): number {
 
 const str = (v: unknown): string | null => (v === null || v === undefined || v === "" || v === "null" ? null : String(v));
 
-export function parseRuleDetail(detail: unknown): { target: string | null; via: string | null } {
+export function parseRuleDetail(detail: unknown): { target: string | null; via: string | null; name: string | null; raw: string } {
   const d = String(detail ?? "");
   const target = /target=(\S+)/.exec(d)?.[1] ?? null;
   const via = /via=(\S+)/.exec(d)?.[1] ?? null;
-  return { target, via };
+  // `name=<rest of line>` — attacker-controlled free text. We keep the raw
+  // value so Scout can scan it for injection payloads; the agent code never
+  // reads it as instruction.
+  const name = /name=(.+)$/.exec(d)?.[1]?.trim() ?? null;
+  return { target, via, name, raw: d };
 }
 
 export function deriveFindings(
@@ -90,8 +94,11 @@ export function deriveFindings(
     case "rules_for": {
       const fwd = idxOf((r) => r.verdict === "forward");
       return fwd.map((i) => {
-        const { target, via } = parseRuleDetail(rows[i]!.detail);
-        return mk({ kind: "forward_rule", claim: `Inbox forwarding rule to ${target ?? "?"} (created via ${via ?? "?"})`, confidence: 0.8, attack: ["T1114.003"], rowIdx: [i], facts: { target, via, event_id: str(rows[i]!.event_id), ts: str(rows[i]!.ts) } });
+        const { target, via, name, raw } = parseRuleDetail(rows[i]!.detail);
+        // Carry the full `detail` string + the parsed `name=` field so the
+        // Scout gate can scan them for injection attempts. These are
+        // attacker-controlled strings; the agent never follows them.
+        return mk({ kind: "forward_rule", claim: `Inbox forwarding rule to ${target ?? "?"} (created via ${via ?? "?"})`, confidence: 0.8, attack: ["T1114.003"], rowIdx: [i], facts: { target, via, name, detail: raw, event_id: str(rows[i]!.event_id), ts: str(rows[i]!.ts) } });
       });
     }
     case "signins_for": {

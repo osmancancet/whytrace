@@ -14,6 +14,7 @@
     { "path": "../adapters" },
     { "path": "../engines/world-model" },
     { "path": "../engines/hmem" },
-    { "path": "../engines/markovian" }
+    { "path": "../engines/markovian" },
+    { "path": "../engines/scout-intent" }
   ]
 }

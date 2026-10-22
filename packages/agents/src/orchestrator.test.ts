@@ -162,6 +162,19 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     if (laterRound) expect(["deep", "fast"]).toContain(laterRound.lane);
   });
 
+  it("Scout Intent: case-007 catches the injection in the mail-rule detail, quarantines it, and still verdicts on the real chain", async () => {
+    const r = await setup("case-007").run();
+    expect(r.verdict).toBe("contain");
+    // Scout saw the injection payload in the mail-rule `detail` field.
+    expect(r.prompt_injection_attempts.length).toBeGreaterThan(0);
+    const forwardRuleAttempt = r.prompt_injection_attempts.find((a) => a.field === "mail_rule_detail" || a.field === "finding_claim");
+    expect(forwardRuleAttempt).toBeDefined();
+    expect(forwardRuleAttempt!.rule).toMatch(/ignore_previous|mark_benign/);
+    // The real forwarding rule finding stayed in the report — Scout quarantined the string,
+    // it did not drop the evidence.
+    expect(r.findings.some((f) => f.kind === "forward_rule")).toBe(true);
+  });
+
   it("H-MEM: case-003 recalls the lesson stored by case-002 and still escalates", async () => {
     const memory = new CaseMemory({ persistDir: mkdtempSync(join(tmpdir(), "whytrace-hmem-")) });
     const r2 = await setup("case-002", { memory }).run();
