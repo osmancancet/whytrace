@@ -1,0 +1,187 @@
+{
+  "run_id": "mvjpr32g_3c03da6390",
+  "case_id": "case-006",
+  "verdict": "contain",
+  "confidence": 0.91,
+  "summary": "CONTAIN @ 0.91 (deterministic summary). 2 confirmed signal(s) [F2, F3]. Techniques: T1078, T1110.003. Reasons: 2 confirmed post-auth abuse signal(s) + 2 confirmed access signal(s).",
+  "timeline": [
+    {
+      "ts": "2026-10-18 07:15:00.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    },
+    {
+      "ts": "2026-10-18 07:15:30.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c5ff277c6a7c",
+        "f16a68d09869"
+      ],
+      "row_refs": [
+        "c5ff277c6a7c#0",
+        "c5ff277c6a7c#1"
+      ],
+      "attack": [
+        "T1078"
+      ],
+      "confidence": 0.6,
+      "kind": "new_device",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "device:cmdb:PH-9900"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "device_id": "PH-9900",
+        "usual_device": "LT-6002"
+      }
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 78.187.4.44 failed against 67 accounts (72 failures) and later signed in as this user",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84889a63e581",
+        "e8d53a5fe24b"
+      ],
+      "row_refs": [
+        "84889a63e581#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "ip:net:78.187.4.44"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "ip": "78.187.4.44",
+        "accounts": 67,
+        "failures": 72,
+        "first_ts": "2026-10-05 08:56:00.0",
+        "last_ts": "2026-10-14 17:09:00.0"
+      }
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.17 failed against 56 accounts (61 failures) and later signed in as this user",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "84889a63e581",
+        "221d90ba0d7f"
+      ],
+      "row_refs": [
+        "84889a63e581#1"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "ip:net:193.140.10.17"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "ip": "193.140.10.17",
+        "accounts": 56,
+        "failures": 61,
+        "first_ts": "2026-10-05 09:18:00.0",
+        "last_ts": "2026-10-14 19:26:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Revoke active sessions and reset the password for the affected UPN.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Remove suspicious inbox rules and quarantine the delivered phishing message.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit downstream SharePoint/OneDrive access from the attacker ASN.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality."
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 1,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "PH-9900 is registered to the user but unmanaged (phone) — worth watching, not proof of takeover",
+      "check_sql_id": "f16a68d09869"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "78.187.4.44: failures against 67 accounts and 1 success as b.cetin@aegean.edu",
+      "check_sql_id": "e8d53a5fe24b"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "193.140.10.17: failures against 56 accounts and 7 success as b.cetin@aegean.edu",
+      "check_sql_id": "221d90ba0d7f"
+    }
+  ],
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "confidence": 0.91,
+    "rationale": "2 confirmed post-auth abuse signal(s) + 2 confirmed access signal(s)",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 22,
+    "model_calls": 6
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_uzmnz72n"
+    }
+  ],
+  "trace_id": "mvjpr32g_3c03da6390",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjpr32g_3c03da6390/trace.jsonl",
+  "execution_time_seconds": 602.465
+}

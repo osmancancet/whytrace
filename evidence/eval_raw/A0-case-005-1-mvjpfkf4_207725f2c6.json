@@ -1,0 +1,94 @@
+{
+  "run_id": "mvjpfkf4_207725f2c6",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.85,
+  "summary": "ESCALATE @ 0.85 (deterministic summary). 1 confirmed signal(s) [F1]. Techniques: T1110.003, T1078. Reasons: partial chain: 1 abuse + 1 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain.",
+  "timeline": [],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "634be95e5da2",
+        "4b5c45421caf"
+      ],
+      "row_refs": [
+        "634be95e5da2#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:e.oz@aegean.edu",
+        "ip:net:193.140.10.9"
+      ],
+      "facts": {
+        "upn": "e.oz@aegean.edu",
+        "ip": "193.140.10.9",
+        "accounts": 68,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:31:00.0",
+        "last_ts": "2026-10-14 14:30:00.0"
+      }
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "193.140.10.9: failures against 68 accounts and 8 success as e.oz@aegean.edu",
+      "check_sql_id": "4b5c45421caf"
+    }
+  ],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.85,
+    "rationale": "partial chain: 1 abuse + 1 access signal(s), not enough to contain",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 8,
+    "model_calls": 1
+  },
+  "models": [],
+  "trace_id": "mvjpfkf4_207725f2c6",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvjpfkf4_207725f2c6/trace.jsonl",
+  "execution_time_seconds": 537.376
+}
