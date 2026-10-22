@@ -151,6 +151,8 @@ header.topbar {
 .timeline li { padding: 4px 6px; border-bottom: 1px dashed var(--border); display: grid; grid-template-columns: 70px auto auto 1fr; gap: 8px; align-items: baseline; }
 .timeline li.row-degraded { color: var(--escalate); }
 .timeline li.row-error { color: var(--contain); }
+.timeline li.row-critic-rejected { background: rgba(248,113,113,0.06); border-left: 3px solid var(--contain); padding-left: 4px; }
+.timeline li.row-fallback { background: rgba(251,191,36,0.06); }
 .timeline .model-chip { font-size: 11px; }
 .timeline .rejected { color: var(--contain); }
 

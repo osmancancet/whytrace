@@ -136,8 +136,16 @@ export function App() {
   const activeFinding = report?.findings.find((f) => f.id === selectedFinding) ?? null;
   const activeQueries = activeFinding ? queries.filter((q) => activeFinding.sql_ids.includes(q.sql_id)) : [];
 
+  const routedModels = useMemo(() => {
+    if (!report) return [] as string[];
+    return [...new Set(report.models.map((m) => m.routed_model).filter(Boolean))];
+  }, [report]);
+
+  const degradedSteps = useMemo(() => trace.filter((e) => e.status === "degraded").length, [trace]);
+  const fallbackSteps = useMemo(() => trace.filter((e) => (e.action ?? "").includes("fallback")).length, [trace]);
+
   const sponsorLine = report
-    ? `Zetaris USL security_usl · ${report.models.length} Nightshift receipts · Markovian ${markovian ? `${markovian.windows.length} pages, ${markovian.totalTokensUsed} ${markovian.tokenLabel}` : "n/a"}`
+    ? `Zetaris USL · ${report.models.length} Nightshift receipts · routed_models [${routedModels.map((m) => m.split("/").pop()).join(", ") || "—"}] · Markovian ${markovian ? `${markovian.windows.length} pages, ${markovian.totalTokensUsed} ${markovian.tokenLabel}` : "n/a"}`
     : `Zetaris USL security_usl · Nightshift Nemotron lanes · Engines: World Model 8/8 · H-MEM 13/13 · Markovian 8/8`;
 
   return (
@@ -153,8 +161,10 @@ export function App() {
         {report && !liveMode && (
           <button className="secondary" onClick={() => loadRun(report.run_id, true)}>Replay recorded run</button>
         )}
-        {replayMode && <span className="badge sample">REPLAY (recorded trace, 4× speed)</span>}
-        {liveMode && <span className="badge sample" role="status">LIVE</span>}
+        {replayMode && <span className="badge sample" aria-label="replay">⟳ REPLAY (recorded trace, 4× speed)</span>}
+        {liveMode && <span className="badge sample" role="status" aria-label="live">● LIVE</span>}
+        {fallbackSteps > 0 && <span className="badge" style={{ color: "var(--escalate)", borderColor: "var(--escalate)" }} title="A deep-lane call fell back to the fast lane (Nemotron Lightning).">↷ route fallback × {fallbackSteps}</span>}
+        {degradedSteps > 0 && <span className="badge" style={{ color: "var(--escalate)", borderColor: "var(--escalate)" }} title="One or more agent steps were degraded.">⚠ degraded × {degradedSteps}</span>}
         {error && <span className="badge" style={{ color: "var(--contain)" }}>⚠ {error}</span>}
       </header>
 
@@ -194,7 +204,14 @@ export function App() {
             <div className="memory-panel">
               <strong>Memory recalled ({report.memory_used.length} lesson(s)):</strong>
               <ul style={{ margin: 0, paddingLeft: 16 }}>
-                {report.memory_used.map((l, i) => <li key={i} className="lesson">{l}</li>)}
+                {report.memory_used.map((l, i) => (
+                  <li key={i} className="lesson">
+                    {/Analyst-confirmed|user_correction|Analyst-|Analyst rejected|Analyst confirmed/.test(l) && (
+                      <span className="model-chip" style={{ marginRight: 4, borderColor: "var(--benign)", color: "var(--benign)" }}>analyst-confirmed</span>
+                    )}
+                    {l}
+                  </li>
+                ))}
               </ul>
             </div>
           ) : null}
@@ -229,7 +246,12 @@ export function App() {
 
       <footer className="sponsor-strip" aria-label="Sponsor strip">
         <div>{sponsorLine}</div>
-        <div>Engines: World Model 8/8 · H-MEM 13/13 · Markovian 8/8</div>
+        <div>
+          <span className="model-chip" title="Four sources registered in Zetaris and joined in security_usl">Zetaris USL</span>
+          <span className="model-chip" title="Meterless Nightshift runtime provides Nemotron routing (meterless/auto, meterless/fast)">Nightshift</span>
+          <span className="model-chip" title="NVIDIA Nemotron 3.5 Super VL 120B (deep lane) + Lightning 30B (fast lane / fallback)">Nemotron</span>
+          <span className="model-chip" title="Three Meterless engines in a shipped feature">Engines WM 8/8 · HMEM 13/13 · Markovian 8/8</span>
+        </div>
       </footer>
     </div>
   );
@@ -257,16 +279,25 @@ function AgentTimeline({ events, liveMode, replayMode }: { events: TraceEvent[];
   const scrollRef = useRef<HTMLUListElement>(null);
   useEffect(() => { scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight); }, [events.length]);
   if (!events.length) return <p style={{ color: "var(--fg-dim)" }}>{liveMode ? "Waiting for first event…" : replayMode ? "Replaying…" : "No events yet. Start a live run or pick a saved run."}</p>;
+  const criticRejected = (e: TraceEvent) => e.agent === "critic" && (e.action ?? "").startsWith("verdict_rejected");
   return (
     <ul className="timeline" ref={scrollRef} style={{ maxHeight: 260, overflowY: "auto" }}>
-      {events.map((e, i) => (
-        <li key={i} className={e.status === "degraded" ? "row-degraded" : e.status === "error" ? "row-error" : ""}>
-          <span>{(e.ts ?? "").slice(11, 19)}</span>
-          <span><strong>{e.agent}</strong>·{e.action}</span>
-          {e.routed_model ? <span className="model-chip">{e.routed_model.split("/").pop()} · {e.receipt_id?.slice(0, 10) ?? ""}</span> : <span />}
-          <span>{e.output_summary ?? e.input_summary ?? ""}</span>
-        </li>
-      ))}
+      {events.map((e, i) => {
+        const isFallback = (e.action ?? "").includes("fallback");
+        const isRejected = criticRejected(e);
+        return (
+          <li key={i} className={`${e.status === "degraded" ? "row-degraded" : e.status === "error" ? "row-error" : ""} ${isRejected ? "row-critic-rejected" : ""} ${isFallback ? "row-fallback" : ""}`}>
+            <span>{(e.ts ?? "").slice(11, 19)}</span>
+            <span><strong>{e.agent}</strong>·{e.action}</span>
+            {e.routed_model ? (
+              <span className="model-chip" title={`routed_model=${e.routed_model} · receipt=${e.receipt_id ?? "n/a"}${e.ms ? ` · ${e.ms} ms` : ""}${e.retry_count ? ` · retries ${e.retry_count}` : ""}`}>
+                {isFallback ? "↷ " : ""}{e.routed_model.split("/").pop()} · {e.receipt_id?.slice(0, 10) ?? ""}
+              </span>
+            ) : <span />}
+            <span>{e.output_summary ?? e.input_summary ?? ""}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -313,11 +344,21 @@ function VerdictPanel({ report }: { report: Report | null }) {
 
 function MarkovianBlock({ markovian }: { markovian: MarkovianSummary | null }) {
   if (!markovian) return <p style={{ color: "var(--fg-dim)" }}>No long-sweep for this run.</p>;
+  const models = [...new Set(markovian.per_step.map((s) => s.routed_model).filter(Boolean))];
   return (
     <div style={{ fontSize: 12 }}>
-      <div>Pages: {markovian.windows.length} · tokens {markovian.totalTokensUsed} ({markovian.tokenLabel}) · model calls {markovian.measured.model_calls}</div>
-      <div>Victims found: {markovian.victim_count}</div>
-      <div style={{ fontFamily: "var(--mono)", color: "var(--fg-dim)", marginTop: 4 }}>Efficiency vs. flat prompt: {markovian.efficiencyPercent.toFixed(1)}%</div>
+      <div>
+        <span className="badge">pages {markovian.windows.length}</span>{" "}
+        <span className="badge">model calls {markovian.measured.model_calls}</span>{" "}
+        <span className="badge" title="Token counts come from Nightshift receipts (meterless.usage)">tokens {markovian.totalTokensUsed} ({markovian.tokenLabel})</span>
+      </div>
+      <div style={{ marginTop: 4 }}>Victims found: <strong>{markovian.victim_count}</strong></div>
+      <div style={{ fontFamily: "var(--mono)", color: "var(--fg-dim)", marginTop: 4 }}>Efficiency vs. flat prompt: {markovian.efficiencyPercent.toFixed(1)}% · duration {(markovian.durationMs / 1000).toFixed(1)} s</div>
+      {models.length > 0 && (
+        <div style={{ marginTop: 4, display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {models.map((m) => <span key={m} className="model-chip">{m!.split("/").pop()}</span>)}
+        </div>
+      )}
     </div>
   );
 }
