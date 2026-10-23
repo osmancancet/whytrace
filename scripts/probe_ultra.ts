@@ -53,8 +53,13 @@ async function main() {
   }
 
   // Probe each candidate with a tiny tool call.
+  // Honest reachability: HTTP 200 with a receipt is NOT enough — if Nightshift
+  // aliases the Ultra id to Super VL (what the local engine does today), the
+  // Ultra lane isn't actually reached. We only count a probe as "reached"
+  // when the receipt's `routed_model` normalises back to the requested id.
   const SCHEMA = { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] } as const;
-  const succeeded: string[] = [];
+  const reached: string[] = [];
+  const aliased: Array<{ id: string; routedTo: string }> = [];
   md.push("## Probe results", "");
   for (const id of ultra) {
     const started = Date.now();
@@ -63,12 +68,18 @@ async function main() {
       const rc = await probe.callTool({
         messages: [{ role: "user", content: `Probe: reply with ok=true via submit_probe. (nonce=${Math.random().toString(36).slice(2)})` }],
         toolName: "submit_probe", description: "Probe tool.", schema: SCHEMA,
-        // Runtime 1.4 floor is 2000; stay comfortably above it.
         parse: (a) => a as { ok: boolean }, lane: "deep", maxTokens: 4000, agent: "ultra_probe",
       });
       const ms = Date.now() - started;
-      succeeded.push(id);
-      md.push(`- ✅ \`${id}\` — ok in ${ms} ms, routed_model=\`${rc.model}\`, receipt=\`${rc.receipt?.receipt_id ?? "n/a"}\``);
+      const routedId = normaliseModelId(rc.model);
+      const requestedId = normaliseModelId(id);
+      if (routedId === requestedId) {
+        reached.push(id);
+        md.push(`- ✅ \`${id}\` reached — ${ms} ms, routed_model=\`${rc.model}\`, receipt=\`${rc.receipt?.receipt_id ?? "n/a"}\``);
+      } else {
+        aliased.push({ id, routedTo: rc.model });
+        md.push(`- ⚠️ \`${id}\` listed, but Nightshift routed the request to \`${rc.model}\` — Ultra not reached on this install. ${ms} ms, receipt=\`${rc.receipt?.receipt_id ?? "n/a"}\``);
+      }
     } catch (err) {
       const ms = Date.now() - started;
       md.push(`- ❌ \`${id}\` — failed after ${ms} ms: ${(err as Error).message.slice(0, 240)}`);
@@ -76,11 +87,17 @@ async function main() {
   }
   md.push("");
 
-  if (!succeeded.length) {
-    md.push("No Ultra model responded; Reporter stays on `meterless/auto`.");
+  if (!reached.length) {
+    if (aliased.length) {
+      md.push(`**Ultra not reached.** Nightshift accepts the Ultra id(s) ${aliased.map((a) => `\`${a.id}\``).join(", ")} but the receipt reports \`routed_model\` ≠ requested — the proxy aliases them to \`${aliased[0]!.routedTo}\` on this install. The Reporter stays on \`meterless/auto\` / Super VL.`, "");
+      md.push("## Wiring", "", `No change is made automatically. If an Ultra lane is enabled later, set \`METERLESS_REPORTER_MODEL=<id>\` and re-run \`npm run probe:ultra\` to re-verify.`);
+    } else {
+      md.push("No Ultra model responded; Reporter stays on `meterless/auto`.");
+    }
     writeOut(md.join("\n"));
     return;
   }
+  const succeeded = reached;
 
   // Side-by-side Reporter sample on case-001 context.
   const pick = succeeded[0]!;
@@ -137,6 +154,18 @@ function writeOut(contents: string) {
   mkdirSync(resolvePath("evidence"), { recursive: true });
   writeFileSync(resolvePath("evidence", "ultra-probe.md"), contents);
   console.log(`wrote evidence/ultra-probe.md`);
+}
+
+/** Normalise a Nemotron/Meterless model id for strict-equality comparison. We
+ *  strip leading provider prefixes and any trailing `-v<n>` versioning so that
+ *  common aliases line up (e.g. `nvidia/llama-3.1-nemotron-ultra-253b-v1` and
+ *  `llama-3.1-nemotron-ultra-253b` are treated as the same model). This is
+ *  intentionally strict — the point is to catch Super-VL aliasing, not to
+ *  gloss over it. */
+function normaliseModelId(id: string | undefined): string {
+  if (!id) return "";
+  const base = id.toLowerCase().replace(/^nvidia\//, "").replace(/^meterless\//, "");
+  return base.replace(/-v\d+$/, "");
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
