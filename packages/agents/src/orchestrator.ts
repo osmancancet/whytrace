@@ -90,6 +90,10 @@ export function defaultSteps(upn: string): PlannerStep[] {
     // partial, and escalates — see DAY3C case-007 run 3. Pulling it into the
     // coverage fill makes every live run see the same abuse-signal set.
     { hypothesis_id: "H1", query_name: "mfa_fatigue", params: { upn }, why: "coverage: MFA fatigue (post-auth abuse signal T1621)" },
+    // DAY7: identity row carries the account's `role` and `mfa_method` which
+    // L1 (admin baseline-break) and L4 (phish-exposure-only path) both read
+    // on. Keep it in the coverage set so the Risk Gate always has them.
+    { hypothesis_id: "H1", query_name: "identity_for", params: { upn }, why: "coverage: identity row (role, mfa_method) for privilege-sensitive lessons" },
   ];
 }
 
@@ -410,7 +414,21 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   // is itself confident (contain / benign / monitor on CONFIRMED findings). If the
   // policy *itself* is uncertain, we fall back to escalate — this is the honest
   // behaviour promised in `.cursor/rules/evidence-contract.mdc`.
-  const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources] });
+  // DAY7: pull mfa_method / role out of the identity_for coverage query. The
+  // Risk Gate reads mfa_method for L4 (phish-exposure-only path). We read it
+  // from the already-ran query map so no additional SQL fires.
+  let identityMfa: string | null = null;
+  let identityRole: string | null = null;
+  for (const { name, rows } of ran.values()) {
+    if (name !== "identity_for") continue;
+    const r = rows[0];
+    if (!r) continue;
+    if (r.mfa_method != null) identityMfa = String(r.mfa_method);
+    if (r.role != null) identityRole = String(r.role);
+    break;
+  }
+  void identityRole; // reserved for future lessons; currently L1 reads role via its own Critic re-query.
+  const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources], mfaMethod: identityMfa });
   let riskModelMissing = false;
   // The Reporter / Risk-Gate prompts stay bounded: only CONFIRMED findings
   // (fallback to all), top-N by confidence, each claim capped at 240 chars.
@@ -544,12 +562,16 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   const faithfulnessThreshold = 0.5;
   let faithfulnessScore: ReturnType<typeof faithfulness> | null = null;
   let faithfulnessBefore: number | null = null;
+  let faithfulnessPrecisionBefore: number | null = null;
+  let faithfulnessTauBefore: number | null = null;
   let faithfulnessRevised = false;
   if (explanation.attribution.length) {
     const cited = extractCitedFindingIds([note.summary, ...note.actions.map((a) => a.action)].join("\n"));
     faithfulnessScore = faithfulness(explanation.attribution, cited, 3);
     if (reporterFromModel && faithfulnessScore.score < faithfulnessThreshold && budget.canModel()) {
       faithfulnessBefore = faithfulnessScore.score;
+      faithfulnessPrecisionBefore = faithfulnessScore.precision;
+      faithfulnessTauBefore = faithfulnessScore.kendall_tau;
       const topTable = explanation.attribution.slice(0, 5).map((a) => `${a.finding_id} shapley=${a.shapley} (rank ${a.rank}): ${a.claim.slice(0, 140)}`).join("\n");
       budget.model += 1;
       modelStepsTotal += 1;
@@ -627,6 +649,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     critic_score: score,
     critic_verdicts: [...verdictsById.values()],
     prompt_injection_attempts: promptInjectionAttempts,
+    exposure: basePolicy.exposure ?? [],
     explanation: {
       verdict: explanation.verdict,
       confidence: explanation.confidence,
@@ -637,7 +660,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       counterfactuals: explanation.counterfactuals,
       contrastive: explanation.contrastive,
       faithfulness: faithfulnessScore
-        ? { ...faithfulnessScore, revised: faithfulnessRevised, score_before_revision: faithfulnessBefore }
+        ? {
+            ...faithfulnessScore,
+            revised: faithfulnessRevised,
+            score_before_revision: faithfulnessBefore,
+            precision_before_revision: faithfulnessPrecisionBefore,
+            kendall_tau_before_revision: faithfulnessTauBefore,
+          }
         : null,
     },
     risk: { decision, policy_decision: basePolicy.decision, model_decision: modelOpinion?.decision, confidence, rationale: modelOpinion?.rationale ?? basePolicy.reasons.join("; "), escalate_reasons },

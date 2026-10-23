@@ -61,7 +61,23 @@ export type Faithfulness = {
   top_shapley_ids: string[];
   cited_ids: string[];
   overlap: number;
+  /** Recall@k — of the top-k Shapley findings, how many did the Reporter cite?
+   *  Range [0,1]; the DAY5 "faithfulness" headline. */
   score: number;
+  /** DAY7 — companion precision metric. "Of the findings the Reporter cited,
+   *  how many are in the top-k Shapley set?" Low recall@k with high precision@k
+   *  means the Reporter cites *fewer* findings than top-k, but each citation
+   *  is on-point; low precision@k means the Reporter is spraying citations
+   *  that are not load-bearing. Reported in evidence/explainability.md next
+   *  to recall to prevent the "faithfulness = 1.00" trivial-cite trap flagged
+   *  in notes/DAY3_FOLLOWUPS.md item 7. */
+  precision: number;
+  /** DAY7 — Kendall-τ between citation emphasis order and Shapley rank. The
+   *  citation order is extracted from the first mention of each F<n> id in
+   *  the Reporter's summary (and action text). τ ∈ [-1, 1]; a positive value
+   *  means the Reporter mentions high-Shapley findings earlier. Null when
+   *  overlap < 2 (τ needs at least 2 shared items to be defined). */
+  kendall_tau: number | null;
 };
 
 export type Explanation = {
@@ -306,12 +322,40 @@ function buildContrastiveText(verdict: VerdictT, runnerUp: VerdictT, blocking: s
   return `Removing ${pretty(blocking)} would push the policy to ${runnerUp}.`;
 }
 
-/** Faithfulness: overlap between the Reporter's cited finding ids and the top-k Shapley findings. */
+/** Faithfulness: overlap between the Reporter's cited finding ids and the
+ *  top-k Shapley findings. Reports recall@k (the DAY5 "score"), plus two
+ *  honesty companions added in DAY7:
+ *    • precision@k — share of cited findings inside the top-k set,
+ *    • kendall_tau — rank correlation between the citation order (first
+ *      mention) and the Shapley rank (over the intersection). τ is null when
+ *      the intersection has < 2 items (τ undefined). */
 export function faithfulness(topShapley: Attribution[], citedIds: string[], k: number = DEFAULT_TOP_K): Faithfulness {
   const top = topShapley.slice(0, k).map((a) => a.finding_id);
+  const topSet = new Set(top);
   const citedSet = new Set(citedIds);
   const overlap = top.filter((id) => citedSet.has(id)).length;
-  return { top_k: k, top_shapley_ids: top, cited_ids: citedIds, overlap, score: top.length ? r4(overlap / top.length) : 0 };
+  const score = top.length ? r4(overlap / top.length) : 0;
+  const precision = citedIds.length ? r4(citedIds.filter((id) => topSet.has(id)).length / citedIds.length) : 0;
+  // τ on the intersection of citedIds and top. Each item has a citation rank
+  // (position in citedIds, 0-indexed) and a Shapley rank (position in top).
+  const shared = citedIds.filter((id) => topSet.has(id));
+  let tau: number | null = null;
+  if (shared.length >= 2) {
+    const shapRank = new Map(top.map((id, i) => [id, i]));
+    const pairs = shared.map((id, i) => ({ cite: i, shap: shapRank.get(id)! }));
+    let concordant = 0, discordant = 0;
+    for (let i = 0; i < pairs.length; i++) {
+      for (let j = i + 1; j < pairs.length; j++) {
+        const dc = Math.sign(pairs[i]!.cite - pairs[j]!.cite);
+        const ds = Math.sign(pairs[i]!.shap - pairs[j]!.shap);
+        if (dc === 0 || ds === 0) continue;
+        if (dc === ds) concordant += 1; else discordant += 1;
+      }
+    }
+    const total = concordant + discordant;
+    tau = total ? r4((concordant - discordant) / total) : 0;
+  }
+  return { top_k: k, top_shapley_ids: top, cited_ids: citedIds, overlap, score, precision, kendall_tau: tau };
 }
 
 /** Extract F<n> finding ids cited in free-text (Reporter summary + action text). */

@@ -12,7 +12,7 @@ const report = (over: Partial<Report> = {}): Report => ({
   run_id: "r", case_id: "case-001", verdict: "contain", confidence: 0.9, summary: "s",
   timeline: [{ ts: "2026-10-14 06:59:00.0", event: "approve", sql_id: A }], findings: [f()], rejected_claims: [],
   actions: [{ action: "Revoke sessions", attack: ["T1078.004"], requires_approval: true }], limitations: [], not_checked: [], dq: [], memory_used: [],
-  critic_verdicts: [], prompt_injection_attempts: [], rounds: 1, models: [], decided_by: "model+policy", model_steps_ok: 0, model_steps_total: 0, trace_id: "r", log_file: "x", execution_time_seconds: 1, ...over,
+  critic_verdicts: [], prompt_injection_attempts: [], exposure: [], rounds: 1, models: [], decided_by: "model+policy", model_steps_ok: 0, model_steps_total: 0, trace_id: "r", log_file: "x", execution_time_seconds: 1, ...over,
 });
 
 describe("checkFinding", () => {

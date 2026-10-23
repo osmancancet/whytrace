@@ -96,6 +96,16 @@ export const Report = z.object({
     reason: z.string(),
     match: z.string(),
   })).default([]),
+  /** DAY7 L4 — phishing exposure the account saw without a downstream signal
+   *  in the follow-up window. Non-empty when the verdict is `monitor` (or
+   *  `escalate` for mfa_method=none) and the only confirmed signals are
+   *  phish-exposure (T1566.002 / T1204.001). The analyst can run a password
+   *  reset / awareness message off this list without the system claiming the
+   *  account itself is compromised. */
+  exposure: z.array(z.object({
+    finding_id: z.string(),
+    claim: z.string(),
+  })).default([]),
   /** DAY5 explainability payload. Attribution + counterfactuals + contrastive
    *  are computed from the deterministic Risk-Gate policy with no extra
    *  model calls. `faithfulness` compares the Reporter's cited finding ids
@@ -139,9 +149,18 @@ export const Report = z.object({
       top_shapley_ids: z.array(z.string()),
       cited_ids: z.array(z.string()),
       overlap: z.number().int().min(0),
+      /** recall@k — share of top-k Shapley findings that the Reporter cites. */
       score: z.number().min(0).max(1),
+      /** DAY7 — precision@k — share of cited findings inside the top-k set. */
+      precision: z.number().min(0).max(1).default(0),
+      /** DAY7 — Kendall-τ between citation order and Shapley rank. */
+      kendall_tau: z.number().min(-1).max(1).nullable().default(null),
       revised: z.boolean().default(false),
       score_before_revision: z.number().min(0).max(1).nullable().default(null),
+      /** DAY7 — the pre-revision companion metrics, kept so evidence/
+       *  explainability.md can show the delta honestly. */
+      precision_before_revision: z.number().min(0).max(1).nullable().default(null),
+      kendall_tau_before_revision: z.number().min(-1).max(1).nullable().default(null),
     }).nullable().default(null),
   }).optional(),
   risk: z.object({

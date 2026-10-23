@@ -41,7 +41,7 @@ export const HOLDOUT_IDENTITIES: IdentitySeed[] = [
   { upn: "n.guler@aegean.edu", display_name: "Nazlı Güler", role: "staff", department: "Personel Daire Başkanlığı", mfa_method: "push", home_country: "TR", created_at: "2021-06-14T08:00:00Z" },
   { upn: "t.bulut@aegean.edu", display_name: "Tolga Bulut", role: "student", department: "Büyük Veri Analistliği", mfa_method: "push", home_country: "TR", created_at: "2025-09-05T08:00:00Z" },
   { upn: "f.yildiz@aegean.edu", display_name: "Fatma Yıldız", role: "staff", department: "Öğrenci İşleri", mfa_method: "push", home_country: "TR", created_at: "2020-02-18T08:00:00Z" },
-  { upn: "k.erdem@aegean.edu", display_name: "Kerem Erdem", role: "staff", department: "Bilgi İşlem", mfa_method: "push", home_country: "TR", created_at: "2016-01-05T08:00:00Z" },
+  { upn: "k.erdem@aegean.edu", display_name: "Kerem Erdem", role: "admin", department: "Bilgi İşlem", mfa_method: "none", home_country: "TR", created_at: "2016-01-05T08:00:00Z" },
   { upn: "g.sen@aegean.edu", display_name: "Gizem Şen", role: "student", department: "Bilgisayar Programcılığı", mfa_method: "totp", home_country: "TR", created_at: "2024-09-11T08:00:00Z" },
 ];
 

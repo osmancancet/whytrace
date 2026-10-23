@@ -29,6 +29,7 @@ function baseReport(overrides: Partial<Report>): Report {
     critic_score: { accuracy: 3, appropriateness: 3, actionability: 3 },
     critic_verdicts: [],
     prompt_injection_attempts: [],
+    exposure: [],
     risk: { decision: "contain", policy_decision: "contain", confidence: 0.9, rationale: "r", escalate_reasons: [] },
     rounds: 1,
     budget: { sql_calls: 1, model_calls: 1 },

@@ -137,7 +137,7 @@ function enrichExplanation(r: Report): Report {
       attribution: ex.attribution,
       counterfactuals: ex.counterfactuals,
       contrastive: ex.contrastive,
-      faithfulness: faith ? { ...faith, revised: false, score_before_revision: null } : null,
+      faithfulness: faith ? { ...faith, revised: false, score_before_revision: null, precision_before_revision: null, kendall_tau_before_revision: null } : null,
     },
   };
 }

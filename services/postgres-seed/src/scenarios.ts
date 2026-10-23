@@ -1,8 +1,12 @@
 // Case definitions mirror notes/SCENARIOS.md. Timestamps are UTC and the
 // generator uses seeded RNG so the data is byte-reproducible.
 
-export type Role = "staff" | "student" | "faculty";
-export type MfaMethod = "push" | "totp" | "sms";
+export type Role = "staff" | "student" | "faculty" | "admin";
+// `none` is a legitimate value for highly-privileged service accounts that
+// are not enrolled in MFA. Analysts need to see this field truthfully; this
+// is NOT the right value for ordinary users and the Risk Gate reads it as a
+// privilege-boundary signal.
+export type MfaMethod = "push" | "totp" | "sms" | "none";
 
 export type IdentitySeed = {
   upn: string;

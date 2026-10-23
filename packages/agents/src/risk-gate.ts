@@ -5,8 +5,20 @@
 // a degraded model step all route the case to a human ("escalate").
 import type { FindingT, VerdictT } from "./schema.ts";
 
-export const ABUSE_TECHNIQUES = ["T1621", "T1114.003", "T1213", "T1110.003"]; // post-authentication abuse
+// L3 — "T1550.004 Web Session Cookie" is the ATT&CK handle for a replayed
+// session; HOLDOUT_LESSONS L3 explicitly promotes "null-device + zero-prompt
+// + concurrent legit user" into the ABUSE bucket because it is a post-auth
+// takeover primitive, not just a foothold.
+export const ABUSE_TECHNIQUES = ["T1621", "T1114.003", "T1213", "T1110.003", "T1550.004"]; // post-authentication abuse
 export const ACCESS_TECHNIQUES = ["T1566.002", "T1204.001", "T1078.004", "T1078"]; // initial access / foothold
+// Phishing exposure signals that only prove the user *saw* the attack surface
+// (click, phish_suspect delivery). HOLDOUT_LESSONS L4: if a click exists and
+// no post-click signal (new_asn / new_device / rule / fatigue / bulk_sis /
+// token_replay) survives in the follow-up window, the correct verdict is
+// `monitor` with an `exposure[]` note — unless mfa_method=none, in which
+// case the loss of a password is already compromise and the result is
+// `escalate`. The subset is a strict subset of ACCESS_TECHNIQUES.
+export const PHISH_EXPOSURE_TECHNIQUES = ["T1566.002", "T1204.001"];
 export const EXPOSURE_TECHNIQUES = ["T1133", "T1190"];
 export const ESCALATE_BELOW = 0.7;
 
@@ -16,9 +28,14 @@ export type PolicyInput = {
   dqConflicts: string[];
   degraded: boolean;
   checkedSources: string[]; // e.g. ["signin_event","mail_event"]
+  /** L4 — the alerting user's MFA method, from identity_for. `none` upgrades
+   *  a clean-follow-up exposure from `monitor` to `escalate` because the loss
+   *  of a password with no MFA is already compromise. Optional: the Risk Gate
+   *  falls back to pre-L4 behaviour when the identity row is unavailable. */
+  mfaMethod?: string | null;
 };
 
-export type PolicyDecision = { decision: VerdictT; confidence: number; reasons: string[]; escalate_reasons: string[] };
+export type PolicyDecision = { decision: VerdictT; confidence: number; reasons: string[]; escalate_reasons: string[]; exposure?: Array<{ finding_id: string; claim: string }> };
 
 const has = (f: FindingT, set: string[]) => f.attack.some((t) => set.includes(t));
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -30,6 +47,14 @@ export function policy(p: PolicyInput): PolicyDecision {
   const access = confirmed.filter((f) => has(f, ACCESS_TECHNIQUES));
   const exposure = p.findings.filter((f) => has(f, EXPOSURE_TECHNIQUES) && (f.status === "CONFIRMED" || f.status === "LIKELY"));
   const weak = p.findings.filter((f) => f.status !== "CONFIRMED" && f.attack.length);
+  // L4 — phish exposure that has not reached any post-authentication signal
+  // yet. We identify "post-exposure" signals as access findings that are not
+  // purely phish surface (i.e. T1078/T1078.004 but NOT T1566.002/T1204.001),
+  // plus any abuse finding. If every confirmed access signal is pure phish
+  // exposure AND no abuse / no exposure (KEV) survives, the chain is clean —
+  // the user saw the bait, nothing happened downstream.
+  const phishExposure = confirmed.filter((f) => has(f, PHISH_EXPOSURE_TECHNIQUES));
+  const credentialAccess = confirmed.filter((f) => has(f, ACCESS_TECHNIQUES) && !has(f, PHISH_EXPOSURE_TECHNIQUES));
   const reasons: string[] = [];
   const esc: string[] = [];
   if (p.degraded) esc.push("a model step was degraded");
@@ -56,6 +81,29 @@ export function policy(p: PolicyInput): PolicyDecision {
   }
 
   if (exposure.length || abuse.length || access.length) {
+    // L4 — "phish exposure without downstream signals" → `monitor` (or
+    // `escalate` for mfa_method=none). The chain is clean when:
+    //   • there is at least one confirmed phish-exposure finding,
+    //   • no abuse finding survives,
+    //   • no credential-use (non-phish) access finding survives,
+    //   • no exposure (KEV) finding survives,
+    //   • no DQ conflict blocks the policy.
+    // The policy still carries an `exposure[]` list so the Reporter can
+    // surface the click URL / sender domain in the Report. If mfa_method is
+    // explicitly 'none', the loss of a password without MFA is already a
+    // compromise → escalate instead of monitor.
+    const mfa = (p.mfaMethod ?? "").toLowerCase();
+    if (phishExposure.length && !abuse.length && !credentialAccess.length && !exposure.length && !p.dqConflicts.length) {
+      const confBase = r2(Math.max(0.6, mean(phishExposure.map((f) => f.confidence)) - 0.05));
+      const exposureNote = phishExposure.map((f) => ({ finding_id: f.id, claim: f.claim }));
+      if (mfa === "none") {
+        reasons.push(`phish exposure (${phishExposure.map((f) => f.id).join(",")}) on an account with mfa_method=none; the loss of a password without MFA is already compromise`);
+        esc.push("mfa_method=none + phish click: password harvest without MFA is treated as compromise");
+        return { decision: "escalate", confidence: Math.max(ESCALATE_BELOW, confBase), reasons, escalate_reasons: esc, exposure: exposureNote };
+      }
+      reasons.push(`phish exposure (${phishExposure.map((f) => f.id).join(",")}) with a clean follow-up window: no new ASN / device / rule / fatigue / bulk-SIS / token-replay signal survived`);
+      return { decision: "monitor", confidence: confBase, reasons, escalate_reasons: esc, exposure: exposureNote };
+    }
     if (exposure.length) reasons.push(`sign-in path touches an exposed asset (${exposure.map((f) => f.id).join(",")})`);
     if (abuse.length || access.length) reasons.push(`partial chain: ${abuse.length} abuse + ${access.length} access signal(s), not enough to contain`);
     esc.push("signals of compromise without a confirmed abuse chain");

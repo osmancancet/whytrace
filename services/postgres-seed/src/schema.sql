@@ -9,9 +9,9 @@ DROP TABLE IF EXISTS identities;
 CREATE TABLE identities (
     upn            text PRIMARY KEY,
     display_name   text NOT NULL,
-    role           text NOT NULL CHECK (role IN ('staff', 'student', 'faculty')),
+    role           text NOT NULL CHECK (role IN ('staff', 'student', 'faculty', 'admin')),
     department     text NOT NULL,
-    mfa_method     text NOT NULL CHECK (mfa_method IN ('push', 'totp', 'sms')),
+    mfa_method     text NOT NULL CHECK (mfa_method IN ('push', 'totp', 'sms', 'none')),
     home_country   text NOT NULL,
     manager_upn    text REFERENCES identities(upn),
     created_at     timestamptz NOT NULL

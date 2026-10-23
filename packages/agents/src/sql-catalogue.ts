@@ -29,7 +29,8 @@ export type QueryName =
   | "dq_signin_bad_vpn_order"
   | "signin_count_by_country"
   | "spray_source_for"
-  | "spray_failures_window";
+  | "spray_failures_window"
+  | "identity_for";
 
 export type SqlCatalogueEntry = { sql: string; description: string };
 
@@ -112,6 +113,16 @@ export function queryFor(name: QueryName, params: Record<string, string | number
         description: "failed sign-ins from one source IP within a time window (paginated spray sweep)",
         sql: `SELECT event_id, ts, upn, result, ip, asn_org, country, mfa_prompt_count FROM ${USL}.signin_event WHERE ip = '${esc(params.ip)}' AND result IN ('failure','mfa_denied') AND ts >= '${esc(params.from)}' AND ts < '${esc(params.to)}' ORDER BY ts`,
       };
+    case "identity_for":
+      return {
+        description: "identity row (role, mfa_method, department) for a UPN",
+        // Reads the frozen USL identity view. The Risk Gate reads `role` and
+        // `mfa_method` to decide whether a privilege boundary applies — e.g.
+        // L1 only raises the "admin baseline-break" finding on `role='admin'`
+        // or `mfa_method='none'` accounts, and L4 upgrades a clean-follow-up
+        // exposure from `monitor` to `escalate` when `mfa_method='none'`.
+        sql: `SELECT upn, role, department, mfa_method, home_country FROM ${USL}.identity WHERE upn = '${esc(params.upn)}'`,
+      };
   }
 }
 
@@ -131,6 +142,7 @@ export function listCatalogue(): Array<{ name: QueryName; description: string; p
     { name: "spray_source_for", description: "password-spray sources behind this UPN's successful sign-ins", params: ["upn"] },
     { name: "spray_failures_window", description: "paginated failures from one IP across a time window (Markovian step)", params: ["ip", "from", "to"] },
     { name: "dq_signin_bad_vpn_order", description: "VPN sessions with ts_end < ts_start", params: [] },
+    { name: "identity_for", description: "identity row for a UPN (role, mfa_method, department)", params: ["upn"] },
   ];
 }
 

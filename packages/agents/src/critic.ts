@@ -6,7 +6,16 @@
 // Checks are code, not prompts, so the same rows always give the same verdict.
 import type { CriticVerdictT, FindingT } from "./schema.ts";
 import { HOME_DOMAIN, USL, esc } from "./sql-catalogue.ts";
-import { isExternal, toMs, type Row } from "./investigator.ts";
+import {
+  L1_BASELINE_MIN_DAYS,
+  L1_HIGH_VALUE_APPS,
+  L1_PRIVILEGED_ROLES,
+  L3_CONCURRENT_WINDOW_MIN,
+  L6_CARRIER_GEO_FRACTION,
+  isExternal,
+  toMs,
+  type Row,
+} from "./investigator.ts";
 import type { SqlRunner } from "./dq.ts";
 
 // Vendor "fixed in" versions for KEV-listed Ivanti Connect Secure CVEs
@@ -176,11 +185,11 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       let sql_id: string | undefined;
       let raw = true;
       try {
-        const r = await z.runSql(`SELECT event_id, ts, country, device_id, user_agent, app, mfa_prompt_count, via_vpn_appliance FROM auth_pg.signin_events WHERE event_id IN (${ids})`);
+        const r = await z.runSql(`SELECT event_id, ts, country, city, asn_org, ip, device_id, user_agent, app, mfa_prompt_count, via_vpn_appliance FROM auth_pg.signin_events WHERE event_id IN (${ids})`);
         rows = r.rows; sql_id = r.sql_id;
       } catch {
         raw = false;
-        const r = await z.runSql(`SELECT event_id, ts, country, device_id, app, mfa_prompt_count, via_vpn_appliance FROM ${USL}.signin_event WHERE event_id IN (${ids})`);
+        const r = await z.runSql(`SELECT event_id, ts, country, city, asn_org, ip, device_id, app, mfa_prompt_count, via_vpn_appliance FROM ${USL}.signin_event WHERE event_id IN (${ids})`);
         rows = r.rows; sql_id = r.sql_id;
       }
       const a = rows.find((x) => x.event_id === f.facts.from_event);
@@ -199,8 +208,118 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       if (raw && NON_INTERACTIVE_UA.test(String(a.user_agent ?? ""))) reasons.push(`the ${a.country} event is a non-interactive mail-sync token (${a.user_agent}), not the person`);
       else if (!s(a.device_id) && n(a.mfa_prompt_count) === 0 && a.app === "mail") reasons.push(`the ${a.country} event has no device and no MFA (mail sync pattern)`);
       if (s(b.via_vpn_appliance) && s(b.device_id)) reasons.push(`the ${b.country} sign-ins use university VPN ${b.via_vpn_appliance} from device ${b.device_id}`);
+      // L2 — "known managed device on both sides dissolves impossible travel".
+      // If BOTH endpoints are the same device_id and the device is managed +
+      // owned by this UPN, the travel is the user carrying their own kit
+      // (consumer VPN, cross-border holiday). We require both to be
+      // success/mfa_approved so an impostor using the real device_id in a
+      // stolen cookie (impostor row only one side) is not downgraded.
+      const devA = s(a.device_id);
+      const devB = s(b.device_id);
+      if (devA && devB && devA === devB) {
+        const dRes = await z.runSql(`SELECT device_id, owner_upn, managed FROM ${USL}.device WHERE device_id = '${esc(devA)}'`);
+        const dev = dRes.rows[0];
+        const managed = dev && String(dev.managed).toLowerCase() === "true" && String(dev.owner_upn) === upn;
+        if (managed) reasons.push(`both endpoints are the user's own managed device ${devA}`);
+      }
+      // L6 — carrier-geolocation guard. For the "foreign" endpoint (the second
+      // row by ts), look at the user's own baseline on the SAME asn_org and
+      // SAME device_id: if ≥ L6_CARRIER_GEO_FRACTION of baseline rows for that
+      // (asn_org, device_id) came from the "foreign" city, the mobile carrier
+      // is geolocating the user there as a baseline artefact and the travel
+      // claim is the IdP's noise, not evidence.
+      const foreignCity = s(b.city);
+      const foreignAsn = s(b.asn_org);
+      const foreignDev = s(b.device_id);
+      if (foreignCity && foreignAsn && foreignDev) {
+        const cRes = await z.runSql(`SELECT city, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(foreignAsn)}' AND device_id = '${esc(foreignDev)}' AND result IN ('success','mfa_approved') GROUP BY city`);
+        const totals = cRes.rows.reduce((acc, r) => acc + n(r.n), 0);
+        const foreign = cRes.rows.find((r) => s(r.city) === foreignCity);
+        const foreignN = n(foreign?.n);
+        if (totals > 0 && foreignN / totals >= L6_CARRIER_GEO_FRACTION) {
+          reasons.push(`${foreignN}/${totals} baseline sign-ins on the same ASN ${foreignAsn} + device ${foreignDev} already geolocate to ${foreignCity} (carrier-geolocation artefact ≥ ${Math.round(L6_CARRIER_GEO_FRACTION * 100)} %)`);
+        }
+      }
       if (reasons.length) return { status: "rejected", reason: `premature impossible-travel claim: ${reasons.join("; ")}`, sql_id };
       return { status: "approved", reason: `both events are interactive and ${f.facts.minutes} min apart`, sql_id, confirm: raw };
+    }
+    case "admin_baseline_break": {
+      // L1 — re-derive the baseline / today app sets from signin_event; then
+      // only promote the claim when the identity row shows a privileged
+      // account (role ∈ L1_PRIVILEGED_ROLES OR mfa_method = 'none'). We never
+      // trust facts.* alone — a mangled claim must be independently supported.
+      const ip = String(f.facts.ip ?? "");
+      const day = String(f.facts.day ?? "");
+      if (!ip || !day) return { status: "rejected", reason: `admin baseline-break missing ip/day in facts`, sql_id: undefined };
+      const r = await z.runSql(`SELECT CAST(ts AS DATE) AS day, app, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = ${U} AND ip = '${esc(ip)}' AND result IN ('success','mfa_approved') GROUP BY CAST(ts AS DATE), app ORDER BY day`);
+      const perDay = new Map<string, Set<string>>();
+      for (const row of r.rows) {
+        const d = String(row.day).slice(0, 10);
+        const a = s(row.app);
+        if (!a) continue;
+        const set = perDay.get(d) ?? new Set<string>();
+        set.add(a);
+        perDay.set(d, set);
+      }
+      const todayApps = perDay.get(day) ?? new Set<string>();
+      const baselineApps = new Set<string>();
+      let baselineDays = 0;
+      for (const [d, apps] of perDay) {
+        if (d === day) continue;
+        baselineDays += 1;
+        for (const a of apps) baselineApps.add(a);
+      }
+      if (baselineDays < L1_BASELINE_MIN_DAYS) return { status: "rejected", reason: `baseline too short on re-query: ${baselineDays} days of history on ${ip} (threshold ${L1_BASELINE_MIN_DAYS})`, sql_id: r.sql_id };
+      const newApps = [...todayApps].filter((a) => !baselineApps.has(a));
+      const highValue = newApps.filter((a) => L1_HIGH_VALUE_APPS.has(a));
+      if (!highValue.length) return { status: "rejected", reason: `${day} apps ${[...todayApps].sort().join(",")} do not add a high-value class to the baseline ${[...baselineApps].sort().join(",")} on ${ip}`, sql_id: r.sql_id };
+      // Privilege gate — identity_for returns at most one row.
+      const idRes = await z.runSql(`SELECT upn, role, mfa_method FROM ${USL}.identity WHERE upn = ${U}`);
+      const idRow = idRes.rows[0];
+      const role = s(idRow?.role)?.toLowerCase() ?? "";
+      const mfa = s(idRow?.mfa_method)?.toLowerCase() ?? "";
+      const privileged = L1_PRIVILEGED_ROLES.has(role) || mfa === "none";
+      if (!privileged) return { status: "rejected", reason: `baseline-break only promoted on privileged accounts (role ∈ ${[...L1_PRIVILEGED_ROLES].join(",")} or mfa_method=none); this user is role=${role || "?"} mfa=${mfa || "?"}`, sql_id: idRes.sql_id };
+      return { status: "approved", reason: `${baselineDays}-day baseline on ${ip} served ${[...baselineApps].sort().join(",")}; ${day} added high-value class(es) ${highValue.sort().join(",")} on a role=${role || "?"} mfa=${mfa || "?"} account`, sql_id: idRes.sql_id, confirm: true };
+    }
+    case "token_replay": {
+      // L3 — session-token replay: a null-device + zero-prompt sign-in from a
+      // non-baseline ASN while a managed-device + baseline ASN sign-in exists
+      // within ±L3_CONCURRENT_WINDOW_MIN minutes. We re-query the two event
+      // ids from the raw signin feed to confirm both rows and both sides.
+      const replayId = String(f.facts.replay_event ?? "");
+      const concurrentId = String(f.facts.concurrent_event ?? "");
+      if (!replayId || !concurrentId) return { status: "rejected", reason: `token_replay missing event ids in facts`, sql_id: undefined };
+      const ids = [replayId, concurrentId].map((x) => `'${esc(x)}'`).join(",");
+      let rows: Row[] = [];
+      let sqlId: string | undefined;
+      try {
+        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result FROM auth_pg.signin_events WHERE event_id IN (${ids})`);
+        rows = r.rows; sqlId = r.sql_id;
+      } catch {
+        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result FROM ${USL}.signin_event WHERE event_id IN (${ids})`);
+        rows = r.rows; sqlId = r.sql_id;
+      }
+      const replay = rows.find((x) => x.event_id === replayId);
+      const concurrent = rows.find((x) => x.event_id === concurrentId);
+      if (!replay || !concurrent) return { status: "rejected", reason: `token_replay cites events ${replayId} / ${concurrentId}; ${!replay ? "replay" : "concurrent"} does not resolve on independent re-query`, sql_id: sqlId };
+      if (s(replay.device_id)) return { status: "rejected", reason: `replay row has a device_id (${s(replay.device_id)}); the pattern needs a null-device session`, sql_id: sqlId };
+      if (n(replay.mfa_prompt_count) !== 0) return { status: "rejected", reason: `replay row has ${n(replay.mfa_prompt_count)} MFA prompts; the pattern needs a zero-prompt session`, sql_id: sqlId };
+      if (!s(concurrent.device_id)) return { status: "rejected", reason: `concurrent row has no device_id — cannot prove the real user is active`, sql_id: sqlId };
+      // Confirm the concurrent device is actually managed+owned.
+      const d = await z.runSql(`SELECT device_id, owner_upn, managed FROM ${USL}.device WHERE device_id = '${esc(s(concurrent.device_id) ?? "")}'`);
+      const dev = d.rows[0];
+      const managed = dev && String(dev.managed).toLowerCase() === "true" && String(dev.owner_upn) === upn;
+      if (!managed) return { status: "rejected", reason: `concurrent device ${s(concurrent.device_id)} is not a managed device owned by ${upn}`, sql_id: d.sql_id };
+      // Confirm the replay ASN is NOT in the user's baseline (≥ 2 distinct days).
+      const asn = s(replay.asn_org) ?? "";
+      const baselineAsn = await z.runSql(`SELECT COUNT(DISTINCT CAST(ts AS DATE)) AS days FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(asn)}' AND result IN ('success','mfa_approved') AND ts < '${esc(String(replay.ts))}'`);
+      const priorDays = n(baselineAsn.rows[0]?.days);
+      if (priorDays >= 2) return { status: "rejected", reason: `replay ASN ${asn} is in baseline (${priorDays} prior distinct days); not a new-ASN session`, sql_id: baselineAsn.sql_id };
+      // Confirm the window is within ±L3_CONCURRENT_WINDOW_MIN minutes.
+      const gapMin = Math.abs(toMs(String(replay.ts)) - toMs(String(concurrent.ts))) / 60_000;
+      if (!Number.isFinite(gapMin) || gapMin > L3_CONCURRENT_WINDOW_MIN) return { status: "rejected", reason: `replay and concurrent sessions are ${gapMin.toFixed(0)} min apart (threshold ${L3_CONCURRENT_WINDOW_MIN} min)`, sql_id: baselineAsn.sql_id };
+      return { status: "approved", reason: `null-device zero-prompt sign-in on ${asn} while the user is concurrently active on ${s(concurrent.asn_org)} with managed device ${s(concurrent.device_id)} (${gapMin.toFixed(0)} min apart)`, sql_id: baselineAsn.sql_id, confirm: true };
     }
     case "kev_exposure": {
       const app = String(f.facts.appliance_id ?? "");

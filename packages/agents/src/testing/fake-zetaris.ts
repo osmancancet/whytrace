@@ -186,6 +186,39 @@ export class FakeZetaris {
       const rs = S.filter((r) => r.app === "sis" && r.result === "success" && r.ip === ip).sort(byTs("ts"));
       return [{ n: rs.length, first_ts: rs[0]?.ts ?? null, last_ts: rs[rs.length - 1]?.ts ?? null }];
     }
+    // DAY7 L1: per-ip per-day app distribution. Must come BEFORE the generic
+    // "COUNT(*) AS n AND ip = '...'" handler which would otherwise swallow it.
+    if (sql.includes(".signin_event") && sql.includes("GROUP BY CAST(ts AS DATE), app")) {
+      const ip = lit(sql, /ip = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.upn === upn && r.ip === ip && (r.result === "success" || r.result === "mfa_approved"));
+      const g = new Map<string, Map<string, number>>();
+      for (const r of rs) {
+        const day = String(r.ts).slice(0, 10);
+        const inner = g.get(day) ?? new Map<string, number>();
+        inner.set(String(r.app), (inner.get(String(r.app)) ?? 0) + 1);
+        g.set(day, inner);
+      }
+      const out: Row[] = [];
+      for (const [day, apps] of g) for (const [app, nn] of apps) out.push({ day, app, n: nn });
+      return out.sort((a, b) => String(a.day).localeCompare(String(b.day)));
+    }
+    // DAY7 L6: per-city breakdown on (asn_org, device_id). Must come BEFORE
+    // the generic "signin_event WHERE upn" fall-through.
+    if (sql.includes(".signin_event") && sql.includes("GROUP BY city") && sql.includes("asn_org = '") && sql.includes("device_id = '")) {
+      const asn = lit(sql, /asn_org = '([^']+)'/);
+      const dev = lit(sql, /device_id = '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.upn === upn && r.asn_org === asn && r.device_id === dev && (r.result === "success" || r.result === "mfa_approved"));
+      const g = new Map<string, number>();
+      for (const r of rs) g.set(String(r.city ?? ""), (g.get(String(r.city ?? "")) ?? 0) + 1);
+      return [...g.entries()].map(([city, n]) => ({ city, n }));
+    }
+    // DAY7 L3: distinct baseline days on an ASN before a timestamp.
+    if (sql.includes("COUNT(DISTINCT CAST(ts AS DATE)) AS days") && sql.includes("asn_org = '")) {
+      const asn = lit(sql, /asn_org = '([^']+)'/);
+      const before = lit(sql, /ts < '([^']+)'/);
+      const rs = t.signin_event.filter((r) => r.upn === upn && r.asn_org === asn && (r.result === "success" || r.result === "mfa_approved") && (!before || String(r.ts) < T(before)));
+      return [{ days: new Set(rs.map((r) => String(r.ts).slice(0, 10))).size }];
+    }
     if (sql.includes(".signin_event") && sql.includes("ip = '") && sql.includes("COUNT(*) AS n")) {
       const ip = lit(sql, /ip = '([^']+)'/);
       return [{ n: S.filter((r) => r.ip === ip && r.result === "success").length }];
@@ -270,6 +303,11 @@ export class FakeZetaris {
     if (sql.includes(".device WHERE device_id")) return pick(t.device.filter((r) => r.device_id === lit(sql, /device_id = '([^']+)'/)), colsOf(sql));
     if (sql.includes(".vpn_session") && upn) return pick(t.vpn_session.filter((r) => r.upn === upn), colsOf(sql));
     if (sql.includes("ts_end < ts_start")) return pick(t.vpn_session.filter((r) => r.ts_end && String(r.ts_end) < String(r.ts_start)), colsOf(sql));
+    // ---- identity (DAY7: L1 / L4 read role + mfa_method)
+    if (sql.includes(".identity") && sql.includes("WHERE upn")) {
+      const rs = t.identity.filter((r) => r.upn === upn);
+      return pick(rs, colsOf(sql));
+    }
     return [];
   }
 }
