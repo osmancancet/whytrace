@@ -2,7 +2,7 @@
 
 > **Evidence-backed account-compromise investigator for university IT.** A planner → investigator ↔ critic → risk-gate → reporter loop reads four fragmented data sources in place through **Zetaris**, cites the exact query and rows behind every claim, and routes to a human when the signal does not stand up to re-query.
 
-Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Explain Why"** by Osman Can Çetlenbik (CyberCBU, Manisa Celal Bayar University). Development was done in Cursor.
+Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Explain Why"** by Osman Can Çetlenbik (CyberCBU, Manisa Celal Bayar University). Development was done in the Cursor IDE with Claude as the AI coding assistant.
 
 ## TL;DR
 
@@ -10,7 +10,7 @@ Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Expla
 - **Problem:** phishing → account takeover is the most common incident; a wrong *benign* leaks student records, a wrong *contain* locks a lecturer out mid-exam.
 - **Verdicts:** `contain | monitor | benign | escalate` — each with a confidence number, timeline, and a defensible rationale.
 - **Evidence chain:** every finding links to a `sql_id` the Critic re-queried independently; nothing is "the model said so".
-- **Sponsor stack:** [Zetaris](https://zetaris.com) (Unified Semantic Layer over four sources), [Meterless](https://meterless.ai) (World Model, H-MEM, Markovian engines + Nightshift provider), [NVIDIA Nemotron](https://developer.nvidia.com/blog/accelerate-ai-development-with-the-nvidia-nemotron-open-models/) (Super VL 120B + Lightning 30B lanes), Cursor (development environment).
+- **Sponsor stack:** [Zetaris](https://zetaris.com) (Unified Semantic Layer over four sources), [Meterless](https://meterless.ai) (World Model, H-MEM, Markovian engines + Nightshift provider), [NVIDIA Nemotron](https://developer.nvidia.com/blog/accelerate-ai-development-with-the-nvidia-nemotron-open-models/) (Super VL 120B + Lightning 30B lanes), Cursor IDE + Claude (development tools).
 
 ## The problem
 
@@ -116,7 +116,7 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 | Meterless engines | World Model, H-MEM, Markovian, Scout Intent | `packages/engines/*` + conformance in `conformance/*` (29/29 passing on the three with upstream suites; Scout has 13 local unit tests because no upstream conformance runner is published, see `notes/ENGINES_FINDINGS.md` §4). Audit JSONL per run in `logs/<run_id>/`. |
 | Meterless Nightshift | Provider for all model calls | `packages/adapters/src/nightshift.ts` — `/no_think`, max_tokens 4000 default (6000 for Planner — Super VL's hidden reasoning tokens push completion spend to 2.5–2.9 k on real planning prompts; 2000 truncated the tool call), warmup/probe ≥ 2000 (Runtime 1.4 floor), 180 s timeout, 2/4/8 s retries, route fallback deep→fast, proxy-token fallback on 401. Every call writes `receipt_id`, `routed_model`, `completion_tokens` and `finish_reason` to the trace. Per-run cache-bust nonce is appended to the LAST USER TURN (the local engine's exact-cache key ignores system turn and model id, verified 23 Oct). |
 | NVIDIA Nemotron (via Nightshift) | Super VL 120B (deep) + Lightning 30B (fast) | `routed_model` from each response's `meterless` receipt is surfaced in the UI (model chip) and recorded in `evidence/eval.md`. |
-| Cursor | Development environment | Commits authored by the builder; all AI-authored work happens inside the editor during the build window. |
+| Cursor + Claude | Development tools (Cursor is optional since the 22 Oct rule update) | Cursor IDE as the editor, Claude as the AI coding assistant; commits authored by the builder during the build window. Project rules for the coding agent live in `.cursor/rules/*.mdc`. |
 
 ## Zetaris USL: build and reflection
 
@@ -254,7 +254,7 @@ Sample mode replays a *previously recorded* investigation without touching Zetar
 
 ## AI disclosure
 
-Runtime models are **NVIDIA Nemotron** (`nemotron-3.5-super-vl-120b-a12b` for deep lanes, `nemotron-3.5-lightning-30b-a3b` for fast lanes), served exclusively through **Meterless Nightshift**. If a Nemotron Ultra lane becomes available on this install, `METERLESS_REPORTER_MODEL=<id>` routes the Reporter narration there while the Investigator stays on Super VL — `scripts/probe_ultra.ts` records the probe state at submission time. The deck narration voice is synthetic. All development was done in **Cursor**.
+Runtime models are **NVIDIA Nemotron** (`nemotron-3.5-super-vl-120b-a12b` for deep lanes, `nemotron-3.5-lightning-30b-a3b` for fast lanes), served exclusively through **Meterless Nightshift**. If a Nemotron Ultra lane becomes available on this install, `METERLESS_REPORTER_MODEL=<id>` routes the Reporter narration there while the Investigator stays on Super VL — `scripts/probe_ultra.ts` records the probe state at submission time. The deck narration voice is synthetic. Development was done in the **Cursor** IDE with **Claude** as the AI coding assistant.
 
 ## Entry points
 
