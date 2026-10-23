@@ -96,6 +96,54 @@ export const Report = z.object({
     reason: z.string(),
     match: z.string(),
   })).default([]),
+  /** DAY5 explainability payload. Attribution + counterfactuals + contrastive
+   *  are computed from the deterministic Risk-Gate policy with no extra
+   *  model calls. `faithfulness` compares the Reporter's cited finding ids
+   *  (F1…) with the top-k Shapley findings; a low score triggers one revision
+   *  pass of the Reporter with the attribution table in the prompt. */
+  explanation: z.object({
+    verdict: Verdict,
+    confidence: z.number().min(0).max(1),
+    mode: z.enum(["exact", "sampled"]),
+    n_findings: z.number().int().min(0),
+    samples_used: z.number().int().min(0).default(0),
+    attribution: z.array(z.object({
+      finding_id: z.string(),
+      claim: z.string(),
+      attack: z.array(z.string()).default([]),
+      sql_ids: z.array(z.string()).default([]),
+      shapley: z.number(),
+      rank: z.number().int().min(1),
+    })).default([]),
+    counterfactuals: z.object({
+      leave_one_out: z.array(z.object({
+        finding_id: z.string(),
+        verdict_without: Verdict,
+        confidence_without: z.number().min(0).max(1),
+        changes_verdict: z.boolean(),
+      })).default([]),
+      minimal_set: z.object({
+        finding_ids: z.array(z.string()),
+        verdict: Verdict,
+        confidence: z.number().min(0).max(1),
+      }).nullable().default(null),
+    }),
+    contrastive: z.object({
+      runner_up: Verdict,
+      explanation: z.string(),
+      blocking_findings: z.array(z.string()).default([]),
+      missing_evidence: z.array(z.string()).default([]),
+    }).nullable().default(null),
+    faithfulness: z.object({
+      top_k: z.number().int().min(1),
+      top_shapley_ids: z.array(z.string()),
+      cited_ids: z.array(z.string()),
+      overlap: z.number().int().min(0),
+      score: z.number().min(0).max(1),
+      revised: z.boolean().default(false),
+      score_before_revision: z.number().min(0).max(1).nullable().default(null),
+    }).nullable().default(null),
+  }).optional(),
   risk: z.object({
     decision: Verdict,
     policy_decision: Verdict,

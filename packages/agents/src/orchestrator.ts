@@ -11,6 +11,7 @@ import { FindingIds, deriveFindings, type Row } from "./investigator.ts";
 import { critique, rubric } from "./critic.ts";
 import { appliancesFromRows, applyDqPenalty, runScopedDq, type DqResult } from "./dq.ts";
 import { canStandUnderDegrade, gate, policy } from "./risk-gate.ts";
+import { explain, extractCitedFindingIds, faithfulness, type Attribution, type Explanation } from "./explain.ts";
 import { readQueryLog, validateReport, type QueryLogRecord } from "./validate.ts";
 import { CaseMemory } from "./memory.ts";
 import { EvidenceGraph } from "./evidence-graph.ts";
@@ -531,6 +532,54 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     }
   }
   if (!reporterFromModel) note = deterministicNote;
+
+  // ---- Explainability (DAY5): attribution + counterfactuals over the
+  // deterministic policy, then a faithfulness pass that checks whether the
+  // Reporter's narration cites the top-3 Shapley findings. A low score triggers
+  // one Reporter revision with the attribution table in the system prompt.
+  // Nothing in explain() calls the model; a single additional Reporter attempt
+  // is the only budget it may spend.
+  const explainCtx = { rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources] };
+  const explanation: Explanation = explain({ findings, ...explainCtx });
+  const faithfulnessThreshold = 0.5;
+  let faithfulnessScore: ReturnType<typeof faithfulness> | null = null;
+  let faithfulnessBefore: number | null = null;
+  let faithfulnessRevised = false;
+  if (explanation.attribution.length) {
+    const cited = extractCitedFindingIds([note.summary, ...note.actions.map((a) => a.action)].join("\n"));
+    faithfulnessScore = faithfulness(explanation.attribution, cited, 3);
+    if (reporterFromModel && faithfulnessScore.score < faithfulnessThreshold && budget.canModel()) {
+      faithfulnessBefore = faithfulnessScore.score;
+      const topTable = explanation.attribution.slice(0, 5).map((a) => `${a.finding_id} shapley=${a.shapley} (rank ${a.rank}): ${a.claim.slice(0, 140)}`).join("\n");
+      budget.model += 1;
+      modelStepsTotal += 1;
+      try {
+        const rep2 = await opts.nightshift.callTool({
+          messages: [
+            { role: "system", content: `You write analyst-ready incident notes for a university SOC. The verdict is already decided by the Risk Gate: ${g.decision} (confidence ${g.confidence}). Do not change it. Revise your note so that the summary cites, by finding id, the evidence pieces that most changed the policy's call (listed below in attribution order).\n\n[ATTRIBUTION TABLE — top findings by Shapley value over the deterministic policy]\n${topTable}\n\nKeep summary <= 120 words. Each attributed finding above (rank ≤ 3) must appear in the summary at least once by its F<n> id.` },
+            { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nRisk Gate reasons: ${[...basePolicy.reasons, ...g.escalate_reasons].join("; ")}` },
+          ],
+          toolName: "submit_note", description: "Submit the revised incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 6000, agent: "reporter",
+          parse: (a) => ({ summary: String(a.summary ?? ""), actions: (Array.isArray(a.actions) ? a.actions : []).map((x: { action?: unknown; attack?: unknown }) => ({ action: String(x.action ?? ""), attack: toArr(x.attack) })).filter((x) => x.action), limitations: toArr(a.limitations), not_checked: toArr(a.not_checked) }),
+        });
+        const revised = rep2.value;
+        if (!revised.actions.length) revised.actions = note.actions;
+        note = revised;
+        modelStepsOk += 1;
+        faithfulnessRevised = true;
+        models.push({ agent: "reporter_revision", routed_model: rep2.model, receipt_id: rep2.receipt?.receipt_id });
+        const citedAfter = extractCitedFindingIds([note.summary, ...note.actions.map((a) => a.action)].join("\n"));
+        faithfulnessScore = faithfulness(explanation.attribution, citedAfter, 3);
+        trace.emit({ agent: "reporter", action: "faithfulness_revision", routed_model: rep2.model, receipt_id: rep2.receipt?.receipt_id, lane: "deep", status: "ok", output_summary: `faithfulness ${faithfulnessBefore} → ${faithfulnessScore.score}` });
+      } catch (err) {
+        trace.emit({ agent: "reporter", action: "faithfulness_revision", status: "degraded", output_summary: (err as Error).message.slice(0, 200) });
+      }
+    }
+    trace.emit({ agent: "explain", action: "attribution", status: "ok", output_summary: `mode=${explanation.mode} top=${explanation.attribution.slice(0, 3).map((a) => `${a.finding_id}:${a.shapley}`).join(",")} faithfulness@3=${faithfulnessScore?.score ?? "n/a"}` });
+  } else {
+    trace.emit({ agent: "explain", action: "attribution", status: "ok", output_summary: "no findings to attribute" });
+  }
+
   // A verdict is "model-backed" only when BOTH the Risk Gate opinion AND the
   // Reporter narration came from a successful model call. Any other shape
   // (policy stood in on degraded run, planner-only, reporter-only) is a
@@ -578,6 +627,19 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     critic_score: score,
     critic_verdicts: [...verdictsById.values()],
     prompt_injection_attempts: promptInjectionAttempts,
+    explanation: {
+      verdict: explanation.verdict,
+      confidence: explanation.confidence,
+      mode: explanation.mode,
+      n_findings: explanation.n_findings,
+      samples_used: explanation.samples_used,
+      attribution: explanation.attribution,
+      counterfactuals: explanation.counterfactuals,
+      contrastive: explanation.contrastive,
+      faithfulness: faithfulnessScore
+        ? { ...faithfulnessScore, revised: faithfulnessRevised, score_before_revision: faithfulnessBefore }
+        : null,
+    },
     risk: { decision, policy_decision: basePolicy.decision, model_decision: modelOpinion?.decision, confidence, rationale: modelOpinion?.rationale ?? basePolicy.reasons.join("; "), escalate_reasons },
     rounds,
     budget: { sql_calls: budget.sql, model_calls: budget.model },

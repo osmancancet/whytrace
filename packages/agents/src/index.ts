@@ -12,3 +12,4 @@ export * from "./markovian-sweep.ts";
 export * from "./rules-baseline.ts";
 export * from "./scout-gate.ts";
 export * from "./model-only.ts";
+export * from "./explain.ts";

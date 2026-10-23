@@ -25,6 +25,7 @@
     "build:web": "npm --workspace @whytrace/web run build",
     "eval": "tsx scripts/eval.ts",
     "eval:adversarial": "tsx scripts/adversarial.ts",
+    "eval:explain": "tsx scripts/eval_explain.ts",
     "probe:ultra": "tsx scripts/probe_ultra.ts",
     "record": "tsx scripts/record_sample.ts",
     "bootstrap:zetaris": "tsx scripts/zetaris_bootstrap.ts",
