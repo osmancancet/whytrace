@@ -17,10 +17,10 @@ const WIDTH = 1440;
 const HEIGHT = 1000;
 
 const SHOTS = [
-  { run: "mvjg199q_c8cfeedb16", file: "console-case-001-contain.png", caption: "case-001 contain @ 0.98 (8/9 CONFIRMED)" },
-  { run: "mvkhycl9_ce854249cd", file: "console-case-002-benign.png",  caption: "case-002 benign (shared-egress rejection)" },
-  { run: "mvjur4qi_f25f750440", file: "console-case-003-escalate.png", caption: "case-003 escalate" },
-  { run: "mvke754e_291c265a82", file: "console-case-007-contain-prompt-injection.png", caption: "case-007 contain + prompt-injection panel" },
+  { run: "mvkpcv7i_5b2ce0bc39", file: "console-case-001-contain.png", caption: "case-001 contain @ 0.94 (model+policy)" },
+  { run: "mvkop4ww_ef8b857b21", file: "console-case-002-benign.png",  caption: "case-002 benign (DAY3D shared-egress rejection on a DAY3E fresh-store run)" },
+  { run: "mvkpwabw_095790bc2d", file: "console-case-003-escalate.png", caption: "case-003 escalate (DQ conflict; risk-gate degraded → policy fallback)" },
+  { run: "mvkpsitu_a27519248c", file: "console-case-007-contain-prompt-injection.png", caption: "case-007 contain + prompt-injection panel" },
 ];
 
 mkdirSync(OUT_DIR, { recursive: true });
