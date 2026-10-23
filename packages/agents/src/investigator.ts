@@ -85,7 +85,13 @@ export function deriveFindings(
       const phish = idxOf((r) => r.kind === "delivery" && r.verdict === "phish_suspect");
       if (!phish.length) return [];
       const r = rows[phish[0]!]!;
-      return [mk({ kind: "phish_delivery", claim: `Phishing-suspect mail delivered from ${r.sender_domain ?? "?"} (${String(r.detail ?? "").slice(0, 60)})`, confidence: 0.8, attack: ["T1566.002"], rowIdx: phish, facts: { sender_domain: str(r.sender_domain), ts: str(r.ts) } })];
+      // detail is projected by the USL as "subject=<text>" for delivery rows.
+      // Extract the subject so Scout can scan it directly (facts.subject →
+      // mail_subject) instead of relying on the 60-char claim slice.
+      const rawDetail = String(r.detail ?? "");
+      const subjectMatch = /^subject=(.*)$/s.exec(rawDetail);
+      const subject = subjectMatch?.[1]?.trim() ?? null;
+      return [mk({ kind: "phish_delivery", claim: `Phishing-suspect mail delivered from ${r.sender_domain ?? "?"} (${rawDetail.slice(0, 60)})`, confidence: 0.8, attack: ["T1566.002"], rowIdx: phish, facts: { sender_domain: str(r.sender_domain), ts: str(r.ts), subject, detail: rawDetail || null, event_id: str(r.event_id) } })];
     }
     case "clicks_for": {
       const r = rows[0]!;

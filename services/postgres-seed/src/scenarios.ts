@@ -74,6 +74,11 @@ export type MailRule = {
   action: "forward" | "delete" | "move";
   target: string;
   created_via: "owa" | "api" | "mobile";
+  // Attacker-controlled free text (the rule's display name in the mail gateway).
+  // Case-007 uses this to carry a prompt-injection payload that Scout Intent
+  // must quarantine before any model prompt sees it. Optional for backward
+  // compatibility with existing rows that have no name.
+  name?: string;
 };
 
 export type AssetRow = {
@@ -96,4 +101,5 @@ export const CASES = {
   "case-004": { upn: "m.aslan@aegean.edu", expected: "contain" },
   "case-005": { upn: "e.oz@aegean.edu", expected: "benign" },
   "case-006": { upn: "b.cetin@aegean.edu", expected: "monitor" },
+  "case-007": { upn: "a.sahin@aegean.edu", expected: "contain" },
 } as const satisfies Record<string, { upn: string; expected: string }>;
