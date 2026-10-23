@@ -182,7 +182,10 @@ function makeFalseFinding(category: PlantCategory, i: number, variant: number, c
       const pick = unrelatedCves[variant % unrelatedCves.length]!;
       const detail = `invented_cve near-miss: cites real KEV ${pick.cve} (${pick.product}) but applied to appliance_id=vpn-edge-01 (Ivanti Connect Secure in the fixture)`;
       return {
-        finding: { ...base, kind: "kev_exposure", claim: `VPN appliance vpn-edge-01 exposed to ${pick.cve} (${pick.product})`, sql_ids: [ctx.realSqlId], row_refs: [`${ctx.realSqlId}#0`], attack: ["T1190"], facts: { upn: ctx.upn, appliance_id: "vpn-edge-01" } },
+        // facts carry the planted cve id so the Critic has something concrete
+        // to re-check against the KEV table. A real investigator finding of
+        // this shape would also name the CVE in facts.
+        finding: { ...base, kind: "kev_exposure", claim: `VPN appliance vpn-edge-01 exposed to ${pick.cve} (${pick.product})`, sql_ids: [ctx.realSqlId], row_refs: [`${ctx.realSqlId}#0`], attack: ["T1190"], facts: { upn: ctx.upn, appliance_id: "vpn-edge-01", cve_claim: pick.cve } },
         detail,
       };
     }

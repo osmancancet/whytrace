@@ -109,8 +109,14 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
     }
     case "forward_rule": {
       const r = await z.runSql(`SELECT event_id, ts, detail FROM ${USL}.mail_event WHERE upn = ${U} AND kind = 'rule' AND verdict = 'forward' ORDER BY ts`);
-      const row = r.rows.find((x) => x.event_id === f.facts.event_id) ?? r.rows[0];
-      if (!row) return { status: "rejected", reason: "rule not found on re-query", sql_id: r.sql_id };
+      if (!r.rows.length) return { status: "rejected", reason: "no forwarding rule found on re-query for this upn", sql_id: r.sql_id };
+      // If the claim cites a specific event_id, it has to resolve against the
+      // actual mail-rule rows for this user. The old fallback to `rows[0]`
+      // approved any planted event_id as long as *some* real forwarding rule
+      // existed — adversarial plant that cites a non-existent id now rejects.
+      const claimed = f.facts.event_id;
+      const row = claimed ? r.rows.find((x) => x.event_id === claimed) : r.rows[0];
+      if (!row) return { status: "rejected", reason: `forwarding rule event_id=${claimed} does not resolve for ${upn} (${r.rows.length} forwarding rule(s) exist for this user, none match)`, sql_id: r.sql_id };
       const target = /target=(\S+)/.exec(String(row.detail))?.[1] ?? null;
       const via = /via=(\S+)/.exec(String(row.detail))?.[1] ?? null;
       if (!isExternal(target)) return { status: "rejected", reason: `forwards to an internal @${HOME_DOMAIN} address (${target}) created via ${via}: not exfiltration`, sql_id: r.sql_id };
@@ -119,9 +125,22 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
     case "bulk_sis": {
       const ip = String(f.facts.ip ?? "");
       const r = await z.runSql(`SELECT COUNT(*) AS n, MIN(ts) AS first_ts, MAX(ts) AS last_ts FROM ${USL}.signin_event WHERE upn = ${U} AND app = 'sis' AND result = 'success' AND ip = '${esc(ip)}'`);
-      return n(r.rows[0]?.n) >= 10
-        ? { status: "approved", reason: `${n(r.rows[0]?.n)} SIS successes from ${ip}`, sql_id: r.sql_id, confirm: true }
-        : { status: "rejected", reason: `only ${n(r.rows[0]?.n)} SIS successes from ${ip}`, sql_id: r.sql_id };
+      const actual = n(r.rows[0]?.n);
+      if (actual < 10) return { status: "rejected", reason: `only ${actual} SIS successes from ${ip}`, sql_id: r.sql_id };
+      // DAY3B: adversarial plant uses the real count +/- 1 or +/- 10 %, which
+      // the old `>= 10` gate approved. We now also check that the claimed
+      // `events` count (if the finding carried one) matches actual within
+      // +/- 10 %, so a near-miss on the count is rejected. Legitimate findings
+      // from the Investigator always carry the actual count, so this is a
+      // zero-cost tightening for real signals.
+      const claimed = Number(f.facts.events ?? 0);
+      if (claimed > 0) {
+        const tol = Math.max(1, Math.ceil(actual * 0.1));
+        if (Math.abs(claimed - actual) > tol) {
+          return { status: "rejected", reason: `claimed ${claimed} SIS successes from ${ip} but independent re-count returns ${actual} (tolerance ${tol} = 10 %)`, sql_id: r.sql_id };
+        }
+      }
+      return { status: "approved", reason: `${actual} SIS successes from ${ip}${claimed ? ` (claim: ${claimed}, within +/- 10 % tolerance)` : ""}`, sql_id: r.sql_id, confirm: true };
     }
     case "impossible_travel": {
       const ids = [f.facts.from_event, f.facts.to_event].map((x) => `'${esc(String(x))}'`).join(",");
@@ -141,10 +160,14 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       const b = rows.find((x) => x.event_id === f.facts.to_event);
       // Both ids unresolvable → the claim cites events that do not exist in
       // this run's identity feed. Treat as fabricated and reject (adversarial
-      // planted-claim test, DAY3 step 2). A single missing id is still a
-      // partial-evidence case → needs_more.
-      if (!a && !b) return { status: "rejected", reason: `impossible-travel claim cites events ${f.facts.from_event} / ${f.facts.to_event} that are not in the signin feed`, sql_id };
-      if (!a || !b) return { status: "needs_more", reason: "could not re-read both sign-in events", sql_id };
+      // planted-claim test, DAY3 step 2). DAY3B: a single missing id is now
+      // also a reject, not needs_more — the plausible-near-miss test showed
+      // that mangling just one event id (e.g. evt_000001 → evt_x000001) with
+      // the other id pointing to a real but unrelated event was enough to
+      // slip through needs_more → SUSPECTED. An honest Investigator always
+      // provides BOTH event ids from rows it just read, so requiring both to
+      // resolve on re-query is safe for real findings.
+      if (!a || !b) return { status: "rejected", reason: `impossible-travel claim cites events ${f.facts.from_event} / ${f.facts.to_event}; ${!a && !b ? "neither resolves" : !a ? "from_event does not resolve" : "to_event does not resolve"} on independent re-query`, sql_id };
       const reasons: string[] = [];
       if (raw && NON_INTERACTIVE_UA.test(String(a.user_agent ?? ""))) reasons.push(`the ${a.country} event is a non-interactive mail-sync token (${a.user_agent}), not the person`);
       else if (!s(a.device_id) && n(a.mfa_prompt_count) === 0 && a.app === "mail") reasons.push(`the ${a.country} event has no device and no MFA (mail sync pattern)`);
@@ -164,6 +187,23 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       }
       const k = await z.runSql(`SELECT cve_id, product, date_added, ransomware_use FROM ${USL}.vulnerability WHERE LOWER(product) LIKE '%connect secure%'`);
       const fw = String(dev.firmware ?? dev.os_version ?? "");
+      // DAY3B: if the finding cites specific CVE ids in facts, those ids must
+      // actually be in the KEV result for this product. Adversarial plant
+      // (invented_cve) names a real KEV CVE for an unrelated product (e.g.
+      // Palo Alto GlobalProtect) and attributes it to the Ivanti appliance;
+      // the old check approved because *some* Ivanti CVE applied. We now
+      // require the claimed CVE to be among the ones KEV lists for this
+      // product. Legitimate findings always derive the CVE list from the
+      // same KEV query, so this is a zero-cost tightening for them.
+      const claimedCveStr = String(f.facts.cve_claim ?? f.facts.cves ?? "");
+      const claimedCves = claimedCveStr ? claimedCveStr.split(",").map((x) => x.trim()).filter(Boolean) : [];
+      if (claimedCves.length) {
+        const kevIds = new Set(k.rows.map((x) => String(x.cve_id)));
+        const unknown = claimedCves.filter((c) => !kevIds.has(c));
+        if (unknown.length) {
+          return { status: "rejected", reason: `KEV table does not list ${unknown.join(", ")} for this product (claim conflates a real KEV CVE from a different product with ${app})`, sql_id: k.sql_id };
+        }
+      }
       const open = k.rows.filter((x) => {
         const fix = VENDOR_FIXED_IN[String(x.cve_id)];
         return fix ? fix.product.test(String(x.product ?? "")) && versionLt(fw, fix.fixedIn) : false;
