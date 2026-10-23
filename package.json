@@ -26,6 +26,7 @@
     "eval": "tsx scripts/eval.ts",
     "eval:adversarial": "tsx scripts/adversarial.ts",
     "eval:explain": "tsx scripts/eval_explain.ts",
+    "eval:perturb": "tsx scripts/eval_perturbation.ts",
     "probe:ultra": "tsx scripts/probe_ultra.ts",
     "record": "tsx scripts/record_sample.ts",
     "bootstrap:zetaris": "tsx scripts/zetaris_bootstrap.ts",

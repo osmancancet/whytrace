@@ -306,8 +306,12 @@ async function main() {
 
   const historyFile = join(historyDir, `${stamp.replace(/[:.]/g, "-")}.md`);
   writeFileSync(historyFile, md.join("\n"));
-  writeFileSync(resolvePath("evidence", "eval.md"), md.join("\n"));
-  console.log(`\nwrote evidence/eval.md and ${historyFile}`);
+  // DAY6: `--out <path>` lets the held-out and perturbation sweeps write a
+  // custom report file without clobbering the dev-set `evidence/eval.md`.
+  const outArg = arg("out", "");
+  const outPath = outArg ? resolvePath(outArg) : resolvePath("evidence", "eval.md");
+  writeFileSync(outPath, md.join("\n"));
+  console.log(`\nwrote ${outPath} and ${historyFile}`);
   // Compact rolling index of history files.
   const historyIndex = ["# Eval history", ""];
   for (const f of readdirSync(historyDir).sort().reverse().slice(0, 50)) historyIndex.push(`- [${f}](${f})`);
