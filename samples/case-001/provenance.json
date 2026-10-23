@@ -1,9 +1,9 @@
 {
   "case_id": "case-001",
-  "recorded_from_run": "mvk8ntbo_fe31df4df7",
+  "recorded_from_run": "mvkq6vax_c4947106d0",
   "verdict": "contain",
   "confidence": 0.94,
-  "recorded_at": "2026-10-23T00:38:13.182Z",
+  "recorded_at": "2026-10-23T08:49:19.581Z",
   "sql_calls": 20,
   "model_calls": 3,
   "rounds": 1,

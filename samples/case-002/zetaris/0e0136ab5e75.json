@@ -1,1 +1,1 @@
-{"headers":["ts","asn_org","country","ip","result","device_id","via_vpn_appliance"],"data":[["2026-10-15 06:40:00.0","Turkcell","TR","193.140.10.21","success",null,null]],"total":1,"timeUsed":1153}
+{"headers":["ts","asn_org","country","ip","result","device_id","via_vpn_appliance"],"data":[["2026-10-15 06:40:00.0","Turkcell","TR","193.140.10.21","success",null,null]],"total":1,"timeUsed":861}

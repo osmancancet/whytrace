@@ -1,0 +1,15 @@
+{
+  "case_id": "case-007",
+  "recorded_from_run": "mvkqaspq_59327fb488",
+  "verdict": "contain",
+  "confidence": 0.86,
+  "recorded_at": "2026-10-23T08:50:44.449Z",
+  "sql_calls": 10,
+  "model_calls": 3,
+  "rounds": 1,
+  "routed_models": [
+    "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "nvidia/nemotron-3.5-super-vl-120b-a12b"
+  ]
+}

@@ -1,10 +1,10 @@
 {
   "case_id": "case-002",
-  "recorded_from_run": "mvk8lh7m_3eba187c34",
-  "verdict": "escalate",
-  "confidence": 0.65,
-  "recorded_at": "2026-10-23T00:35:17.498Z",
-  "sql_calls": 24,
+  "recorded_from_run": "mvkq2kav_d5e1eb8a1f",
+  "verdict": "benign",
+  "confidence": 0.85,
+  "recorded_at": "2026-10-23T08:46:12.955Z",
+  "sql_calls": 22,
   "model_calls": 4,
   "rounds": 2,
   "routed_models": [
