@@ -34,7 +34,7 @@ npm run investigate -- case-002
 npm run dev
 ```
 
-Four recorded-run screenshots of the live console live in `docs/media/` — contain (case-001), benign (case-002, shared-egress rejection), escalate (case-003), and contain with the Scout prompt-injection panel (case-007). Each was taken with `node scripts/capture_console.mjs` driving the installed Brave over the Chrome DevTools Protocol against the real dev server (no browser binary or driver installed globally); the `?run=<id>` deep link makes every URL deterministic:
+Five recorded-run screenshots of the live console live in `docs/media/` — contain (case-001), benign (case-002, shared-egress rejection), escalate (case-003), contain with the Scout prompt-injection panel (case-007), plus a focused view of the DAY5 "Why this verdict" panel on case-001. Each was taken with `node scripts/capture_console.mjs` driving the installed Brave over the Chrome DevTools Protocol against the real dev server (no browser binary or driver installed globally); the `?run=<id>` deep link makes every URL deterministic:
 
 | scenario | file |
 |---|---|
@@ -42,6 +42,7 @@ Four recorded-run screenshots of the live console live in `docs/media/` — cont
 | case-002 benign (shared-egress rejection) | [console-case-002-benign.png](docs/media/console-case-002-benign.png) |
 | case-003 escalate (KEV-exposed appliance) | [console-case-003-escalate.png](docs/media/console-case-003-escalate.png) |
 | case-007 contain + Scout prompt-injection panel | [console-case-007-contain-prompt-injection.png](docs/media/console-case-007-contain-prompt-injection.png) |
+| case-001 "Why this verdict" panel (attribution + counterfactuals + faithfulness) | [console-explain-case-001.png](docs/media/console-explain-case-001.png) |
 
 **Zero-dependency replay with the Docker image.** The default image boots the API in `SAMPLE_MODE=true` so a judge can run it with no keys, no local containers and no Nightshift:
 
@@ -171,6 +172,37 @@ Every probe attempt (time, class, routed model) is written into the eval snapsho
 **The latest live sweep is in `evidence/eval.md`.** The B0 baseline is a classic Entra-style rules-only system (impossible travel by centroid distance, new ASN, MFA deny burst, external forwarding rule); M0 is Nemotron on its own with the raw event dump — no tools, no Critic, no Risk Gate — the "model alone vs through the agent" ablation. The story is that WhyTrace solves cases B0 and M0 cannot (case-002 "benign faculty travel" where B0 over-contains, case-003 "KEV-vulnerable appliance" where B0 under-reacts, case-005 forwarding rule where M0 escalates on surface signals the Critic later clears) because of the USL cross-source join, the Critic's independent re-query, H-MEM and Scout Intent's prompt-injection guard.
 
 **Headline (23 Oct 10:53 TR live 3-run sweep after the DAY3D shared-egress rule + mfa_fatigue coverage fill; raw `evidence/eval_history/2026-10-23T07-53-47-318Z.md`): Nemotron alone 13/21 · rules-only 9/21 · WhyTrace 19/21 · false contain 0/3/3 · false benign 0/3/2.** 18/21 A0 runs were model-backed; the other three fell through to `policy_fallback` after Nightshift provider errors and the deterministic policy stood in on a complete chain. Zero cache replays, zero `infra_unavailable`. The two A0 misses are both infrastructure-induced: run 2 case-006 (expected `monitor`, policy escalated at 0.65 after a `provider_error` degraded the model step) and run 3 case-005 (expected `benign`, `policy_fallback` escalated once Nightshift returned HTTP 502 for every retry on the Reporter call). **case-002 is now benign 3/3** — the DAY3D shared-egress Critic rule rejects the `new_asn` finding on the campus NAT (201 distinct MFA-completed accounts from 193.140.10.21 in 30 d, threshold 10) and the chain collapses to zero surviving signals, matching the labelled verdict. **case-007 is contain 3/3** — the `mfa_fatigue` step is in the deterministic coverage fill, so a Planner that skips it (as happened in DAY3C run 3) cannot drop the fatigue finding and the policy still sees the full post-auth-abuse chain; every run also carries 12 `prompt_injection_attempts` on 3 fields × 2 policy packs. The canonical Scout-live run is `output_examples/case-007-live-scout-fired.json`. B0 over-contains case-002, under-reacts to case-003/004 (no KEV, no Markovian), never raises `monitor` for case-006 and 3× false contains case-002. M0 falsely contains case-003 3× (vulnerable appliance read as takeover) and over-benigns case-002/006 on surface signals the Critic would clear. **WhyTrace produced zero false `contain` and zero false `benign` (0/3 vs B0's 3, M0's 3; 0/3 vs B0's 3, M0's 2).** The DAY3C 3-run headline (`A0 17/21 · B0 9/21 · M0 11/21`) and the DAY3B headline before it are kept in `evidence/eval_history/`.
+
+## Explainability: how much each piece of evidence mattered
+
+Track 02 asks for *why*, not just *what*. For every verdict WhyTrace produces, the Report also carries an `explanation` block (`packages/agents/src/explain.ts`) that answers three questions deterministically — zero extra model calls:
+
+1. **How much did each finding contribute?** Exact Shapley values over the deterministic Risk-Gate `policy()` when `n ≤ 12` (2^n subsets; `policy()` is pure and sub-millisecond), with a seeded permutation sampler as fallback. The attribution satisfies efficiency (Σφ = v(all) − v(∅)), symmetry (identical players get the same value) and dummy-player (a finding whose addition never changes `v` scores 0) — all three are enforced by unit tests in `packages/agents/src/explain.test.ts`.
+2. **What would change the verdict?** Per-finding leave-one-out verdicts, plus the smallest set of findings (size 1, 2 or 3) whose removal would flip the policy.
+3. **Why not the runner-up?** A deterministic contrastive sentence built from the policy's rules — not written by the model — naming the findings that block the second-most-likely verdict or the policy ingredient it would need.
+
+The Report also carries a **faithfulness@3** score: the overlap between the Reporter narration's cited `F<n>` ids and the top-3 Shapley findings. If a Reporter leans on a finding with ~0 attribution the score drops; below the threshold the orchestrator spends one extra Reporter model call with the attribution table in the system prompt, and both the before/after scores are recorded (`faithfulness.revised`, `faithfulness.score_before_revision`).
+
+Worked example — `case-001` contain @ 0.94 (8 confirmed findings; see [`evidence/explainability.md`](evidence/explainability.md) for all seven cases):
+
+| rank | finding | Shapley | ATT&CK | claim |
+|---|---|---|---|---|
+| 1 | F5 | 0.2147 | T1621 | MFA fatigue: 7 denied pushes followed by 1 approval from 185.220.101.7 |
+| 2 | F2 | 0.2058 | T1213 | Bulk SIS access: 38 events within 60 min from the same IP |
+| 3 | F7 | 0.1982 | T1114.003 | Inbox forwarding rule to an external Gmail |
+| 4 | F6 | 0.0902 | T1566.002 | Phishing-suspect mail delivered |
+| 5 | F4 | 0.0825 | T1078.004 | Suspicious sign-ins from BulwarkHost NL |
+| 6 | F1 | 0.0743 | T1204.001 | User clicked the phishing link |
+| 7 | F3 | 0.0743 | T1078.004 | Impossible travel Amsterdam → Manisa in 234 min |
+| 8 | F8 | 0.0000 | — | Geo count (no ATT&CK technique) — dummy player |
+
+- **Counterfactual:** removing F2, F5 and F7 would flip the policy to `escalate` @ 0.74 (chain drops below "≥2 confirmed abuse OR 1 abuse + 2 access"). No single-finding removal flips the verdict — the contain stands on multiple independent confirmed signals.
+- **Why not escalate?** _Removing F2, F5, F7 would drop the chain below the "≥2 confirmed abuse OR 1 abuse + 2 access" threshold, so the policy would escalate for human review._
+- **Faithfulness@3:** 1.00 — the Reporter cites every top-3 Shapley finding by id in the summary.
+
+The analyst console surfaces the same payload in a "Why this verdict" panel (attribution bars, "Would change the verdict" chips, "Why not …" line, faithfulness badge): see [`docs/media/console-explain-case-001.png`](docs/media/console-explain-case-001.png) and the inline version at [`docs/media/console-case-001-contain.png`](docs/media/console-case-001-contain.png).
+
+Regenerate the aggregate for every demo case with `npm run eval:explain` (the script picks each case's latest `model+policy` report, reconstructs the policy context — rejected count, DQ invalid rows, degraded flag, core sources checked — and re-runs `explain()`; mean faithfulness@3 across the six scored cases is **1.00**).
 
 ## Prompt-injection guard
 
