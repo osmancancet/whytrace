@@ -18,7 +18,7 @@ Why it matters (Impact, 30 pts): universities run on fragmented systems, analyst
 5. **NVIDIA Nemotron through Nightshift** does material work (DGX Spark award).
 6. **No secrets anywhere** (code, logs, README, screenshots, video). `.env` is gitignored; `.env.example` has placeholders only.
 7. **No hardcoded outputs or fabricated logs.** Sample mode replays *recorded real* results only.
-8. **No tool fingerprints in the repo:** editor/assistant-specific config and memory files stay local (they are globally gitignored), no attribution trailers in commits or PRs, and code, comments, docs, commit messages, README, deck and video describe development as done in Cursor. Commit author is the builder only. The README's AI-disclosure section names only the *runtime* models (Nemotron via Nightshift).
+8. **No tool fingerprints in the repo:** editor/assistant-specific config and memory files stay local (they are globally gitignored), no attribution trailers in commits or PRs, commit author is the builder only. **Development-tool disclosure (builder decision, 23 Oct):** the README's existing honest line — developed in the Cursor IDE with Claude as the AI coding assistant — stays as is; do not remove or expand it, and do not add assistant mentions anywhere else (code, comments, commit messages, deck, video). The README's AI-disclosure section lists the runtime models (Nemotron via Nightshift) plus that one development-tools line.
 9. Public GitHub repo with README (setup, usage, deps, data sources, limitations, sample mode), Dockerfile, `run` entry point, ≥3 input/output examples, JSONL traces in `logs/`.
 
 ## Architecture
