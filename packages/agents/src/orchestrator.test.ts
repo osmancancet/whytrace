@@ -72,6 +72,34 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     expect(r.verdict).not.toBe("benign");
   });
 
+  it("case-002 locks in the DAY3D fix: benign with no false access signal, Scout gate silent", async () => {
+    // DAY3 risk 3 / DAY3B risk 1: live Super VL case-002 escalated with
+    // `partial chain: 0 abuse + 1 access signal(s)` while FakeZetaris called it
+    // benign. DAY3D closed the gap with the shared-egress rule in critic.ts +
+    // the via-managed-VPN rejection path for new_asn. This test is the
+    // regression lock-in — if a future refactor lets a case-002 finding
+    // through as CONFIRMED, the policy will see a `partial chain` and escalate
+    // again, and this assertion will fail.
+    const r = await setup("case-002").run();
+    expect(r.verdict).toBe("benign");
+    // The two primary case-002 findings (impossible_travel on the ExchangeSync
+    // token, new_asn on MEO through vpn-edge-02) must both be rejected on the
+    // Critic's independent re-query.
+    const confirmedAccessOrAbuse = r.findings.filter((f) => f.status === "CONFIRMED" && f.attack.some((t) => /^T1078|T1114\.003|T1213|T1621|T1566|T1204/.test(t)));
+    expect(confirmedAccessOrAbuse).toEqual([]);
+    // The deterministic policy must land on benign (not escalate via `partial
+    // chain` as it did pre-DAY3D) and the Risk Gate must not escalate on
+    // model-opinion dissent — the Report records both.
+    expect(r.risk!.policy_decision).toBe("benign");
+    expect(r.risk!.escalate_reasons).toEqual([]);
+    // Scout gate must not false-positive on case-002's clean mail / sign-in
+    // fields: nothing in `subject=Senate agenda`, `ExchangeSync/15`, LT-3104 or
+    // the MEO ASN name should look like an injection to our broader rules
+    // (otherwise sanitizeFinding would change the Risk Gate / Reporter prompt
+    // on a benign case). An empty attempts array is the honest signal.
+    expect(r.prompt_injection_attempts ?? []).toEqual([]);
+  });
+
   it("without DQ, case-003 loses its evidence-conflict reason (ablation A2)", async () => {
     const r = await setup("case-003", { ablate: { dq: false } }).run();
     expect(r.dq).toEqual([]);
