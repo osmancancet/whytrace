@@ -96,6 +96,15 @@ const DEFAULT_POLICY: PolicyPack = {
     { id: "injection.contact_attacker", pattern: /\b(forward|send|email|call) .*(gmail\.com|outlook\.com|protonmail\.com|yopmail\.com|pastebin\.com)/i, reason: "redirect to an external exfiltration channel" },
     { id: "injection.system_prompt", pattern: /\b(reveal|show|print|dump) (the |your )?(system|rubric|hidden) prompt\b/i, reason: "exfiltration of the system prompt" },
     { id: "injection.override_verdict", pattern: /\boverride (the )?(verdict|risk gate|decision)\b/i, reason: "asks to override the Risk Gate" },
+    // Broader instruction-override phrasing ("ignore all previous instructions",
+    // "disregard the rules above", "disregard the user") — up to three filler words.
+    { id: "injection.ignore_instructions", pattern: /\b(ignore|disregard|forget)\b(?:\s+[\w'-]+){0,3}?\s+(instructions|rules|guidelines|findings|rubric|context|the user)\b/i, reason: "attempts to override earlier instructions" },
+    { id: "injection.ignore_previous_short", pattern: /\bignore (previous|prior|above)\b/i, reason: "attempts to override earlier instructions" },
+    // Chat-template / role markup smuggled into a data field.
+    { id: "injection.role_markup", pattern: /<\/?\s*(system|assistant|user)\s*>|\[\/?INST\]|<\|im_(start|end)\|>/i, reason: "chat-role markup inside a data field (role confusion)" },
+    { id: "injection.persona_switch", pattern: /\byou are now\b|\bpretend to be (the )?(system|admin|administrator|developer)\b|\b(unrestricted|developer|jailbreak) mode\b/i, reason: "attempts to switch the agent's role" },
+    { id: "injection.secret_exfil", pattern: /\b(reveal|show|print|dump|list|leak)\b(?:\s+[\w'-]+){0,3}?\s+(api keys?|credentials|passwords?|secrets?|tokens?)\b/i, reason: "asks the agent to disclose secrets" },
+    { id: "injection.privilege_grant", pattern: /\bgrant (me|us)\b[^.\n]{0,20}\b(admin|root|superuser|owner)\b/i, reason: "asks the agent to grant privileges" },
   ],
   proceedFloor: 0.55,
   clarifyFloor: 0.4,
@@ -107,6 +116,8 @@ const ADVERSARIAL_TIGHT: PolicyPack = {
   injectionRules: [
     ...DEFAULT_POLICY.injectionRules,
     // Zero-width + U+202E right-to-left override are classic smuggling tricks.
+    // The same bidi / zero-width trick written as an escape sequence in plain text.
+    { id: "injection.escaped_bidi", pattern: /\\u(200[b-f]|202[a-e]|206[6-9]|feff)/i, reason: "escaped zero-width or RTL override sequence in a user-controlled field" },
     { id: "injection.zero_width", pattern: /[​-‏‪-‮﻿]/, reason: "zero-width or RTL override character in a user-controlled field" },
     { id: "injection.base64_payload", pattern: /\b(?:eyJ|data:[a-z]+\/[a-z]+;base64,)[A-Za-z0-9+/=]{20,}/, reason: "embedded base64 payload — potential tool-call smuggling" },
     { id: "injection.markdown_image_fetch", pattern: /!\[[^\]]*\]\(https?:\/\/[^\s)]+\)/, reason: "markdown image whose URL would exfiltrate on render" },
