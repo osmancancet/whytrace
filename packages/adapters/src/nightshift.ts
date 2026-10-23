@@ -53,6 +53,15 @@ export type NightshiftResponse = {
    *  orchestrator forwards this into the trace as `cache_hit` so Night 3's
    *  "<200 ms with a receipt" independence problem is visible in eval tables. */
   cacheHit?: boolean;
+  /** The upstream `finish_reason` for the chosen choice. `"length"` means the
+   *  `max_tokens` budget cut the response short — if we also see no tool call
+   *  and no complete text, that's a `max_tokens_hit` failure class (not a
+   *  provider outage). */
+  finishReason?: string;
+  /** Completion tokens from the Nightshift / provider `usage.output_tokens`
+   *  (or from `meterless.usage`). Surfaced into the trace so eval tables can
+   *  group by actual token spend per agent. */
+  completionTokens?: number;
   /** Upstream correlation ids captured from the raw HTTP response. These make
    *  bug reports to NVIDIA / Nightshift self-contained — `nvcf-reqid` is the
    *  Nemotron provider's trace id, `x-request-id` is the Nightshift proxy's,
@@ -61,7 +70,7 @@ export type NightshiftResponse = {
 };
 
 /** Categorical failure class for degraded model calls. */
-export type FailureClass = "auth_error" | "format_miss" | "provider_error" | "timeout" | "empty_response";
+export type FailureClass = "auth_error" | "format_miss" | "provider_error" | "timeout" | "empty_response" | "max_tokens_hit";
 
 export type NightshiftOptions = {
   baseUrl?: string;
@@ -75,6 +84,12 @@ export type NightshiftOptions = {
   app?: string;
   deepModel?: string;
   fastModel?: string;
+  /** Optional per-run nonce appended to the last USER message of every chat
+   *  call. Nightshift's exact-prompt cache key ignores the system turn and
+   *  the model id (verified directly on 23 Oct 2026), so a nonce on the
+   *  system turn does not bust it. Threading the nonce through the user
+   *  turn is what makes `--runs > 1` return independent samples. */
+  runNonce?: string;
   /** Optional Nemotron Ultra override. When set, chat calls whose `agent` is
    *  `"reporter"` route to this model id instead of `deepModel`. We keep Super
    *  VL on the investigation path (its tool-call latency is well-studied) and
@@ -119,6 +134,7 @@ export function classifyFailure(input: unknown): FailureClass {
   const msg = input instanceof Error ? input.message : String(input ?? "");
   if (/\babort(ed)?\b/i.test(msg) || /\btimeout\b/i.test(msg) || /ETIMEDOUT/i.test(msg)) return "timeout";
   if (/\bhttp 40[13]\b/i.test(msg) || /\bunauthori[sz]ed\b/i.test(msg) || /\bforbidden\b/i.test(msg)) return "auth_error";
+  if (/max_tokens_hit/i.test(msg)) return "max_tokens_hit";
   if (/empty_response/i.test(msg)) return "empty_response";
   if (/format_miss/i.test(msg) || /missing from response/i.test(msg)) return "format_miss";
   // 5xx or network — upstream was reachable but failed, or the provider refused.
@@ -127,7 +143,13 @@ export function classifyFailure(input: unknown): FailureClass {
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_RETRIES = 3;
-const DEFAULT_MAX_TOKENS = 2000;
+/** Nightshift / Runtime 1.4 requires `max_tokens >= 2000`; Nemotron Super VL's
+ *  tool_call_format phase also eats hidden reasoning tokens despite `/no_think`,
+ *  so 2000 truncates every real tool call. Direct measurement on 23 Oct 2026
+ *  showed the planner request needs 1,014–2,805 completion tokens to emit a
+ *  valid `submit_plan` tool call; 4000 is the safe default. Agents that measure
+ *  usage above 2,500 (planner) override to 6000. See notes/DAY3B_REPORT.md. */
+const DEFAULT_MAX_TOKENS = 4000;
 
 export class Nightshift {
   private readonly baseUrl: string;
@@ -138,6 +160,7 @@ export class Nightshift {
   private readonly deepModel: string;
   private readonly fastModel: string;
   private readonly reporterModel?: string;
+  private readonly runNonce?: string;
   private readonly timeoutMs: number;
   private readonly retries: number;
   private readonly fetchFn: typeof fetch;
@@ -159,6 +182,7 @@ export class Nightshift {
     this.fastModel = opts.fastModel ?? process.env.MODEL_FAST ?? "meterless/fast";
     const reporter = opts.reporterModel ?? process.env.METERLESS_REPORTER_MODEL;
     this.reporterModel = reporter && reporter.trim().length ? reporter.trim() : undefined;
+    this.runNonce = opts.runNonce && opts.runNonce.trim().length ? opts.runNonce.trim() : undefined;
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.retries = opts.retries ?? DEFAULT_RETRIES;
     this.fetchFn = opts.fetchFn ?? fetch;
@@ -225,7 +249,9 @@ export class Nightshift {
 
   async warmUp(): Promise<void> {
     try {
-      await this.chat({ messages: [{ role: "user", content: "ready" }], lane: "fast", maxTokens: 32, agent: "warmup" });
+      // Runtime 1.4 contract requires `max_tokens >= 2000`; 32 was below the
+      // floor and returned HTTP 502 on every call (confirmed 23 Oct 2026).
+      await this.chat({ messages: [{ role: "user", content: "ready" }], lane: "fast", maxTokens: 2000, agent: "warmup" });
     } catch {
       /* ignore */
     }
@@ -241,7 +267,13 @@ export class Nightshift {
     const useReporterOverride = lane === "deep" && agent === "reporter" && this.reporterModel;
     const model = useReporterOverride ? this.reporterModel! : (lane === "deep" ? this.deepModel : this.fastModel);
     if (useReporterOverride) this.trace?.emit({ agent, action: "reporter_model_override", status: "ok", output_summary: `routing Reporter call to ${this.reporterModel}` });
-    const messages = this.ensureNoThink(opts.messages);
+    // Thread the per-run nonce through the LAST USER MESSAGE. Nightshift's
+    // exact-prompt cache key ignores the system turn and the model id — we
+    // verified this directly against the local engine on 23 Oct 2026, so a
+    // nonce on the system turn (DAY3) never busted the cache. Appending to the
+    // last user turn is what actually produces independent samples.
+    const nonced = this.runNonce ? appendNonceToLastUser(opts.messages, this.runNonce) : opts.messages;
+    const messages = this.ensureNoThink(nonced);
     const routeFallback = opts.routeFallback !== false;
     try {
       if (this.sampleMode) {
@@ -277,7 +309,7 @@ export class Nightshift {
           const resp = await callAttempt(lane, model);
           resp.retryCount = attempt;
           this.recordSample(resp, messages, opts.tools, lane);
-          this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: attempt, cache_hit: resp.cacheHit === true, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
+          this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: attempt, cache_hit: resp.cacheHit === true, completion_tokens: resp.completionTokens, finish_reason: resp.finishReason, max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
           return resp;
         } catch (err) {
           lastErr = err;
@@ -295,14 +327,14 @@ export class Nightshift {
           const resp = await callAttempt("fast", this.fastModel);
           resp.retryCount = this.retries + 1;
           this.recordSample(resp, messages, opts.tools, "fast");
-          this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane", cache_hit: resp.cacheHit === true, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
+          this.trace?.emit({ agent, action: "chat_nightshift_fallback", lane: "fast", routed_model: resp.model, receipt_id: resp.receipt?.receipt_id, ms: Date.now() - started, status: "ok", retry_count: this.retries + 1, output_summary: "deep lane degraded, retried on fast lane", cache_hit: resp.cacheHit === true, completion_tokens: resp.completionTokens, finish_reason: resp.finishReason, max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS, x_request_id: resp.requestIds?.x_request_id, nvcf_reqid: resp.requestIds?.nvcf_reqid });
           return resp;
         } catch (fallbackErr) {
           lastErr = fallbackErr;
         }
       }
       const failureClass = classifyFailure(lastErr);
-      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries, output_summary: lastErr instanceof Error ? lastErr.message.slice(0, 200) : undefined, failure_class: failureClass });
+      this.trace?.emit({ agent, action: "chat_nightshift", lane, routed_model: model, ms: Date.now() - started, status: "degraded", retry_count: this.retries, output_summary: lastErr instanceof Error ? lastErr.message.slice(0, 200) : undefined, failure_class: failureClass, max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS });
       throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
     } finally {
       this.release();
@@ -332,7 +364,8 @@ export class Nightshift {
         messages: [{ role: "user", content: "Probe: reply with ok=true via submit_probe." }],
         tools: [{ type: "function", function: { name: "submit_probe", description: "Probe tool.", parameters: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] } } }],
         lane: "fast",
-        maxTokens: 128,
+        // Runtime 1.4 floor is 2000; a smaller probe budget guarantees a 502.
+        maxTokens: 2000,
         agent: "probe",
         routeFallback: false,
       });
@@ -465,16 +498,20 @@ export class Nightshift {
         throw new Error(`Nightshift HTTP ${res.status}: ${detail}`);
       }
       const parsed = JSON.parse(bodyText) as {
-        choices?: Array<{ message?: { content?: string; tool_calls?: Array<{ id?: string; function?: { name: string; arguments: string } }> } }>;
+        choices?: Array<{ message?: { content?: string; tool_calls?: Array<{ id?: string; function?: { name: string; arguments: string } }> }; finish_reason?: string }>;
         meterless?: MeterlessReceipt;
+        usage?: { completion_tokens?: number; output_tokens?: number };
       };
-      const choice = parsed.choices?.[0]?.message;
+      const firstChoice = parsed.choices?.[0];
+      const choice = firstChoice?.message;
       const text = choice?.content ?? "";
       const toolCalls = (choice?.tool_calls ?? []).map((c) => {
         let argsObj: Record<string, unknown> = {};
         try { argsObj = JSON.parse(c.function?.arguments ?? "{}") as Record<string, unknown>; } catch { argsObj = {}; }
         return { id: c.id, name: c.function?.name ?? "", arguments: argsObj };
       });
+      const finishReason = firstChoice?.finish_reason;
+      const completionTokens = Number(parsed.usage?.completion_tokens ?? parsed.usage?.output_tokens ?? parsed.meterless?.usage?.output_tokens ?? 0) || undefined;
       const resp: NightshiftResponse = {
         text,
         toolCalls,
@@ -484,9 +521,18 @@ export class Nightshift {
         retryCount: 0,
         model: parsed.meterless?.routed_model ?? parsed.meterless?.winning_route?.model ?? args.model,
         lane: args.lane,
+        finishReason,
+        completionTokens,
       };
       resp.cacheHit = fromExactCache(resp);
       if (requestIds.x_request_id || requestIds.nvcf_reqid) resp.requestIds = requestIds;
+      // Classify "max_tokens_hit" explicitly: the budget cut the response short
+      // (finish_reason === "length") AND no tool call survived. If text came
+      // back truncated, we still let callers try to extract from text — but if
+      // nothing landed, this is NOT a provider outage, it's a budget bug.
+      if (finishReason === "length" && toolCalls.length === 0 && (!text || text.trim().length === 0)) {
+        throw new Error(`Nightshift max_tokens_hit (HTTP 200, finish_reason=length, max_tokens=${args.maxTokens}, completion_tokens=${completionTokens ?? "?"}) — budget truncated the response before any content survived`);
+      }
       return resp;
     } finally {
       clearTimeout(timer);
@@ -626,16 +672,28 @@ export function fromExactCache(resp: NightshiftResponse): boolean {
   return false;
 }
 
-/** Append a cache-busting token to the first system message (adding one if
- *  missing). Only the key — not the semantic prompt — changes, so the agent
- *  gets the same answer with a fresh route. */
+/** Append a cache-busting token to the LAST USER message (adding one if there
+ *  is no user turn yet). Verified against the local Nightshift engine on
+ *  23 Oct 2026: the exact-prompt cache key ignores the system turn and the
+ *  model id, so a nonce on the system turn (what DAY3 shipped) does not
+ *  change the cache key. The user turn is what busts the key. The semantic
+ *  intent of the prompt is unchanged — the token is a bracketed sentinel. */
 export function withCacheBuster(messages: NightshiftMessage[], runId: string): NightshiftMessage[] {
   const token = `[cache_bust ${runId} ${Date.now().toString(36)}]`;
-  if (messages.length === 0 || messages[0]!.role !== "system") {
-    return [{ role: "system", content: `/no_think\n${token}` }, ...messages];
-  }
-  const [first, ...rest] = messages;
-  return [{ ...first!, content: `${first!.content}\n${token}` }, ...rest];
+  return appendNonceToLastUser(messages, token);
+}
+
+/** Append `[run:<nonce>]` (or any token) to the LAST user turn. Used by both
+ *  withCacheBuster and the per-chat per-run nonce path. If there is no user
+ *  turn, a new one is appended. Exported for unit tests. */
+export function appendNonceToLastUser(messages: NightshiftMessage[], nonceToken: string): NightshiftMessage[] {
+  const token = /^\[.+\]$/.test(nonceToken) ? nonceToken : `[run:${nonceToken}]`;
+  const idx = (() => { for (let i = messages.length - 1; i >= 0; i--) if (messages[i]!.role === "user") return i; return -1; })();
+  if (idx < 0) return [...messages, { role: "user", content: token }];
+  const next = messages.slice();
+  const u = next[idx]!;
+  next[idx] = { ...u, content: `${u.content}\n${token}` };
+  return next;
 }
 
 function newRunStamp(): string { return `anon-${Math.random().toString(36).slice(2, 10)}`; }

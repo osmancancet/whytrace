@@ -63,7 +63,8 @@ async function main() {
       const rc = await probe.callTool({
         messages: [{ role: "user", content: `Probe: reply with ok=true via submit_probe. (nonce=${Math.random().toString(36).slice(2)})` }],
         toolName: "submit_probe", description: "Probe tool.", schema: SCHEMA,
-        parse: (a) => a as { ok: boolean }, lane: "deep", maxTokens: 128, agent: "ultra_probe",
+        // Runtime 1.4 floor is 2000; stay comfortably above it.
+        parse: (a) => a as { ok: boolean }, lane: "deep", maxTokens: 4000, agent: "ultra_probe",
       });
       const ms = Date.now() - started;
       succeeded.push(id);
@@ -115,7 +116,7 @@ async function main() {
           properties: { summary: { type: "string" }, actions: { type: "array", items: { type: "object", properties: { action: { type: "string" } }, required: ["action"] } }, limitations: { type: "array", items: { type: "string" } } },
           required: ["summary"],
         },
-        parse: (a) => a as { summary: string; actions: Array<{ action: string }>; limitations: string[] }, lane: "deep", maxTokens: 2000, agent: "reporter",
+        parse: (a) => a as { summary: string; actions: Array<{ action: string }>; limitations: string[] }, lane: "deep", maxTokens: 4000, agent: "reporter",
       });
       const ms = Date.now() - started;
       md.push(`### ${label} (${modelId}) — ${ms} ms, routed_model=\`${rc.model}\``, "", "```", rc.value.summary, "```", "");

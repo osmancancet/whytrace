@@ -16,9 +16,13 @@ export const PlanStep = z.object({
   why: z.string(),
 });
 
+// DAY3B: tighter caps keep the planner's completion-token spend bounded so a
+// 4000-token budget is enough. Measured on 23 Oct 2026: ≤3 hypotheses + ≤6
+// steps halves the completion-token spend (2,805 → ~1,400) without changing
+// the plan's shape — the orchestrator fills in default coverage anyway.
 export const PlannerOutput = z.object({
-  hypotheses: z.array(Hypothesis).min(1).max(5),
-  steps: z.array(PlanStep).min(1).max(12),
+  hypotheses: z.array(Hypothesis).min(1).max(3),
+  steps: z.array(PlanStep).min(1).max(8),
 });
 export type PlannerOutput = z.infer<typeof PlannerOutput>;
 
@@ -136,7 +140,7 @@ export const PLANNER_TOOL_SCHEMA = {
     hypotheses: {
       type: "array",
       minItems: 1,
-      maxItems: 5,
+      maxItems: 3,
       items: {
         type: "object",
         properties: {
@@ -150,7 +154,7 @@ export const PLANNER_TOOL_SCHEMA = {
     steps: {
       type: "array",
       minItems: 1,
-      maxItems: 12,
+      maxItems: 8,
       items: {
         type: "object",
         properties: {

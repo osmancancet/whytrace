@@ -104,7 +104,10 @@ export async function runSprayMarkovian(deps: SprayMarkovianDeps, input: SprayMa
           { role: "user", content: user },
         ],
         lane: "fast",
-        maxTokens: 2000,
+        // DAY3B default: 4000 keeps the sweep safe from Lightning's hidden
+        // reasoning tokens; the per-page extraction never nears 4000 output
+        // tokens so this is pure headroom.
+        maxTokens: 4000,
         agent: "markovian",
       });
       modelCalls += 1;

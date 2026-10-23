@@ -172,10 +172,14 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       try {
         const plan = await opts.nightshift.callTool({
           messages: [
-            { role: "system", content: `You are a university SOC planner. Produce <= 5 hypotheses and <= 10 named-query steps.\nCatalogue (name(params): description):\n${catalogueDesc}\nOnly use these query names. Params: upn, device_id, appliance_id, department. Return via submit_plan.${recall.context ? `\n\n[MEMORY CONTEXT]\n${recall.context}` : ""}` },
+            { role: "system", content: `You are a university SOC planner. Be brief: produce <= 3 hypotheses and <= 8 named-query steps, with one short sentence per 'why'.\nCatalogue (name(params): description):\n${catalogueDesc}\nOnly use these query names. Params: upn, device_id, appliance_id, department. Return via submit_plan.${recall.context ? `\n\n[MEMORY CONTEXT]\n${recall.context}` : ""}` },
             { role: "user", content: userMsg },
           ],
-          toolName: "submit_plan", description: "Submit the investigation plan.", schema: PLANNER_TOOL_SCHEMA, lane: plannerLane, maxTokens: 2000, agent: "planner",
+          // Planner needs headroom: hidden reasoning tokens plus the tool-call
+          // envelope push completion tokens into the 2,500–2,900 range on real
+          // prompts (measured 23 Oct 2026). 6000 keeps the request safely out
+          // of the max_tokens_hit zone.
+          toolName: "submit_plan", description: "Submit the investigation plan.", schema: PLANNER_TOOL_SCHEMA, lane: plannerLane, maxTokens: 6000, agent: "planner",
           parse: (args) => PlannerOutput.parse(args),
         });
         steps = plan.value.steps;
@@ -405,7 +409,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
           { role: "system", content: "You are the Risk Gate of a university SOC. Decide contain | monitor | benign | escalate from the verified evidence only. contain = confirmed account takeover chain; benign = suspicious signals explained away; monitor = weak unexplained signal; escalate = exposure or conflicting/insufficient evidence needing a human. Return via submit_risk." },
           { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nData-quality conflicts:\n${dqConflicts.join("\n") || "(none)"}` },
         ],
-        toolName: "submit_risk", description: "Submit the risk decision.", schema: RISK_TOOL_SCHEMA, lane: "deep", maxTokens: 2000, agent: "risk_gate",
+        toolName: "submit_risk", description: "Submit the risk decision.", schema: RISK_TOOL_SCHEMA, lane: "deep", maxTokens: 4000, agent: "risk_gate",
         parse: (a) => ({ decision: Verdict.parse(a.decision), confidence: Math.min(1, Math.max(0, Number(a.confidence))), rationale: String(a.rationale ?? "") }),
       });
       modelOpinion = rc.value;
@@ -463,10 +467,10 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     try {
       const rep = await opts.nightshift.callTool({
         messages: [
-          { role: "system", content: `You write analyst-ready incident notes for a university SOC. The verdict is already decided by the Risk Gate: ${g.decision} (confidence ${g.confidence}). Do not change it. Summary < 150 words, cite finding ids (F1…). Actions are recommendations for the analyst, each with ATT&CK ids from the findings. List limitations and what could not be checked (e.g. travel calendar, EDR).` },
+          { role: "system", content: `You write analyst-ready incident notes for a university SOC. The verdict is already decided by the Risk Gate: ${g.decision} (confidence ${g.confidence}). Do not change it. Be brief: summary <= 120 words with one short sentence per finding citation (F1…). Actions: 2–4 bullet recommendations for the analyst, each with ATT&CK ids from the findings. Limitations and not_checked: 1–2 lines each.` },
           { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nRisk Gate reasons: ${[...basePolicy.reasons, ...g.escalate_reasons].join("; ")}` },
         ],
-        toolName: "submit_note", description: "Submit the incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 2000, agent: "reporter",
+        toolName: "submit_note", description: "Submit the incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 4000, agent: "reporter",
         parse: (a) => ({ summary: String(a.summary ?? ""), actions: (Array.isArray(a.actions) ? a.actions : []).map((x: { action?: unknown; attack?: unknown }) => ({ action: String(x.action ?? ""), attack: toArr(x.attack) })).filter((x) => x.action), limitations: toArr(a.limitations), not_checked: toArr(a.not_checked) }),
       });
       note = rep.value;

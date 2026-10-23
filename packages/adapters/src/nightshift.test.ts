@@ -97,7 +97,7 @@ describe("Nightshift.chat", () => {
     await expect(n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false })).rejects.toThrow(/empty_response/);
   });
 
-  it("retries once with a cache-busting system turn when an exact-cache hit replayed an empty response", async () => {
+  it("retries once with a cache-busting user turn when an exact-cache hit replayed an empty response", async () => {
     const seenBodies: Array<{ messages: Array<{ role: string; content: string }> }> = [];
     let call = 0;
     const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
@@ -118,9 +118,15 @@ describe("Nightshift.chat", () => {
     const r = await n.chat({ messages: [{ role: "user", content: "hi" }], lane: "fast", routeFallback: false });
     expect(call).toBe(2);
     expect(r.text).toBe("real answer");
-    // The cache-busted call must carry the extra marker in the system turn so Nightshift's exact cache key differs.
-    const bustedSystem = seenBodies[1]!.messages.find((m) => m.role === "system");
-    expect(bustedSystem?.content ?? "").toMatch(/cache_bust/);
+    // The cache-busted call must carry the marker in the LAST USER turn — the
+    // local Nightshift's exact-cache key ignores the system turn and the
+    // model id, so a system-turn nonce was proven not to bust the cache on
+    // 23 Oct 2026. Any system turn should NOT carry the marker.
+    const bustedMsgs = seenBodies[1]!.messages;
+    const lastUser = [...bustedMsgs].reverse().find((m) => m.role === "user");
+    expect(lastUser?.content ?? "").toMatch(/cache_bust/);
+    const bustedSystem = bustedMsgs.find((m) => m.role === "system");
+    expect(bustedSystem?.content ?? "").not.toMatch(/cache_bust/);
   });
 
   it("falls back from the deep lane to the fast lane after retries fail", async () => {
@@ -386,14 +392,19 @@ describe("isEmptyResponse / fromExactCache / withCacheBuster", () => {
     expect(fromExactCache({ ...base, text: "", toolCalls: [], receipt: { cache: { status: "miss", from_cache: false } } })).toBe(false);
     expect(fromExactCache({ ...base, text: "", toolCalls: [], receipt: { cache: { status: "exact" } } })).toBe(true);
   });
-  it("appends a cache_bust token to the first system turn (adds one when missing)", () => {
-    const addedSystem = withCacheBuster([{ role: "user", content: "hi" }], "run-abc");
-    expect(addedSystem[0]).toMatchObject({ role: "system" });
-    expect(addedSystem[0]!.content).toMatch(/cache_bust run-abc/);
-    const touchedSystem = withCacheBuster([{ role: "system", content: "/no_think\nhello" }, { role: "user", content: "hi" }], "run-abc");
-    expect(touchedSystem[0]!.content).toMatch(/\/no_think\nhello/);
-    expect(touchedSystem[0]!.content).toMatch(/cache_bust run-abc/);
-    expect(touchedSystem[1]).toEqual({ role: "user", content: "hi" });
+  it("appends a cache_bust token to the LAST USER turn (never the system turn, verified against the local engine's cache-key semantics)", () => {
+    // Pure user — the token lands in that turn.
+    const simple = withCacheBuster([{ role: "user", content: "hi" }], "run-abc");
+    expect(simple[0]!.role).toBe("user");
+    expect(simple[0]!.content).toMatch(/hi\n\[cache_bust run-abc/);
+    // System + user — the system turn is NOT touched, only the user turn.
+    const withSystem = withCacheBuster([{ role: "system", content: "/no_think\nhello" }, { role: "user", content: "hi" }], "run-abc");
+    expect(withSystem[0]!.content).toBe("/no_think\nhello");
+    expect(withSystem[1]!.content).toMatch(/hi\n\[cache_bust run-abc/);
+    // No user turn → one is appended.
+    const sysOnly = withCacheBuster([{ role: "system", content: "s" }], "run-abc");
+    expect(sysOnly[sysOnly.length - 1]!.role).toBe("user");
+    expect(sysOnly[sysOnly.length - 1]!.content).toMatch(/cache_bust run-abc/);
   });
 });
 
@@ -417,10 +428,77 @@ describe("classifyFailure", () => {
     expect(classifyFailure(new Error('Nightshift tool call "submit_risk" missing from response'))).toBe("format_miss");
     expect(classifyFailure(new Error("format_miss on repair retry"))).toBe("format_miss");
   });
+  it("classifies budget truncation as max_tokens_hit — the hidden reasoning tokens exceeded our maxTokens", () => {
+    expect(classifyFailure(new Error("Nightshift max_tokens_hit (HTTP 200, finish_reason=length, max_tokens=2000, completion_tokens=2000)"))).toBe("max_tokens_hit");
+  });
   it("falls back to provider_error for 5xx / network — upstream genuinely failed", () => {
     expect(classifyFailure(new Error("Nightshift HTTP 502: bad gateway"))).toBe("provider_error");
     expect(classifyFailure(new Error("Nightshift HTTP 500: provider_deadline"))).toBe("provider_error");
     expect(classifyFailure(new Error("ECONNREFUSED"))).toBe("provider_error");
+  });
+});
+
+describe("Nightshift budget & nonce (DAY3B)", () => {
+  // The planner request with max_tokens=2000 returned finish_reason=length and
+  // 2,000 completion tokens for 1,090 chars on 23 Oct 2026 — a real budget bug,
+  // not a provider outage. We throw max_tokens_hit so eval tables group it right.
+  it("throws max_tokens_hit when finish_reason=length AND no tool call AND no text", async () => {
+    const fetchFn = (async () => new Response(JSON.stringify({
+      choices: [{ message: { content: "", tool_calls: [] }, finish_reason: "length" }],
+      usage: { completion_tokens: 2000 },
+      meterless: { receipt_id: "r_hit", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
+    }), { status: 200 })) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await expect(n.chat({ messages: [{ role: "user", content: "plan" }], lane: "fast", routeFallback: false, maxTokens: 2000 }))
+      .rejects.toThrow(/max_tokens_hit.*finish_reason=length/);
+  });
+
+  it("surfaces completion_tokens and finish_reason on the ok chat_nightshift trace event", async () => {
+    const { RunTrace } = await import("./trace.ts");
+    const { readFileSync, mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const trace = new RunTrace({ logsRoot: mkdtempSync(tmpdir() + "/wt-trace-tok-") });
+    const fetchFn = (async () => new Response(JSON.stringify({
+      choices: [{ message: { content: "", tool_calls: [{ id: "t", function: { name: "submit_x", arguments: "{\"ok\":true}" } }] }, finish_reason: "tool_calls" }],
+      usage: { completion_tokens: 843 },
+      meterless: { receipt_id: "r_ok", routed_model: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
+    }), { status: 200 })) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0, trace });
+    await n.chat({ messages: [{ role: "user", content: "p" }], lane: "fast", routeFallback: false, maxTokens: 4000 });
+    const line = readFileSync(trace.files().trace, "utf8").split("\n").find((l) => /"action":"chat_nightshift"/.test(l) && !/_fallback/.test(l));
+    const ev = JSON.parse(line ?? "{}");
+    expect(ev.completion_tokens).toBe(843);
+    expect(ev.finish_reason).toBe("tool_calls");
+    expect(ev.max_tokens).toBe(4000);
+  });
+
+  it("appends runNonce to the last user turn of every chat so --runs > 1 produces independent samples", async () => {
+    const seenBodies: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+    const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: "hi", tool_calls: [] }, finish_reason: "stop" }],
+        meterless: { receipt_id: "r", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b" },
+      }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0, runNonce: "nonce:A0:case-001:run-2" });
+    await n.chat({ messages: [{ role: "system", content: "/no_think" }, { role: "user", content: "plan" }], lane: "fast", routeFallback: false });
+    const msgs = seenBodies[0]!.messages;
+    const lastUser = [...msgs].reverse().find((m) => m.role === "user");
+    expect(lastUser?.content ?? "").toMatch(/\[run:nonce:A0:case-001:run-2\]/);
+    const sys = msgs.find((m) => m.role === "system");
+    expect(sys?.content ?? "").not.toMatch(/\[run:/);
+  });
+
+  it("default max_tokens is 4000 (Runtime 1.4 floor is 2000; Nemotron Super VL needs headroom for hidden reasoning tokens)", async () => {
+    const seenBodies: Array<{ max_tokens: number }> = [];
+    const fetchFn = (async (_u: string | URL | Request, init?: RequestInit) => {
+      seenBodies.push(JSON.parse((init?.body as string) ?? "{}"));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "hi" }, finish_reason: "stop" }], meterless: { receipt_id: "r", routed_model: "nvidia/nemotron-3.5-lightning-30b-a3b" } }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const n = new Nightshift({ fetchFn, token: "t", timeoutMs: 5000, retries: 0 });
+    await n.chat({ messages: [{ role: "user", content: "p" }], lane: "fast", routeFallback: false });
+    expect(seenBodies[0]!.max_tokens).toBe(4000);
   });
 });
 

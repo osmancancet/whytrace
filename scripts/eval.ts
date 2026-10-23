@@ -76,11 +76,13 @@ async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNon
   }
   // Per-run nonce: Nightshift's exact-prompt cache replays the same answer for
   // identical prompts, which makes `--runs > 1` return cached responses rather
-  // than independent samples. We inject the nonce as a sentinel into the trace
-  // id (`run_id` already differs per run) and let the orchestrator's cache_bust
-  // path kick in on exact-cache replays. The adapter also surfaces cache_hit so
-  // the eval table shows which runs were replays.
-  const nightshift = new Nightshift({ trace });
+  // than independent samples. DAY3B: the nonce goes through the adapter's
+  // `runNonce` option so it is appended to the LAST USER TURN of every chat
+  // call — the system turn and the model id do NOT change the exact-cache key
+  // on this install (verified directly on 23 Oct 2026). Each run therefore
+  // keys differently and we get independent samples. The adapter surfaces
+  // cache_hit so the eval table shows which runs were replays.
+  const nightshift = new Nightshift({ trace, runNonce });
   if (runNonce) trace.emit({ agent: "eval", action: "run_nonce", output_summary: runNonce, status: "ok" });
   if (v.kind === "model_only") {
     return evaluateModelOnly({ caseId, upn, description: caseInfo?.description, zetaris, nightshift, trace });

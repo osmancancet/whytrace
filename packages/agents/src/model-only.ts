@@ -70,7 +70,7 @@ export async function evaluateModelOnly(input: ModelOnlyInput): Promise<Report> 
         { role: "system", content: "You are a university SOC analyst. Decide contain | monitor | benign | escalate from the raw alert and event dump only. contain = confirmed account takeover; benign = suspicious signals explained; monitor = weak unexplained signal; escalate = exposure or insufficient evidence needing a human. Return via submit_verdict." },
         { role: "user", content: dump },
       ],
-      toolName: "submit_verdict", description: "Submit the one-shot verdict.", schema: SCHEMA, lane: "deep", maxTokens: 2000, agent: "model_only",
+      toolName: "submit_verdict", description: "Submit the one-shot verdict.", schema: SCHEMA, lane: "deep", maxTokens: 4000, agent: "model_only",
       parse: (a) => ({ verdict: Verdict.parse(a.verdict), confidence: Math.min(1, Math.max(0, Number(a.confidence))), rationale: String(a.rationale ?? "") }),
     });
     verdict = rc.value.verdict;
