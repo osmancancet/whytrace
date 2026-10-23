@@ -43,4 +43,11 @@ describe("B0 rules-only baseline (Entra-style thresholds)", () => {
     await run();
     expect(trace.files().queries).toMatch(/queries\.jsonl$/);
   });
+
+  it("labels the Report with decided_by=rules_only (no model calls) so eval tables show 'n/a' instead of 0/0 model-backed", async () => {
+    const r = await setup("case-005", "e.oz@aegean.edu").run();
+    expect(r.decided_by).toBe("rules_only");
+    expect(r.model_steps_ok).toBe(0);
+    expect(r.model_steps_total).toBe(0);
+  });
 });

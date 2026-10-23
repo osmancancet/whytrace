@@ -1,8 +1,8 @@
 # markovian conformance
 # runner: conformance/markovian/runner.ts
 # impl:   packages/engines/markovian/src/index.ts
-# ran:    2026-10-23T00:21:17.819Z
-# took:   344 ms
+# ran:    2026-10-23T00:23:45.799Z
+# took:   479 ms
 # exit:   0
 
 --- STDOUT ---

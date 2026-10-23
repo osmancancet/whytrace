@@ -1,8 +1,8 @@
 # hmem conformance
 # runner: conformance/hmem/runner.ts
 # impl:   packages/engines/hmem/src/index.ts
-# ran:    2026-10-23T00:21:17.474Z
-# took:   414 ms
+# ran:    2026-10-23T00:23:45.319Z
+# took:   450 ms
 # exit:   0
 
 --- STDOUT ---

@@ -212,7 +212,8 @@ async function main() {
         decided_by: r.decided_by, failure_classes: summ.failure_classes,
       });
       const fc = Object.keys(summ.failure_classes).length ? ` [${Object.entries(summ.failure_classes).map(([k, n]) => `${k}=${n}`).join(" ")}]` : "";
-      console.log(`${v.id} run ${run} ${caseId}: ${r.verdict} (expected ${expected}) ${r.execution_time_seconds.toFixed(1)} s · model-backed ${r.model_steps_ok}/${r.model_steps_total} · cached=${summ.model_calls_cached} · decided_by=${r.decided_by}${fc} ${summ.degraded ? "DEGRADED" : ""} models=[${summ.routed_models.join(",")}]`);
+      const mb = v.kind === "rules" ? "n/a" : `${r.model_steps_ok}/${r.model_steps_total}`;
+      console.log(`${v.id} run ${run} ${caseId}: ${r.verdict} (expected ${expected}) ${r.execution_time_seconds.toFixed(1)} s · model-backed ${mb} · cached=${summ.model_calls_cached} · decided_by=${r.decided_by}${fc} ${summ.degraded ? "DEGRADED" : ""} models=[${summ.routed_models.join(",")}]`);
     } catch (err) {
       rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "error", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: (Date.now() - started) / 1000, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 1, routed_models: [], model_calls_ok: 0, model_calls_total: 0, model_calls_cached: 0, decided_by: "-", failure_classes: {}, error: (err as Error).message.slice(0, 160) });
       console.log(`${v.id} run ${run} ${caseId}: ERROR ${(err as Error).message}`);
@@ -251,15 +252,26 @@ async function main() {
     const fb = judgedRs.filter((r) => r.verdict === "benign" && r.expected !== "benign").length;
     const degraded = judgedRs.filter((r) => r.degraded).length;
     const failures = judgedRs.reduce((a, r) => a + r.provider_failures, 0);
-    const modelBacked = judgedRs.filter((r) => r.decided_by === "model+policy").length;
+    // Model-backed counts: for the orchestrator (A0 and friends) it means
+    // decided_by === "model+policy"; for M0 we count every row where the one
+    // model call succeeded (decided_by === "model_only" with model_steps_ok ≥ 1).
+    // For B0 (rules_only) the whole concept is n/a — the variant has no model
+    // step by design, so we show "n/a" in both the headline and the table.
+    const kind = v.kind;
+    const modelBacked = kind === "rules" ? "n/a"
+      : kind === "model_only" ? `${judgedRs.filter((r) => r.decided_by === "model_only" && r.model_calls_ok >= 1).length}/${judgedRs.length}`
+      : `${judgedRs.filter((r) => r.decided_by === "model+policy").length}/${judgedRs.length}`;
     const totalCached = judgedRs.reduce((a, r) => a + r.model_calls_cached, 0);
     const classAgg: Record<string, number> = {};
     for (const r of judgedRs) for (const [k, n] of Object.entries(r.failure_classes)) classAgg[k] = (classAgg[k] ?? 0) + n;
     const classLine = Object.entries(classAgg).sort().map(([k, n]) => `${k}=${n}`).join(" ") || "(none)";
     const secs = judgedRs.map((r) => r.seconds).sort((a, b) => a - b);
-    md.push(`## ${v.id} — ${v.label}`, "", `Judged ${acc}/${judgedRs.length} ok · model-backed ${modelBacked}/${judgedRs.length} · infra_unavailable ${infra}/${rs.length} · false contain ${fc} · false benign ${fb} · degraded runs ${degraded}/${judgedRs.length} · provider_failures ${failures} · cached model calls ${totalCached} · failure classes: ${classLine} · median time ${secs.length ? secs[Math.floor(secs.length / 2)]!.toFixed(1) : "-"} s`, "");
+    md.push(`## ${v.id} — ${v.label}`, "", `Judged ${acc}/${judgedRs.length} ok · model-backed ${modelBacked} · infra_unavailable ${infra}/${rs.length} · false contain ${fc} · false benign ${fb} · degraded runs ${degraded}/${judgedRs.length} · provider_failures ${failures} · cached model calls ${totalCached} · failure classes: ${classLine} · median time ${secs.length ? secs[Math.floor(secs.length / 2)]!.toFixed(1) : "-"} s`, "");
     md.push("| case | expected | run | verdict | ok | conf | rounds | SQL | model | s | rejected | model-backed | cached | decided_by | failure_classes | degraded | provider_failures | routed_models | run_id |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
-    for (const r of rs) md.push(`| ${r.case_id} | ${r.expected} | ${r.run} | ${r.verdict}${r.error ? ` (${r.error})` : ""} | ${r.judged ? (r.ok ? "✅" : "❌") : "⏸️"} | ${r.confidence} | ${r.rounds} | ${r.sql} | ${r.model} | ${r.seconds.toFixed(1)} | ${r.rejected} | ${r.model_calls_ok}/${r.model_calls_total} | ${r.model_calls_cached} | ${r.decided_by} | ${Object.entries(r.failure_classes).map(([k, n]) => `${k}:${n}`).join(" ") || "-"} | ${r.degraded ? "yes" : "no"} | ${r.provider_failures} | ${r.routed_models.map((m) => m.split("/").pop()).join(", ") || "-"} | ${r.run_id} |`);
+    for (const r of rs) {
+      const mb = kind === "rules" ? "n/a" : `${r.model_calls_ok}/${r.model_calls_total}`;
+      md.push(`| ${r.case_id} | ${r.expected} | ${r.run} | ${r.verdict}${r.error ? ` (${r.error})` : ""} | ${r.judged ? (r.ok ? "✅" : "❌") : "⏸️"} | ${r.confidence} | ${r.rounds} | ${r.sql} | ${r.model} | ${r.seconds.toFixed(1)} | ${r.rejected} | ${mb} | ${r.model_calls_cached} | ${r.decided_by} | ${Object.entries(r.failure_classes).map(([k, n]) => `${k}:${n}`).join(" ") || "-"} | ${r.degraded ? "yes" : "no"} | ${r.provider_failures} | ${r.routed_models.map((m) => m.split("/").pop()).join(", ") || "-"} | ${r.run_id} |`);
+    }
     md.push("");
   }
   if (memRows.length) md.push("## A3 — memory cold vs warm (case-003)", "", "| memory | verdict | lessons recalled | rounds | SQL | model | s |", "|---|---|---|---|---|---|---|", ...memRows, "");

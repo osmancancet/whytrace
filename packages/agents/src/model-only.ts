@@ -104,7 +104,11 @@ export async function evaluateModelOnly(input: ModelOnlyInput): Promise<Report> 
     rounds: 0,
     budget: { sql_calls: 2, model_calls: degraded ? 0 : 1 },
     models: degraded ? [] : [{ agent: "model_only", routed_model: modelId, receipt_id: receiptId }],
-    decided_by: degraded ? "policy_fallback" : "model+policy",
+    // M0 is model-only *by construction*. We always report `model_only` so the
+    // configuration is visible; a degraded call shows up as 0/1 in
+    // model_steps_ok/total, which the eval sweep surfaces alongside the
+    // decided_by label.
+    decided_by: "model_only",
     model_steps_ok: degraded ? 0 : 1,
     model_steps_total: 1,
     trace_id: trace.run_id,

@@ -109,11 +109,23 @@ export const Report = z.object({
   models: z.array(z.object({ agent: z.string(), routed_model: z.string(), receipt_id: z.string().optional() })).default([]),
   /** Honest model-contribution telemetry. `model_steps_ok` counts planner /
    *  risk-gate / reporter / markovian model calls that returned a usable
-   *  payload; `model_steps_total` counts every one that was attempted. A
-   *  run is `model+policy` only when the Risk Gate AND the Reporter model
-   *  steps succeeded — any other combination is a `policy_fallback`
-   *  verdict and must say so in the report JSON and in the console. */
-  decided_by: z.enum(["model+policy", "policy_fallback"]).default("model+policy"),
+   *  payload; `model_steps_total` counts every one that was attempted.
+   *  Values:
+   *    - `model+policy`      — orchestrator run where both Risk Gate AND
+   *      Reporter model steps succeeded; the model contributed to the
+   *      verdict and the policy guarded it.
+   *    - `policy_fallback`   — orchestrator run where at least one of
+   *      Risk Gate / Reporter was degraded; the deterministic policy
+   *      stood in.
+   *    - `model_only`        — M0 ablation: Nemotron alone (no tools,
+   *      no Critic, no Risk Gate, no DQ). Always labelled model-only
+   *      regardless of whether the single model call degraded, because
+   *      *the configuration* is model-only — "degraded + model_only"
+   *      shows up in model_steps_ok / model_steps_total.
+   *    - `rules_only`        — B0 baseline: Entra-style rules only.
+   *      Zero model calls — eval tables must show "model-backed n/a"
+   *      for this variant, not 0/0 counted as a model failure. */
+  decided_by: z.enum(["model+policy", "policy_fallback", "model_only", "rules_only"]).default("model+policy"),
   model_steps_ok: z.number().int().min(0).default(0),
   model_steps_total: z.number().int().min(0).default(0),
   trace_id: z.string(),
