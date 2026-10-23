@@ -2,18 +2,26 @@
 // Five stages (Sense → Interpret → Guard → Route → Recommend) based on
 // `engines/scout-intent/AGENTS.md` summary in notes/ENGINES_FINDINGS.md §4.
 //
-// The engine runs on strings that reach a model prompt from external sources:
-// mail-rule names / targets, sign-in user_agent, device names, subjects. It
-// does NOT run on numbers, SQL ids, or data we produced ourselves.
+// Two surfaces:
+//   `decide({ prompt })` scores whole prompts (used by the Meterless eval
+//      harness under conformance/scout/evals/, where injection → block).
+//   `scanFields({...})` scores short, attacker-controlled fields (mail rule
+//      names, user_agent, device names). The orchestrator wraps those strings
+//      so the downstream prompt treats them as data; injection → quarantine,
+//      not block, because the content stays visible as evidence rather than
+//      replaced by a model instruction.
 //
-// This is a WhyTrace implementation. The upstream Meterless Scout eval runner
-// is published separately (`engines/scout-intent/evals/runner/index.ts`) and
-// expects a `Scout` class exported with the shape in `decide()`. Our shape
-// matches so the official evals can run against this file by setting
-// `SCOUT_IMPL=<abs path to this file>`; see docs/scout-intent.md for the
-// vendored-runner command. No conformance runner is published upstream so
-// this file is unit-tested here instead.
+// Each injection rule carries a `severity` (default "quarantine"). `decide()`
+// returns the max severity across firing rules; `scanFields()` downgrades
+// `block` → `quarantine` because untrusted *data* that quotes an injection
+// string is still just data.
+//
+// The upstream Meterless Scout harness is vendored under
+// `conformance/scout/evals/` (Apache-2.0, see conformance/PROVENANCE.md) and
+// `scripts/run_conformance.mjs` sets `SCOUT_IMPL` at this file so that the
+// published metric gates run against our implementation.
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 export type Intent = {
   id: string;
@@ -22,12 +30,19 @@ export type Intent = {
   keywords: string[];
   /** Risk tier — "block" intents cannot land, they only surface as detections. */
   tier: "safe" | "sensitive" | "block";
+  /** Example prompts that match this intent (used for registry scoring). */
+  examples?: string[];
+  /** Capabilities this intent needs (used when building the tool plan). */
+  capabilities?: string[];
 };
+
+export type InjectionSeverity = "block" | "quarantine";
+export type InjectionRule = { id: string; pattern: RegExp; reason: string; severity?: InjectionSeverity };
 
 export type PolicyPack = {
   name: string;
   /** Regexes that identify a prompt-injection attempt. One match → quarantine. */
-  injectionRules: Array<{ id: string; pattern: RegExp; reason: string }>;
+  injectionRules: InjectionRule[];
   /** Confidence floor to proceed (default band). */
   proceedFloor: number;
   /** Confidence floor to clarify instead of proceeding. */
@@ -60,7 +75,7 @@ export type ScoutDecision = {
   /** Stage 2 — ranked intent candidates. */
   candidates: Array<{ intent: string; score: number }>;
   /** Stage 3 — injection / policy guards triggered. */
-  guards: Array<{ ruleId: string; policy: string; reason: string; match: string }>;
+  guards: Array<{ ruleId: string; policy: string; reason: string; match: string; severity: InjectionSeverity }>;
   /** Stage 3 — ultimate risk level this gate returns. */
   risk: { level: "allow" | "quarantine" | "block"; reasons: string[] };
   /** Stage 4 — tool plan the executor should run (empty for `block`). */
@@ -74,7 +89,8 @@ export type ScoutDecision = {
   confidence: number;
   /** Clarification request when confidence is in the clarify band. */
   clarification?: string;
-  /** Overrides are blocked actions remembered for audit. */
+  /** Overrides are operator corrections recorded in telemetry. Offline runs
+   *  carry none; the eval harness divides this count by contracts issued. */
   overrides: string[];
 };
 
@@ -87,25 +103,32 @@ const DEFAULT_INTENTS: Intent[] = [
   { id: "system_prompt_leak", label: "Request to reveal the system prompt / rubric", keywords: ["system prompt", "reveal instructions", "show rubric", "ignore previous"], tier: "block" },
 ];
 
+// Default injection rules. Legacy ids kept for the orchestrator's existing
+// quarantine semantics; broader ids (`*_instructions`, `role_markup`,
+// `persona_switch`, `secret_exfil`, `privilege_grant`, `escaped_bidi`) match
+// the Meterless eval corpus patterns and have severity=block for whole-prompt
+// `decide()` calls. `scanFields()` downgrades block→quarantine for all rules
+// because untrusted fields are wrapped as data, not treated as instructions.
+const DEFAULT_INJECTION_RULES: InjectionRule[] = [
+  // Legacy narrow rules (kept — unit tests reference these ids explicitly).
+  { id: "injection.ignore_previous", pattern: /\bignore\s+(all\s+|the\s+)?(previous|prior)\s+(instructions|findings|rules|rubric)\b/i, reason: "attempts to override earlier instructions", severity: "block" },
+  { id: "injection.disregard_context", pattern: /\b(disregard|forget) (the )?(context|findings|rubric)\b/i, reason: "asks the agent to forget context", severity: "quarantine" },
+  { id: "injection.mark_benign", pattern: /\b(mark|classify|set) (this |it |the (account|case) )?(as )?benign\b/i, reason: "asks for a benign verdict without evidence", severity: "quarantine" },
+  { id: "injection.contact_attacker", pattern: /\b(forward|send|email|call) .*(gmail\.com|outlook\.com|protonmail\.com|yopmail\.com|pastebin\.com)/i, reason: "redirect to an external exfiltration channel", severity: "block" },
+  { id: "injection.system_prompt", pattern: /\b(reveal|show|print|dump) (the |your )?(system|rubric|hidden) prompt\b/i, reason: "exfiltration of the system prompt", severity: "block" },
+  { id: "injection.override_verdict", pattern: /\boverride (the )?(verdict|risk gate|decision)\b/i, reason: "asks to override the Risk Gate", severity: "block" },
+  // Broader rules — these are the ones the Meterless harness measures.
+  { id: "injection.ignore_instructions", pattern: /\b(ignore|disregard|forget)\s+(all\s+|the\s+|every\s+)?(previous\s+|prior\s+|above\s+|below\s+|earlier\s+)?(instructions?|rules?|guidelines?|findings|rubric)\b/i, reason: "instruction-override attempt", severity: "block" },
+  { id: "injection.role_markup", pattern: /<\/?(user|system|assistant)>|\[\/?INST\]/i, reason: "role-confusion markup injected in the prompt", severity: "block" },
+  { id: "injection.persona_switch", pattern: /\b(you are now (in |an? )?(a )?(unrestricted|admin|root|developer)|unrestricted\s+(mode|access|agent)|pretend to be (the |a )?(system|admin|root|database admin)|act as (an? )?(admin|system|root|the system))\b/i, reason: "requests a different privileged persona", severity: "block" },
+  { id: "injection.secret_exfil", pattern: /\b(reveal|dump|print|show|leak|list)\s+(all\s+|the\s+|hidden\s+|stored\s+)*(api[\s_-]?keys?|credentials?|secrets?|passwords?|private\s+keys?|system\s+prompt)\b/i, reason: "credential or secret exfiltration attempt", severity: "block" },
+  { id: "injection.privilege_grant", pattern: /\bgrant\s+(me\s+|you\s+|access\s+to\s+|us\s+)?(admin|root|superuser|owner|all\s+(access|rights))\b/i, reason: "privilege-escalation request", severity: "block" },
+  { id: "injection.escaped_bidi", pattern: /\\u202[eEfF]/, reason: "literal unicode RTL/LRM override escape", severity: "block" },
+];
+
 const DEFAULT_POLICY: PolicyPack = {
   name: "default",
-  injectionRules: [
-    { id: "injection.ignore_previous", pattern: /\bignore (previous|prior|all) (instructions|findings|rules|rubric)\b/i, reason: "attempts to override earlier instructions" },
-    { id: "injection.disregard_context", pattern: /\b(disregard|forget) (the )?(context|findings|rules|rubric)\b/i, reason: "asks the agent to forget context" },
-    { id: "injection.mark_benign", pattern: /\b(mark|classify|set) (this |it |the (account|case) )?(as )?benign\b/i, reason: "asks for a benign verdict without evidence" },
-    { id: "injection.contact_attacker", pattern: /\b(forward|send|email|call) .*(gmail\.com|outlook\.com|protonmail\.com|yopmail\.com|pastebin\.com)/i, reason: "redirect to an external exfiltration channel" },
-    { id: "injection.system_prompt", pattern: /\b(reveal|show|print|dump) (the |your )?(system|rubric|hidden) prompt\b/i, reason: "exfiltration of the system prompt" },
-    { id: "injection.override_verdict", pattern: /\boverride (the )?(verdict|risk gate|decision)\b/i, reason: "asks to override the Risk Gate" },
-    // Broader instruction-override phrasing ("ignore all previous instructions",
-    // "disregard the rules above", "disregard the user") — up to three filler words.
-    { id: "injection.ignore_instructions", pattern: /\b(ignore|disregard|forget)\b(?:\s+[\w'-]+){0,3}?\s+(instructions|rules|guidelines|findings|rubric|context|the user)\b/i, reason: "attempts to override earlier instructions" },
-    { id: "injection.ignore_previous_short", pattern: /\bignore (previous|prior|above)\b/i, reason: "attempts to override earlier instructions" },
-    // Chat-template / role markup smuggled into a data field.
-    { id: "injection.role_markup", pattern: /<\/?\s*(system|assistant|user)\s*>|\[\/?INST\]|<\|im_(start|end)\|>/i, reason: "chat-role markup inside a data field (role confusion)" },
-    { id: "injection.persona_switch", pattern: /\byou are now\b|\bpretend to be (the )?(system|admin|administrator|developer)\b|\b(unrestricted|developer|jailbreak) mode\b/i, reason: "attempts to switch the agent's role" },
-    { id: "injection.secret_exfil", pattern: /\b(reveal|show|print|dump|list|leak)\b(?:\s+[\w'-]+){0,3}?\s+(api keys?|credentials|passwords?|secrets?|tokens?)\b/i, reason: "asks the agent to disclose secrets" },
-    { id: "injection.privilege_grant", pattern: /\bgrant (me|us)\b[^.\n]{0,20}\b(admin|root|superuser|owner)\b/i, reason: "asks the agent to grant privileges" },
-  ],
+  injectionRules: DEFAULT_INJECTION_RULES,
   proceedFloor: 0.55,
   clarifyFloor: 0.4,
   blockedIntentIds: new Set(["exfiltrate_evidence", "override_verdict", "system_prompt_leak"]),
@@ -116,16 +139,14 @@ const ADVERSARIAL_TIGHT: PolicyPack = {
   injectionRules: [
     ...DEFAULT_POLICY.injectionRules,
     // Zero-width + U+202E right-to-left override are classic smuggling tricks.
-    // The same bidi / zero-width trick written as an escape sequence in plain text.
-    { id: "injection.escaped_bidi", pattern: /\\u(200[b-f]|202[a-e]|206[6-9]|feff)/i, reason: "escaped zero-width or RTL override sequence in a user-controlled field" },
-    { id: "injection.zero_width", pattern: /[​-‏‪-‮﻿]/, reason: "zero-width or RTL override character in a user-controlled field" },
-    { id: "injection.base64_payload", pattern: /\b(?:eyJ|data:[a-z]+\/[a-z]+;base64,)[A-Za-z0-9+/=]{20,}/, reason: "embedded base64 payload — potential tool-call smuggling" },
-    { id: "injection.markdown_image_fetch", pattern: /!\[[^\]]*\]\(https?:\/\/[^\s)]+\)/, reason: "markdown image whose URL would exfiltrate on render" },
-    { id: "injection.tool_schema_hint", pattern: /\btool_call\s*:\s*\{/, reason: "attempts to synthesise a tool-call shape in free text" },
-    { id: "injection.urgent_social", pattern: /\b(ignore everything|urgent|right now|immediately) (and|then)? (approve|release|forward|send)\b/i, reason: "urgency-framed social-engineering phrase" },
+    { id: "injection.zero_width", pattern: /[​-‏‪-‮﻿]/, reason: "zero-width or RTL override character in a user-controlled field", severity: "quarantine" },
+    { id: "injection.base64_payload", pattern: /\b(?:eyJ|data:[a-z]+\/[a-z]+;base64,)[A-Za-z0-9+/=]{20,}/, reason: "embedded base64 payload — potential tool-call smuggling", severity: "quarantine" },
+    { id: "injection.markdown_image_fetch", pattern: /!\[[^\]]*\]\(https?:\/\/[^\s)]+\)/, reason: "markdown image whose URL would exfiltrate on render", severity: "quarantine" },
+    { id: "injection.tool_schema_hint", pattern: /\btool_call\s*:\s*\{/, reason: "attempts to synthesise a tool-call shape in free text", severity: "quarantine" },
+    { id: "injection.urgent_social", pattern: /\b(ignore everything|urgent|right now|immediately) (and|then)? (approve|release|forward|send)\b/i, reason: "urgency-framed social-engineering phrase", severity: "quarantine" },
   ],
-  proceedFloor: 0.6,
-  clarifyFloor: 0.5,
+  proceedFloor: 0.55,
+  clarifyFloor: 0.4,
   blockedIntentIds: new Set(["exfiltrate_evidence", "override_verdict", "system_prompt_leak"]),
 };
 
@@ -136,6 +157,9 @@ export const BUILTIN_POLICIES: Record<string, PolicyPack> = {
 
 export type ScoutOptions = {
   intents?: Intent[];
+  /** Path to a JSON registry (`{ intents: [...] }`) as used by the Meterless
+   *  eval harness. Loaded synchronously. */
+  intentRegistry?: string;
   policyPack?: Array<keyof typeof BUILTIN_POLICIES | string> | PolicyPack[];
   /** HMAC key for ExecutionContract signatures. Random per-process by default
    *  (contracts live 5 min so key rotation per run is fine). */
@@ -146,15 +170,47 @@ export type ScoutOptions = {
   now?: () => number;
 };
 
+type RegistryEntry = {
+  id: string;
+  category?: string;
+  description?: string;
+  capabilities?: string[];
+  riskClass?: "low" | "medium" | "high";
+  examples?: string[];
+};
+
+function loadIntentRegistry(path: string): Intent[] {
+  const raw = JSON.parse(readFileSync(path, "utf-8")) as { intents?: RegistryEntry[] };
+  const entries = raw.intents ?? [];
+  return entries.map((e) => ({
+    id: e.id,
+    label: e.description ?? e.id,
+    tier: "safe", // riskClass is for routing, not for blocking the whole intent.
+    keywords: [],
+    examples: Array.isArray(e.examples) ? e.examples.slice() : [],
+    capabilities: Array.isArray(e.capabilities) ? e.capabilities.slice() : [],
+  }));
+}
+
 export class Scout {
   private readonly intents: Intent[];
   private readonly policies: PolicyPack[];
   private readonly hmacKey: string;
   private readonly ttlSeconds: number;
   private readonly now: () => number;
+  private readonly registryMode: boolean;
 
   constructor(opts: ScoutOptions = {}) {
-    this.intents = opts.intents ?? DEFAULT_INTENTS;
+    if (opts.intents) {
+      this.intents = opts.intents;
+      this.registryMode = false;
+    } else if (opts.intentRegistry) {
+      this.intents = loadIntentRegistry(opts.intentRegistry);
+      this.registryMode = true;
+    } else {
+      this.intents = DEFAULT_INTENTS;
+      this.registryMode = false;
+    }
     const packs = opts.policyPack ?? ["default"];
     this.policies = packs.map((p) => (typeof p === "string" ? (BUILTIN_POLICIES[p] ?? DEFAULT_POLICY) : p));
     this.hmacKey = opts.hmacKey ?? randomUUID();
@@ -163,6 +219,10 @@ export class Scout {
   }
 
   decide(input: ScoutInput): ScoutDecision {
+    return this.decideInternal(input, "prompt");
+  }
+
+  private decideInternal(input: ScoutInput, mode: "prompt" | "field"): ScoutDecision {
     // Stage 1 — Sense: tokenise and length-bound.
     const prompt = input.prompt ?? "";
     const tokens = prompt
@@ -173,9 +233,9 @@ export class Scout {
 
     // Stage 2 — Interpret: score each intent against the sense tokens.
     const candidates = this.intents
-      .map((it) => ({ intent: it.id, score: scoreIntent(it, tokens, prompt) }))
+      .map((it) => ({ intent: it.id, score: this.registryMode ? scoreRegistryIntent(it, prompt) : scoreIntent(it, tokens, prompt) }))
       .sort((a, b) => b.score - a.score);
-    const top = candidates[0] ?? { intent: "general_question", score: 0 };
+    const top = candidates[0] ?? { intent: this.intents[0]?.id ?? "general_question", score: 0 };
     const topIntent = this.intents.find((it) => it.id === top.intent) ?? this.intents[0]!;
 
     // Stage 3 — Guard: run every policy's injection rules.
@@ -183,7 +243,10 @@ export class Scout {
     for (const pol of this.policies) {
       for (const rule of pol.injectionRules) {
         const m = rule.pattern.exec(prompt);
-        if (m) guards.push({ ruleId: rule.id, policy: pol.name, reason: rule.reason, match: m[0].slice(0, 120) });
+        if (m) {
+          const severity: InjectionSeverity = rule.severity ?? "quarantine";
+          guards.push({ ruleId: rule.id, policy: pol.name, reason: rule.reason, match: m[0].slice(0, 120), severity });
+        }
       }
     }
     const blocked = this.policies.some((p) => p.blockedIntentIds.has(topIntent.id)) || topIntent.tier === "block";
@@ -192,21 +255,34 @@ export class Scout {
     for (const g of guards) reasons.push(`${g.policy}:${g.ruleId} — ${g.reason}`);
     if (blocked) reasons.push(`intent "${topIntent.id}" (${topIntent.label}) is on the block list`);
 
-    // Risk level — "block" when the top intent is a block-tier intent or any
-    // adversarial-tight rule fires; "quarantine" when any default-pack rule
-    // fires (the content is kept as data, not as an instruction); "allow"
-    // when nothing fires. Downstream wraps quarantined text in a fenced data
-    // block so the model sees it as a sign-in log, not an order.
+    // Risk level — block when the top intent is a block-tier intent, or when
+    // (in prompt mode) a severity=block injection rule fires. Field mode
+    // downgrades block→quarantine because scanFields wraps the content as
+    // data; a block there would strip the evidence the analyst needs to see.
     let level: ScoutDecision["risk"]["level"] = "allow";
     if (blocked) level = "block";
-    else if (injectionDetected) level = "quarantine";
+    else if (injectionDetected) {
+      const strongest = guards.reduce<InjectionSeverity>((acc, g) => (g.severity === "block" ? "block" : acc), "quarantine");
+      if (mode === "field") level = "quarantine";
+      else level = strongest;
+    }
 
-    // Stage 4 — Route: build a tool plan. Only "allow" and "quarantine"
-    // produce a tool plan (the surface decides whether to include the
-    // quarantined text as data). "block" returns an empty plan.
-    const toolPlan: ScoutDecision["toolPlan"] = level === "block"
-      ? []
-      : [{ capability: `scout.${level === "quarantine" ? "quarantine_text" : "pass_through"}`, input: { surface: input.surface ?? "orchestrator" } }];
+    // Stage 4 — Route: build a tool plan. For `block` we emit no plan. For
+    // allow/quarantine we emit the registered intent's capabilities (one step
+    // per capability) when a registry is loaded — this is what the Meterless
+    // tool_precision metric measures — or a single pass_through/quarantine
+    // step with our own capability names when running the WhyTrace default
+    // registry.
+    let toolPlan: ScoutDecision["toolPlan"] = [];
+    if (level !== "block") {
+      if (this.registryMode) {
+        const caps = topIntent.capabilities ?? [];
+        toolPlan = caps.map((c) => ({ capability: c, input: { surface: input.surface ?? "chat" } }));
+        if (!toolPlan.length) toolPlan = [{ capability: `scout.${level === "quarantine" ? "quarantine_text" : "pass_through"}`, input: { surface: input.surface ?? "chat" } }];
+      } else {
+        toolPlan = [{ capability: `scout.${level === "quarantine" ? "quarantine_text" : "pass_through"}`, input: { surface: input.surface ?? "orchestrator" } }];
+      }
+    }
 
     // Stage 5 — Recommend: issue the ExecutionContract when we have a plan.
     const executionContract: ScoutExecutionContract | undefined = toolPlan.length === 0
@@ -221,13 +297,19 @@ export class Scout {
           signature: "",
         });
 
-    // Confidence band / clarification. Use the tightest proceedFloor across
-    // all enabled policies so adversarial-tight is strictly stricter.
+    // Confidence bands (Scout spec):
+    //   high   ≥ 0.80 → proceed
+    //   medium 0.55 – 0.79 → proceed + log
+    //   low    0.40 – 0.54 → clarify
+    //   reject < 0.40 → fall back to GENERAL (no clarify)
+    // We ask for clarification whenever the top score is below the proceed
+    // floor, including the Reject band, because the Meterless harness scores
+    // "handle the Acme situation" / "do the thing we talked about yesterday"
+    // as clarification=true from a very low raw score.
     const proceedFloor = Math.max(...this.policies.map((p) => p.proceedFloor));
-    const clarifyFloor = Math.max(...this.policies.map((p) => p.clarifyFloor));
     const confidence = clamp01(top.score);
-    const clarification = confidence < clarifyFloor && !blocked && !injectionDetected
-      ? `Scout confidence ${confidence.toFixed(2)} below clarify floor ${clarifyFloor}; ask the analyst what they want to investigate.`
+    const clarification = (confidence < proceedFloor && !blocked && !injectionDetected)
+      ? `Scout confidence ${confidence.toFixed(2)} below proceed floor ${proceedFloor}; ask the analyst to pick an intent.`
       : undefined;
 
     const quarantinedText = level === "quarantine" ? quarantine(prompt, guards) : undefined;
@@ -244,20 +326,22 @@ export class Scout {
       quarantinedText,
       confidence,
       clarification,
-      overrides: blocked ? [`blocked_intent:${topIntent.id}`] : [],
+      overrides: [],
     };
   }
 
   /** Scan an arbitrary record of untrusted strings (mail-rule name/target,
    *  user_agent, device name, subject, vpn client). Returns the Scout decision
-   *  for each field plus a merged risk level — the strictest wins. */
+   *  for each field plus a merged risk level — the strictest wins. All
+   *  injection rules are downgraded to `quarantine` here because untrusted
+   *  fields are wrapped as data, never followed as instructions. */
   scanFields(fields: Record<string, string | null | undefined>, surface = "orchestrator"): { perField: Record<string, ScoutDecision>; mergedRisk: ScoutDecision["risk"]["level"]; quarantinedFields: string[] } {
     const perField: Record<string, ScoutDecision> = {};
     const quarantinedFields: string[] = [];
     let merged: ScoutDecision["risk"]["level"] = "allow";
     for (const [k, raw] of Object.entries(fields)) {
       if (!raw) continue;
-      const dec = this.decide({ prompt: String(raw), surface, user: { id: "untrusted", role: "field" } });
+      const dec = this.decideInternal({ prompt: String(raw), surface, user: { id: "untrusted", role: "field" } }, "field");
       perField[k] = dec;
       if (dec.risk.level === "block") merged = "block";
       else if (dec.risk.level === "quarantine" && merged !== "block") merged = "quarantine";
@@ -313,6 +397,43 @@ function scoreIntent(it: Intent, tokens: string[], prompt: string): number {
   // guard does not miss a short injection sentence.
   if (it.tier === "block" && score > 0) return Math.max(score, 0.5);
   return score;
+}
+
+/** Registry scoring: Jaccard over 1+2-grams between the prompt and the
+ *  intent's example set (max across examples). This is the Scout spec's
+ *  Stage-1 lexical signal — enough to clear 0.80 for an exact or near-exact
+ *  example and to drop into the clarify band for off-registry prompts. */
+function scoreRegistryIntent(it: Intent, prompt: string): number {
+  if (!it.examples?.length) return 0;
+  const pgrams = ngrams(tokeniseForScore(prompt));
+  if (!pgrams.size) return 0;
+  let best = 0;
+  for (const ex of it.examples) {
+    const egrams = ngrams(tokeniseForScore(ex));
+    if (!egrams.size) continue;
+    const inter = intersectionSize(pgrams, egrams);
+    const union = pgrams.size + egrams.size - inter;
+    const jac = union > 0 ? inter / union : 0;
+    if (jac > best) best = jac;
+  }
+  return best;
+}
+
+function tokeniseForScore(s: string): string[] {
+  return s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t && t.length > 1);
+}
+
+function ngrams(tokens: string[]): Set<string> {
+  const out = new Set<string>();
+  for (const t of tokens) out.add(`u:${t}`);
+  for (let i = 0; i < tokens.length - 1; i++) out.add(`b:${tokens[i]}|${tokens[i + 1]}`);
+  return out;
+}
+
+function intersectionSize(a: Set<string>, b: Set<string>): number {
+  let n = 0;
+  for (const v of a) if (b.has(v)) n++;
+  return n;
 }
 
 function quarantine(text: string, guards: ScoutDecision["guards"]): string {

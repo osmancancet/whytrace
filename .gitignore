@@ -22,3 +22,4 @@ docs/KICKOFF_PROMPT.md
 # evidence captured from real runs (git-ignored until we curate)
 data/sample/
 evidence/*.local.*
+conformance/scout/evals/reports/
