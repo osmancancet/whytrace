@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka8ua9_beb1ba13ba",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. The alert is a new-device sign-in for b.cetin@aegean.edu. Historical sign-ins (Oct 10-16) come from device LT-6002, IP 193.140.10.17, Turkcell ASN, Manisa/TR, with no MFA (remembered device). On Oct 18 a new device PH-9900 from IP 78.187.4.44 appears — same ASN (Turkcell), same country (TR), same city (Manisa), same app (portal) — so there is no impossible travel or ISP/country anomaly. The new device triggered exactly one MFA prompt, which was approved (mfa_approved then success), consistent with a legitimate user enrolling/authenticating a new phone. No mail events and no post-auth suspicious activity are present. The new-device signal is explained by successful MFA in the user's normal geography, so this is treated as benign.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_64uiz2qo"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka8ua9_beb1ba13ba",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka8ua9_beb1ba13ba/trace.jsonl",
+  "execution_time_seconds": 21.646
+}

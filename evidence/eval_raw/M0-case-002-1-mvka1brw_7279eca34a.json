@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka1brw_7279eca34a",
+  "case_id": "case-002",
+  "verdict": "escalate",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: ESCALATE @ 1.00. Ten consecutive successful logins from Lisbon, Portugal over university VPN (vpn-edge-02) from a single device (LT-3104) are consistent with a faculty member travelling abroad. However, one earlier sign-in (2026-10-15 06:40 UTC) from Manisa, Turkey (Turkcell, no VPN, no device_id, mail app) occurs just 32 minutes before the first Lisbon login — impossible travel between Turkey and Portugal. The anomalous event lacks a device_id and bypasses the VPN, and MFA prompt count is 0 across all events, so the signal is not explained. There is no confirmed takeover (no failed auth, no MFA fatigue, no mail rules), but the impossible-travel + missing device identity is insufficient to clear as benign and too serious to treat as mere monitoring without verification. Human review (contact the faculty, confirm travel/device) is required before any containment action that could disrupt a legitimate traveller.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_g1tnatr1"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka1brw_7279eca34a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka1brw_7279eca34a/trace.jsonl",
+  "execution_time_seconds": 17.513
+}

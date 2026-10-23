@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka9q28_28ff9e0c86",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: MONITOR @ 1.00. The majority of sign-ins are consistent with the faculty member travelling abroad: repeated successful logins from Portugal via the corporate VPN appliance, same device (LT-3104), across mail and LMS, with no MFA prompts. A single outlier exists—a successful login from Turkey (Manisa, Turkcell) earlier on 2026-10-15 with no VPN, no device ID, and no MFA prompt. No mail events or subsequent activity from that IP are present. This anomalous single sign-in is a weak unexplained signal that does not by itself confirm account takeover, but cannot be fully explained from the available data. Monitoring is appropriate; contain is premature without evidence of malicious activity, and escalation is not required because there is no apparent exposure or critical evidence gap beyond this single anomaly.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xmqy919a"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka9q28_28ff9e0c86",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka9q28_28ff9e0c86/trace.jsonl",
+  "execution_time_seconds": 13.599
+}

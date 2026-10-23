@@ -1,0 +1,98 @@
+{
+  "run_id": "mvk94qat_00a987edc8",
+  "case_id": "case-007",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "Risk Gate escalated case-007 (a.sahin@aegean.edu) at confidence 0.65 despite no verified findings surviving Critic review; evidence policy rates the case benign. No F-citations apply.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Close as benign after confirming no additional telemetry contradicts the Critic rejection for a.sahin@aegean.edu.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document the Risk Gate escalation versus evidence-policy discrepancy for tuning review.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Re-open immediately if new evidence for a.sahin@aegean.edu surfaces.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "No verified findings exist; ATT&CK IDs cannot be mapped from this case.",
+    "Escalation reason: model proposed escalate, evidence policy says benign"
+  ],
+  "not_checked": [
+    "Full mailbox, endpoint, and authentication logs for a.sahin@aegean.edu were not examined."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 0,
+      "invalid": 0,
+      "scope": "account:a.sahin@aegean.edu",
+      "sql_id": "87b5b22ff848"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 0,
+      "invalid": 0,
+      "scope": "account:a.sahin@aegean.edu",
+      "sql_id": "ea6cdc04cbb2"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.65,
+    "rationale": "Case-007 (a.sahin@aegean.edu) has no surviving verified findings, no rejected claims, and no data-quality conflicts. There is no confirmed account takeover chain (rules out contain), no suspicious signals to explain away (rules out benign), and no weak unexplained signal to watch (rules out monitor). The evidentiary base is empty/insufficient to make a supportable containment or monitoring decision, which matches the escalate criterion of insufficient evidence needing human review.",
+    "escalate_reasons": [
+      "model proposed escalate, evidence policy says benign"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 9,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_3rvifdtp"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_s7i8k3xq"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_w1zc6x7c"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvk94qat_00a987edc8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvk94qat_00a987edc8/trace.jsonl",
+  "execution_time_seconds": 42.59
+}

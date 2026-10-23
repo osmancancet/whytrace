@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka9if2_e014892f23",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.97,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.97. Confirmed account takeover. User received and clicked a payroll phish from typosquat domain aegean-edu.co (\"Acil hesap doğrulaması\"). Shortly after, authentication originated from 185.220.101.7 (BulwarkHost Ltd, Amsterdam NL — a hosting VPS, not the user's normal Turkcell Manisa ISP LT-2207). The attacker performed MFA fatigue (7 denials then 1 approval) before a successful mail login (mfa_prompt_count 8), then accessed mail, and created an inbox forwarding rule via API to external d.yilmaz.payroll@gmail.com, followed by rapid automated sis access. Credentials phished, MFA bypassed, mail read, exfiltration rule set = confirmed compromise requiring immediate containment (password reset, revoke sessions, remove forwarding rule, MFA re-enroll).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_uzzi3u52"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka9if2_e014892f23",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka9if2_e014892f23/trace.jsonl",
+  "execution_time_seconds": 9.905
+}

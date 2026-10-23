@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka86w7_84f534d8ec",
+  "case_id": "case-004",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Multiple failed sign-ins from a single foreign IP (185.213.44.9, SprayNet AS, Moscow, RU) against the portal app, followed by a successful sign-in from the same IP with no MFA prompt and no VPN appliance. This matches a password-spray then account-takeover pattern against m.aslan@aegean.edu. No mail events or other context explain the success as legitimate; it is a confirmed account compromise requiring containment.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_qmpgb73u"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka86w7_84f534d8ec",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka86w7_84f534d8ec/trace.jsonl",
+  "execution_time_seconds": 14.513
+}

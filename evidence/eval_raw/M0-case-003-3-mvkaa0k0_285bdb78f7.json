@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkaa0k0_285bdb78f7",
+  "case_id": "case-003",
+  "verdict": "escalate",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: ESCALATE @ 1.00. Lab-admin account accessed repeatedly from a foreign Cloud VPS IP (45.142.10.9, Frankfurt) via a flagged vulnerable VPN appliance. MFA was approved once, then subsequent sign-ins succeeded without MFA prompts, consistent with possible session hijack or MFA bypass after initial compromise. No device identity, no mail activity, and no confirmed malicious action beyond the sign-ins themselves. The combination of high-privilege account, vulnerable appliance exposure, and anomalous geolocation/ASN is insufficient to confirm account takeover but warrants immediate human review.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xbya964o"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkaa0k0_285bdb78f7",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkaa0k0_285bdb78f7/trace.jsonl",
+  "execution_time_seconds": 11.938
+}

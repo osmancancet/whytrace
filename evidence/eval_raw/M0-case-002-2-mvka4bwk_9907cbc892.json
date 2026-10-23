@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka4bwk_9907cbc892",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: MONITOR @ 0.70. Prof.kaya@aegean.edu shows a consistent baseline: 10 successful sign-ins from Lisbon, Portugal (MEO/ASN) via the university VPN appliance (vpn-edge-02) on known device LT-3104 across mail and LMS, all with mfa_prompt_count 0. This matches the \"travelling abroad + device + VPN\" profile. One anomalous event stands out: a successful mail sign-in at 2026-10-15 06:40 from 193.140.10.21 (Turkcell, Manisa, Turkey), not via VPN, with no device_id recorded. It is a single isolated sign-in with no failed logins, no MFA fatigue, no impossible-travel confirmation (faculty location is not verifiable from the dump), no mail-event evidence of access/exfiltration, and mfa_prompt_count 0 is consistent with the rest of the baseline so it is not by itself a MFA-bypass indicator. The signal is unexplained but weak (one event, no downstream activity), not confirmed account takeover, and not sufficiently explained to call benign. Appropriate action is to monitor for recurrence or correlated activity rather than contain or escalate.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_yh1df9jv"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka4bwk_9907cbc892",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka4bwk_9907cbc892/trace.jsonl",
+  "execution_time_seconds": 171.859
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka3pqn_cd716d539a",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: CONTAIN @ 1.00. Confirmed account takeover for d.yilmaz@aegean.edu (payroll user). Chain: phishing email from lookalike domain aegean-edu.co delivered and clicked (06:12–06:15), followed by MFA fatigue (7 mfa_denied then mfa_approved, 8 prompts) and successful mail auth from 185.220.101.7 (BulwarkHost Ltd, Amsterdam) with no device_id, deviating from the user's normal Turkcell/Manisa LT-2207 pattern. A mail forwarding rule was then created via API to external d.yilmaz.payroll@gmail.com (07:03), indicating persistence and data exfiltration. Immediate containment warranted: disable account, force password reset, revoke sessions, remove forwarding rule.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_cs8dbmmb"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka3pqn_cd716d539a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka3pqn_cd716d539a/trace.jsonl",
+  "execution_time_seconds": 28.723
+}

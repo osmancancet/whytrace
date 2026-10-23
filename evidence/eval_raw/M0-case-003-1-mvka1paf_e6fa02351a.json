@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka1paf_e6fa02351a",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.85,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.85. Privileged Lab-admin account s.demir@aegean.edu authenticated eight times in ~30 minutes from a single foreign Cloudvault VPS IP (45.142.10.9, Frankfurt, DE) via the flagged vulnerable VPN appliance (vpn-edge-01). The first event is an MFA approval, after which seven consecutive portal/LMS successes occur with zero MFA prompts—consistent with post-MFA session reuse or MFA bypass on a vulnerable appliance rather than normal re-auth. No mail events or benign explanation (travel, known device, expected admin work) are present to explain the atypical ASN/geography and MFA pattern. This indicates a confirmed account takeover of a privileged account; immediate containment (disable sessions, reset credentials, revoke via the vulnerable appliance) is warranted.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_v6oss7da"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka1paf_e6fa02351a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka1paf_e6fa02351a/trace.jsonl",
+  "execution_time_seconds": 25.814
+}

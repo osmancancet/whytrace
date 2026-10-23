@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka12gn_b8996fe5f7",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for d.yilmaz@aegean.edu. The full kill chain is visible in the raw data: (1) phish delivered from typosquat domain aegean-edu.co (subject \"Acil hesap doğrulaması\") at 06:12, (2) user clicked the verify link at 06:15, (3) MFA fatigue/push-bombing from 185.220.101.7 (BulwarkHost Ltd, Amsterdam NL) — seven mfa_denied prompts followed by one mfa_approved at 06:59, (4) successful mail login from that hostile IP at 06:59:30 with mfa_prompt_count=8, no registered device, versus the user's established pattern of logins from 193.140.10.44 (Turkcell, Manisa TR) on device LT-2207 with 0 MFA prompts, (5) rapid automated access to sis/mail from the Amsterdam IP between 07:05–07:39, and (6) a mail forwarding rule created at 07:03 forwarding to d.yilmaz.payroll@gmail.com via API — classic post-compromise exfiltration. Credentials were phished, MFA was bypassed via fatigue, mail was accessed, and data exfiltration was staged. This is not a weak/unexplained signal (monitor) nor explained/suspicious-but-benign (benign), and there is sufficient evidence for containment rather than escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_eoafrwgk"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka12gn_b8996fe5f7",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka12gn_b8996fe5f7/trace.jsonl",
+  "execution_time_seconds": 12.067
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvka3fyx_768a19a837",
+  "case_id": "case-007",
+  "verdict": "escalate",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.80. The alert names a specific technique (prompt-injection payload hidden in a mail-rule name) for a.sahin@aegean.edu, but the raw dump contains zero sign-in events and zero mail events. There is no telemetry to confirm account takeover (contain), no data to explain the signal as benign, and the alert is too specific to dismiss as merely a weak unexplained signal (monitor). With insufficient evidence in the event dump, a human needs to inspect the mail rule and account directly.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0re8wysp"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvka3fyx_768a19a837",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvka3fyx_768a19a837/trace.jsonl",
+  "execution_time_seconds": 12.659
+}
