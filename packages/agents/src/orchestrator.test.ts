@@ -95,6 +95,30 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     expect(r.limitations.join(" ")).toMatch(/Planner model degraded/);
   });
 
+  it("a planner that hangs past the wall-clock budget still lets the coverage queries run (DAY3D case-005 run 3)", async () => {
+    // Live: Nightshift held the Planner call for ~23 min and then returned 502.
+    // The wall budget was gone, so every SQL was refused and the run ended with
+    // 0 queries and "coverage incomplete". The cheap default coverage queries must
+    // still run so the deterministic policy decides on real evidence.
+    let clock = 1_000_000;
+    const logsRoot = mkdtempSync(join(tmpdir(), "whytrace-test-"));
+    const trace = new RunTrace({ logsRoot });
+    const zetaris = new FakeZetaris(undefined, trace);
+    const fake = new FakeNightshift({ risk: riskModel });
+    const nightshift = {
+      callTool: async (o: Parameters<FakeNightshift["callTool"]>[0]) => {
+        if (o.toolName === "submit_plan") { clock += 23 * 60_000; throw new Error("Nightshift HTTP 502: Meterless provider request failed."); }
+        return fake.callTool(o);
+      },
+      chat: fake.chat.bind(fake),
+    } as unknown as FakeNightshift;
+    const r = await investigate({ caseId: "case-001", trace, zetaris, nightshift, now: () => clock });
+    const ranNames = new Set(readQueryLog(trace.files().queries).filter((q) => q.status === "ok").map((q) => q.sql_id));
+    expect(r.budget!.sql_calls).toBeGreaterThanOrEqual(defaultSteps("x").length);
+    expect(ranNames.size).toBeGreaterThanOrEqual(defaultSteps("x").length);
+    expect(r.verdict).toBe("contain");
+  });
+
   it("a failing reporter still yields a valid report", async () => {
     const r = await setup("case-001", { failTools: ["submit_note"] }).run();
     expect(r.summary).toMatch(/CONTAIN|ESCALATE/);

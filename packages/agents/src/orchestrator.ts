@@ -68,6 +68,10 @@ class Budget {
   sql = 0; model = 0;
   constructor(private readonly started: number, private readonly now: () => number, private readonly maxSql: number) {}
   canSql() { return this.sql < this.maxSql && !this.timeUp(); }
+  /** Default coverage queries (and the Critic's re-query of what they find) ignore the
+   *  wall clock: they are cheap (sub-second) and without them the policy cannot decide.
+   *  A model step that hangs past the budget must not leave the run with 0 SQL. */
+  canEssentialSql() { return this.sql < this.maxSql; }
   canModel() { return this.model < LIMITS.model && !this.timeUp(); }
   timeUp() { return this.now() - this.started > LIMITS.wallMs; }
 }
@@ -142,13 +146,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   // query is always a *different* SQL from the Investigator's named query, so
   // its re-query is never served from this cache: independence is preserved.
   const sqlCache = new Map<string, Awaited<ReturnType<typeof opts.zetaris.runSql>>>();
-  const run = async (sql: string, agent: string, parent?: string) => {
+  const run = async (sql: string, agent: string, parent?: string, essential = false) => {
     const cached = sqlCache.get(sql);
     if (cached) {
       trace.emit({ agent, action: "sql_cache_hit", parent_id: parent, sql_id: cached.sql_id, rows: cached.rows.length, status: "ok" });
       return cached;
     }
-    if (!budget.canSql()) throw new Error("SQL budget exhausted");
+    if (!(essential ? budget.canEssentialSql() : budget.canSql())) throw new Error("SQL budget exhausted");
     budget.sql += 1;
     const r = await opts.zetaris.runSql(sql, { limit: 200 });
     sqlCache.set(sql, r);
@@ -156,6 +160,8 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     return r;
   };
   const criticZ = { runSql: (sql: string) => run(sql, "critic") };
+  const criticEssential = { runSql: (sql: string) => run(sql, "critic", undefined, true) };
+  const coverageNames = new Set(defaultSteps("").map((s) => s.query_name));
 
   const catalogueDesc = listCatalogue().map((c) => `${c.name}(${c.params.join(",")}): ${c.description}`).join("\n");
 
@@ -210,8 +216,14 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
 
     // ---- Investigator
     const newFindings: FindingT[] = [];
+    let coverageOnly = false;
     for (const step of steps) {
-      if (!budget.canSql()) break;
+      const isCoverage = round === 1 && coverageNames.has(step.query_name);
+      if (!budget.canSql()) {
+        if (!budget.canEssentialSql()) break;
+        if (!isCoverage) continue; // out of wall time: keep only the cheap default coverage
+      }
+      if (isCoverage && !budget.canSql()) coverageOnly = true;
       const name = step.query_name as QueryName;
       const params = { ...step.params, upn: caseInfo.upn };
       let entry;
@@ -220,7 +232,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       if (ranSql.has(entry.sql)) continue;
       ranSql.add(entry.sql);
       try {
-        const r = await run(entry.sql, "investigator", root.step_id);
+        const r = await run(entry.sql, "investigator", root.step_id, isCoverage && !budget.canSql());
         ran.set(r.sql_id, { name, rows: r.rows });
         allRows.push(...r.rows);
         if (/\.signin_event\b/.test(entry.sql)) checkedSources.add("signin_event");
@@ -241,7 +253,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     if (opts.ablate?.critic === false) {
       findings.push(...newFindings);
     } else {
-      const c = await critique(criticZ, newFindings, verdictsById);
+      const c = await critique(coverageOnly ? criticEssential : criticZ, newFindings, verdictsById);
       for (const v of c.verdicts) {
         verdictsById.set(v.finding_id, v);
         trace.emit({ agent: "critic", action: `verdict_${v.status}`, sql_id: v.check_sql_id, input_summary: v.finding_id, output_summary: v.reason.slice(0, 300), lane: "code", status: "ok" });
@@ -303,14 +315,14 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   // unchecked and the policy had to escalate for "coverage incomplete".
   const coverageAdded: string[] = [];
   for (const s of defaultSteps(caseInfo.upn)) {
-    if (!budget.canSql()) break;
+    if (!budget.canEssentialSql()) break;
     const name = s.query_name as QueryName;
     const params = { ...s.params, upn: caseInfo.upn };
     const entry = (() => { try { return queryFor(name, params); } catch { return undefined; } })();
     if (!entry) continue;
     if (ranSql.has(entry.sql)) continue;
     try {
-      const r = await run(entry.sql, "coverage", root.step_id);
+      const r = await run(entry.sql, "coverage", root.step_id, true);
       ran.set(r.sql_id, { name, rows: r.rows });
       allRows.push(...r.rows);
       ranSql.add(entry.sql);
@@ -323,7 +335,7 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
       if (derived.length) {
         const c = opts.ablate?.critic === false
           ? { approved: derived, rejected: [] as Array<{ claim: string; reason: string }>, needsMore: [] as string[], verdicts: [] as CriticVerdictT[] }
-          : await critique(criticZ, derived, verdictsById);
+          : await critique(criticEssential, derived, verdictsById);
         for (const v of c.verdicts) { verdictsById.set(v.finding_id, v); trace.emit({ agent: "critic", action: `verdict_${v.status}`, sql_id: v.check_sql_id, input_summary: v.finding_id, output_summary: v.reason.slice(0, 300), lane: "code", status: "ok" }); }
         findings.push(...c.approved);
         rejected.push(...c.rejected);
