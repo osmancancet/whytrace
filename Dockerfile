@@ -12,6 +12,7 @@ COPY apps/ ./apps/
 COPY packages/ ./packages/
 COPY services/ ./services/
 COPY scripts/ ./scripts/
+COPY samples/ ./samples/
 COPY vitest.config.ts ./
 RUN npm install --no-audit --no-fund --silent
 RUN npm run build:web
@@ -23,8 +24,9 @@ ENV SAMPLE_MODE=true
 ENV PORT=8000
 # Copy only what the API + CLI need at runtime.
 COPY --from=build /app /app
-# Create the empty logs/samples/output dirs the API writes to.
-RUN mkdir -p logs output_examples samples
+# Ensure the logs/output dirs the API writes to exist (samples came from the
+# build stage).
+RUN mkdir -p logs output_examples
 EXPOSE 8000
 # tsx can execute TypeScript directly in production for this demo. The command
 # starts the API server; judges can hit http://localhost:8000/healthz to confirm.

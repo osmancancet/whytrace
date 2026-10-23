@@ -1,8 +1,10 @@
-# Clean-clone + Docker test — 2026-10-23T05:25Z (DAY3D)
+# Clean-clone + Docker test — 2026-10-23T08:55Z (DAY3E)
 
 Fresh-tree reproducibility check for milestone #11. Working directory
 `/tmp/whytrace-clean/clone`, nothing from the user's original tree reused
-(no `.env`, no `logs/`, no `node_modules`).
+(no `.env`, no `logs/`, no `node_modules`). Repeated after DAY3E — the
+Dockerfile now carries `samples/` into the runtime image and the sample tapes
+were re-recorded from fresh, model-backed live runs.
 
 ## Reproduction steps
 
@@ -14,12 +16,14 @@ npm ci
 ./run case-002 --sample                       # offline replay of a recorded run
 ./run case-001 --sample
 ./run case-003 --sample
-docker build -t whytrace:clean-clone .        # multi-stage build, sample-mode default
-docker run --rm -d --name whytrace-clean -p 8001:8000 whytrace:clean-clone
-curl -s http://127.0.0.1:8001/healthz          # → {"ok":true,"service":"whytrace-api",...}
-curl -s -X POST http://127.0.0.1:8001/run -H "Content-Type: application/json" -d '{"case_id":"case-002"}'
-curl -s "http://127.0.0.1:8001/runs/<run_id>"  # final JSON report
-docker stop whytrace-clean
+./run case-007 --sample
+docker build -t whytrace:day3e-clean .        # multi-stage build, sample-mode default
+docker run --rm -d --name whytrace-day3e -p 8003:8000 whytrace:day3e-clean
+curl -s http://127.0.0.1:8003/healthz          # → {"ok":true,"service":"whytrace-api",...}
+# POST one run per case, GET final report
+curl -s -X POST http://127.0.0.1:8003/run -H "Content-Type: application/json" -d '{"case_id":"case-002"}'
+curl -s "http://127.0.0.1:8003/runs/<run_id>"
+docker stop whytrace-day3e
 ```
 
 ## Timings (wall clock, macOS 27, Darwin arm64)
@@ -27,22 +31,49 @@ docker stop whytrace-clean
 | step | seconds | notes |
 |---|---:|---|
 | `git clone` (local source) | 0 | local-filesystem clone; a public-remote clone would add network RTT |
-| `npm ci` (fresh node_modules) | 2 | 118 MB installed; npm cache was pre-warmed on this host |
-| `./run case-002 --sample` | 1 | offline replay from `samples/case-002/` (24 recorded Zetaris queries) |
+| `npm ci` (fresh node_modules) | 3 | 118 MB installed; npm cache was pre-warmed on this host |
+| `./run case-002 --sample` | 0 | offline replay from `samples/case-002/` (27 recorded Zetaris queries) |
 | `./run case-001 --sample` | 0 | sample replay |
 | `./run case-003 --sample` | 0 | sample replay |
-| `docker build -t whytrace:clean-clone .` | 26 | multi-stage image, dist layer cached across the two run containers |
-| `docker run` + healthz + one sample POST /run + stop | 12 | 6 s startup to healthz 200, 4 s API-driven case-002, 1 s shutdown |
-| **total** (clone → stop) | **41** | well inside the "≤ 5 min from README" bar in `notes/ODULLER_VE_HEDEFLER.md` #11 |
+| `./run case-007 --sample` | 0 | sample replay |
+| `docker build -t whytrace:day3e-clean .` | 10 | multi-stage image, cache warm on this host from DAY3D |
+| `docker run` + healthz + four sample POST /run + stop | 15 | 2 s startup to healthz 200, ~3 s per case |
+| **total** (clone → stop) | **28** | well inside the "≤ 5 min from README" bar in `notes/ODULLER_VE_HEDEFLER.md` #11 |
 
 ## Verdicts recorded in the clean clone
 
+CLI sample replay:
+
 | command | expected | actual | notes |
 |---|---|---|---|
-| `./run case-002 --sample` | benign | `benign @ 0.85` ✅ | shared-egress rejection visible on the `new_asn` claim ("201 distinct accounts completed MFA from 193.140.10.21 in the last 30 days") — the DAY3D fix survives the replay |
-| `./run case-001 --sample` | contain | `contain @ 0.84` ✅ |  |
-| `./run case-003 --sample` | escalate | `escalate @ 0.51` ✅ |  |
-| Docker `POST /run case-002` | benign | `escalate @ 0.75` ⚠️ | Dockerized sample-mode replay re-runs the full orchestrator and the sample tape (recorded 2026-10-23T00:35Z, pre-DAY3D) does not include every Critic SQL the new shared-egress rule emits; stale-tape artefact, not a code regression. The CLI replay above sees the critical row because the shared-egress check reuses an already-cached SQL text. **Action:** re-record `samples/case-002/` with `npm run record -- case-002` so the tape is DAY3D-current (builder TODO). |
+| `./run case-002 --sample` | benign | `benign @ 0.85` ✅ | DAY3D shared-egress rejection visible on the `new_asn` claim ("201 distinct accounts completed MFA from 193.140.10.21 in the last 30 days"); DAY3E re-recorded tape carries the new SQL variants |
+| `./run case-001 --sample` | contain | `contain @ 0.94` ✅ | model-backed `model+policy` |
+| `./run case-003 --sample` | escalate | `escalate @ 0.51` ✅ | tape recorded during a `policy_fallback` run (risk-gate model declined to answer with DQ-conflict content — tracked in DAY3E builder TODOs) |
+| `./run case-007 --sample` | contain | `contain @ 0.86` ✅ | Scout Intent prompt-injection panel fires 12 attempts on the recorded run |
+
+Dockerized `POST /run` against `whytrace:day3e-clean` (sample mode, no network, no `.env`):
+
+| case | expected | actual | notes |
+|---|---|---|---|
+| `case-001` | contain | `contain @ 0.94 (model+policy)` ✅ |  |
+| `case-002` | benign | `benign @ 0.85 (model+policy)` ✅ | **DAY3D shared-egress fix survives through the Dockerized orchestrator** — the stale-tape artefact flagged in the previous DAY3D run is resolved |
+| `case-003` | escalate | `escalate @ 0.51 (policy_fallback)` ✅ | risk-gate model error replayed from the recorded tape; verdict still matches the label |
+| `case-007` | contain | `contain @ 0.86 (model+policy)` ✅ |  |
+
+## Dockerfile change (DAY3E)
+
+The previous build stage copied `apps/`, `packages/`, `services/` and
+`scripts/` but **not** `samples/`, and the runtime stage then created an empty
+`samples/` directory. The DAY3D clean-clone report flagged this as a stale-tape
+artefact; it was in fact a *missing* tape, so every sample-mode `POST /run`
+inside the container fell through to live mode, failed without `.env`
+credentials and ended at `policy_fallback → escalate`. The Dockerfile now:
+
+- adds `COPY samples/ ./samples/` to the build stage so the tapes ship with the image;
+- removes `samples` from the runtime `mkdir -p` list so it is sourced from the build stage, not blanked.
+
+With that change, the Docker verdicts above match the CLI sample-mode verdicts
+exactly, which is what milestone #11 requires.
 
 ## Isolation checks
 
@@ -52,9 +83,9 @@ docker stop whytrace-clean
 
 ## Milestone #11 verdict
 
-Clean-clone end-to-end works for the CLI sample mode (3/3 cases match
-expectations) and the Docker image boots with `/healthz` 200 in 6 s. The one
-mismatch (Docker `POST /run case-002` → escalate) is a sample-tape staleness
-problem that we can clear by re-recording after the next live full-sweep eval.
-Everything else — repo structure, npm workspace install, Docker build/run — is
-reproducible from an empty directory in under one minute on this host.
+Clean-clone end-to-end works for both the CLI sample mode (4/4 cases match
+expectations) and the Dockerized API (4/4 cases match expectations) in under
+30 s on this host. The DAY3D "stale-tape" caveat is cleared: samples are
+re-recorded against the DAY3D shared-egress + `mfa_fatigue` coverage paths and
+the Dockerfile now carries them, so a judge building from a fresh clone sees
+the same verdicts as the local CLI.
