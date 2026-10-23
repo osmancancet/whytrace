@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlimvai_01dfc04686",
+  "case_id": "ho-08",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. All 130 sign-ins for g.sen@aegean.edu are consistent with an established baseline: single device (dev-gs-phone), single city (Manisa, TR), two known networks (AS34984 Superonline mobile and AS-AEGEAN-EDU university), regular twice-daily cadence across LMS/mail apps, and MFA usage matching network trust (university network logins always success/no MFA). The 2026-10-15 13:31:50 login after the phish click exactly matches the baseline midday university LMS pattern (same IP, device, app, no MFA). The phishing delivery/click (edevlet-burs-basvuru.com, KYK scholarship lure) is a suspicious signal, but there is no follow-on compromise: no new devices, no new locations, no impossible travel, no MFA fatigue/anomalies, no anomalous auth after the click. Suspicious signal explained by normal authentication activity — no confirmed account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6ss0c0f4"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlimvai_01dfc04686",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlimvai_01dfc04686/trace.jsonl",
+  "execution_time_seconds": 16.763
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlida5s_94efeb152c",
+  "case_id": "ho-04",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. All sign-ins come from one device (dev-ng-01) and one city (Manisa, TR) across ~two months with a stable, repeated pattern: daytime successes from the university ASN (AS-AEGEAN-EDU, no MFA) and evening MFA-approved logins from a home ISP (TTNET, MFA prompt count = 1). MFA is genuinely prompted and approved each evening, so the person in possession of the device/phone is authenticating — no new device, no impossible travel, no MFA fatigue/bypass, no password change, no external forwarding, and no sent-mail anomalies. The inbox rule only moves mail to an internal Archive-2026 folder via OWA (no external forwarding). The phish_suspect delivery (look-alike domain aegean-edu.com.tr, IBAN/salary lure) is a received, flagged phish with no evidence the user entered credentials or that the account was misused. Suspicious signals are explained by normal remote-evening access by the legitimate user, so there is no confirmed account takeover and no exposure requiring human escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_sfkb322p"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlida5s_94efeb152c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlida5s_94efeb152c/trace.jsonl",
+  "execution_time_seconds": 37.717
+}

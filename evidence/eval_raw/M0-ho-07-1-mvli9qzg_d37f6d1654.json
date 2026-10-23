@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli9qzg_d37f6d1654",
+  "case_id": "ho-07",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.90. The account k.erdem@aegean.edu shows two mutually exclusive access patterns. The legitimate user authenticates from the university's own network (193.140.10.9, AS-AEGEAN-EDU, Manisa/TR) via device dev-ke-ws during business hours (07:30–12:15) across portal/mail/vpn/sis, including via the VPN appliance. Separately, the same account is successfully logged into every ~2 days at ~02:00 from 203.0.113.45 (AS14061 DigitalOcean, Frankfurt/DE) with an empty device_id, across portal/mail/sis, NOT via the VPN appliance, and with no MFA prompt. A university account in Turkey cannot plausibly be used from a Frankfurt cloud VPS at 02:00 on a recurring basis while simultaneously being used on campus in Manisa during the day. The cloud-IP logins are active through the alert date (2026-11-07), indicating an attacker with valid credentials is actively accessing the account. This is a confirmed account-takeover pattern warranting immediate containment (disable account, force password reset, revoke all sessions, inspect for mailbox/forwarding abuse).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_99ufmh2b"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli9qzg_d37f6d1654",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli9qzg_d37f6d1654/trace.jsonl",
+  "execution_time_seconds": 15.906
+}

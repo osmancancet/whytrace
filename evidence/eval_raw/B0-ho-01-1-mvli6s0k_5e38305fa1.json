@@ -1,0 +1,35 @@
+{
+  "run_id": "mvli6s0k_5e38305fa1",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.8,
+  "summary": "B0 rules-only baseline: CONTAIN. impossible travel: FR ↔ TR ~2779 km in 0.5 h; impossible travel: TR ↔ FR ~2779 km in 0.3 h; sign-in from new ASN(s): AS14061 DigitalOcean; external email forwarding rule detected: target=RSS Feeds via=api",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "decided_by": "rules_only",
+  "model_steps_ok": 0,
+  "model_steps_total": 0,
+  "trace_id": "mvli6s0k_5e38305fa1",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli6s0k_5e38305fa1/trace.jsonl",
+  "execution_time_seconds": 1.413
+}

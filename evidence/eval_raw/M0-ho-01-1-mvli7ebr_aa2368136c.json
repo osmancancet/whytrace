@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli7ebr_aa2368136c",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for z.korkmaz@aegean.edu. Chain of evidence: (1) phishing email delivered from docusign-aegean-share.com at 07:52 and link clicked at 07:58 on 2026-10-14; (2) within one minute, an MFA-approved portal login from 203.0.113.77 (DigitalOcean, Amsterdam) — an anomalous cloud IP with no registered device; (3) repeated successful mail logins from 192.0.2.150 (OVH SAS, Gravelines, FR), a foreign hosting provider, with no device_id and no MFA, continuing through 03:10 on 10-15; (4) at 08:20:47, an inbox rule created via API moving mail to RSS Feeds — classic attacker concealment to hide compromise-related mail. This matches a full phishing → credential/MFA compromise → persistent cloud-based access → mail-rule manipulation ATO pattern, not explained by legitimate travel or behavior. Immediate containment: disable account, force password reset, revoke all sessions/app tokens, remove the malicious inbox rule, and reset MFA.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h1xiwbv1"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli7ebr_aa2368136c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli7ebr_aa2368136c/trace.jsonl",
+  "execution_time_seconds": 12.448
+}

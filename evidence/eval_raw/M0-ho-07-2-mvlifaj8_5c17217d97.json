@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlifaj8_5c17217d97",
+  "case_id": "ho-07",
+  "verdict": "contain",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.82. The account k.erdem@aegean.edu shows two concurrent access patterns: (1) legitimate on-campus logins from 193.140.10.9 (AS-AEGEAN-EDU, Manisa, TR) via device dev-ke-ws during business hours across portal/mail/vpn, and (2) repeated successful logins from 203.0.113.45 (AS14061 DigitalOcean, Frankfurt, DE) via the portal app every ~2 days at ~02:00–02:04 AM with an empty device_id and 0 MFA prompts. The foreign-cloud logins occur over weeks, use no university VPN appliance (via_vpn_appliance empty), present no enrolled device, and bypass MFA despite an unrecognized location/IP — classic persistent unauthorized access while the legitimate user continues normal use. Signals are repeated and unexplained (not weak, not explained by VPN/known travel), sufficient to treat as confirmed account takeover rather than exposure needing human triage.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_e2i45vn3"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlifaj8_5c17217d97",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlifaj8_5c17217d97/trace.jsonl",
+  "execution_time_seconds": 118.059
+}

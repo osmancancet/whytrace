@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlijjyb_1adf0d8d6e",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for c.aydin@aegean.edu. The account's normal baseline is two devices (dev-ca-laptop from AS-AEGEAN-EDU Manisa daytime, dev-ca-phone from Turkcell Manisa evenings). On 2026-10-08, an unknown device (dev-unk-7f3a) from 192.0.2.61 (AS60068 Datacamp Limited, Frankfurt, DE) performed 6 consecutive portal failures (22:41–22:44), then an MFA-approved portal login (22:46:12), followed by successful mail/SIS/portal access from Frankfurt (22:47–23:11). Within this same intrusion window, a mail forwarding rule was created sending mail to c.aydin.ogr@proton.me via OWA (22:49:02) — a classic ATO persistence/exfiltration signal. Geography, device, auth pattern, and mail-rule activity all deviate from baseline and indicate confirmed compromise.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_g5zatpob"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlijjyb_1adf0d8d6e",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlijjyb_1adf0d8d6e/trace.jsonl",
+  "execution_time_seconds": 9.552
+}

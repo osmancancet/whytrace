@@ -1,0 +1,168 @@
+{
+  "run_id": "mvldu1i4_2ab66dd311",
+  "case_id": "ho-05",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "ESCALATE @ 0.70 (deterministic summary). 1 confirmed signal(s) [F1]. Techniques: T1078.004. Reasons: partial chain: 0 abuse + 1 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain.",
+  "timeline": [
+    {
+      "ts": "2026-10-13 20:33:00.0",
+      "event": "F1 Impossible travel: Bucharest → İzmir in 12 min",
+      "sql_id": "e44af3ffcd34"
+    },
+    {
+      "ts": "2026-10-13 20:45:00.0",
+      "event": "F1 Impossible travel: Bucharest → İzmir in 12 min",
+      "sql_id": "e44af3ffcd34"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Bucharest → İzmir in 12 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "e44af3ffcd34",
+        "938d1d2c4caa"
+      ],
+      "row_refs": [
+        "e44af3ffcd34#5",
+        "e44af3ffcd34#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:t.bulut@aegean.edu"
+      ],
+      "facts": {
+        "upn": "t.bulut@aegean.edu",
+        "from_event": "evt_ho_003372",
+        "to_event": "evt_ho_003325",
+        "from_country": "RO",
+        "to_country": "TR",
+        "minutes": 12
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 12 min apart",
+      "check_sql_id": "938d1d2c4caa"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.7,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Bucharest → İzmir in 12 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "e44af3ffcd34",
+          "938d1d2c4caa"
+        ],
+        "shapley": 0.7,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "partial chain: 0 abuse + 1 access signal(s), not enough to contain",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 6,
+    "model_calls": 1
+  },
+  "models": [],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvldu1i4_2ab66dd311",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvldu1i4_2ab66dd311/trace.jsonl",
+  "execution_time_seconds": 1672.548
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlibntz_1bd92f8ead",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover. On 2026-10-14 the user received a phishing email (docusign-aegean-share.com, Turkish purchase-contract subject), clicked it at 07:58, and within one minute an MFA approval occurred from 203.0.113.77 (DigitalOcean, Amsterdam) via portal — an anomalous ASN/geo immediately after the phish click, consistent with real-time credential/MFA capture. Starting 08:14 the account was accessed repeatedly from 192.0.2.150 (OVH SAS, France) via mail with no device_id and no MFA prompt, recurring through 2026-10-15 03:10 — consistent with stolen-session access from attacker infrastructure. At 08:20 an inbox rule was created via API moving mail to \"RSS Feeds,\" a classic post-compromise trail-hiding action. Baseline behavior is Manisa/Turk Telekom on device dev-zk-01 with periodic MFA approvals; the OVH/DigitalOcean activity and rule change are unexplained and malicious. This meets the contain definition (confirmed ATO), not merely monitor/escalate.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_s8se4815"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlibntz_1bd92f8ead",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlibntz_1bd92f8ead/trace.jsonl",
+  "execution_time_seconds": 15.673
+}

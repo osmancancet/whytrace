@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlily6h_577a49477a",
+  "case_id": "ho-06",
+  "verdict": "benign",
+  "confidence": 0.96,
+  "summary": "M0 model-only verdict: BENIGN @ 0.96. All sign-in events are fully consistent: same IP (193.140.10.21), same institutional ASN (AS-AEGEAN-EDU), same country/city (TR/Manisa), same known device (dev-fy-pc), same apps (mail/sis), all successful, with zero MFA prompts across the entire dump. No failed authentications, no new geographies/ASNs/devices, no impossible travel, no MFA fatigue, and zero mail events (no forwarding/rule anomalies). Nothing in the raw dump indicates account takeover; the signals are explained by normal on-campus institutional activity.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_wdly9d1d"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlily6h_577a49477a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlily6h_577a49477a/trace.jsonl",
+  "execution_time_seconds": 23.657
+}

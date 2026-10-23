@@ -1,0 +1,270 @@
+{
+  "run_id": "mvl1x1ll_1952591e4d",
+  "case_id": "ho-01",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "ESCALATE @ 0.65 (deterministic summary). 2 confirmed signal(s) [F1, F2]. Techniques: T1566.002, T1078.004. Reasons: partial chain: 0 abuse + 2 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain; model proposed contain, evidence policy says escalate.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 07:52:10.0",
+      "event": "F1 Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "sql_id": "b9a792b53327"
+    },
+    {
+      "ts": "2026-10-14 07:59:30.0",
+      "event": "F2 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 08:14:02.0",
+      "event": "F2 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b9a792b53327",
+        "00f57257b433"
+      ],
+      "row_refs": [
+        "b9a792b53327#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "sender_domain": "docusign-aegean-share.com",
+        "ts": "2026-10-14 07:52:10.0",
+        "subject": "Satın alma sözleşmesi – imza bekliyor",
+        "detail": "subject=Satın alma sözleşmesi – imza bekliyor",
+        "event_id": "d:msg-ho01-phish"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "92a083819d3a",
+        "56ab410a8809"
+      ],
+      "row_refs": [
+        "92a083819d3a#5",
+        "92a083819d3a#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "from_event": "evt_ho_002861",
+        "to_event": "evt_ho_002862",
+        "from_country": "NL",
+        "to_country": "FR",
+        "minutes": 15
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1566.002",
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Reporter model unavailable; deterministic summary built from findings.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 156,
+      "invalid": 0,
+      "scope": "account:z.korkmaz@aegean.edu",
+      "sql_id": "f9bdefb17ff2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 156,
+      "invalid": 0,
+      "scope": "account:z.korkmaz@aegean.edu",
+      "sql_id": "467f8abd1051"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for docusign-aegean-share.com",
+      "check_sql_id": "00f57257b433"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "both events are interactive and 15 min apart",
+      "check_sql_id": "56ab410a8809"
+    },
+    {
+      "finding_id": "F3",
+      "status": "rejected",
+      "reason": "193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "d7235c0a35d1"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "b9a792b53327",
+          "00f57257b433"
+        ],
+        "shapley": 0.425,
+        "rank": 1
+      },
+      {
+        "finding_id": "F2",
+        "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "92a083819d3a",
+          "56ab410a8809"
+        ],
+        "shapley": 0.325,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.7,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.8,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.8
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1",
+        "F2"
+      ],
+      "cited_ids": [
+        "F1",
+        "F2"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "contain",
+    "confidence": 0.65,
+    "rationale": "Two verified findings form a confirmed account takeover chain: a phishing-suspect mail was delivered (F1, T1566.002) and was followed by impossible travel Amsterdam→Gravelines in 15 minutes (F2, T1078.004), indicating credential/session use from an implausible location shortly after phishing delivery. The rejected password-spray claim does not explain the confirmed impossible travel and relies on shared-egress background noise. No data-quality conflicts exist. Evidence is confirmed rather than weak or merely suspicious, so containment is warranted.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 12,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_v2ik8htb"
+    }
+  ],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 1,
+  "model_steps_total": 3,
+  "trace_id": "mvl1x1ll_1952591e4d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvl1x1ll_1952591e4d/trace.jsonl",
+  "execution_time_seconds": 1361.794
+}

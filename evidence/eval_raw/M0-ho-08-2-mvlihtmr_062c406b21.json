@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlihtmr_062c406b21",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: ESCALATE @ 1.00. All sign-ins for g.sen@aegean.edu are consistent: one known device (dev-gs-phone), one city (Manisa, TR), two known IPs (Superonline mobile and AS-AEGEAN-EDU university), stable daily cadence across lms/mail, no impossible travel, no new devices, no MFA anomalies, no failed-auth bursts — so there is no confirmed account takeover (not \"contain\"). However, the user received and clicked a phishing link (edevlet-burs-basvuru.com, KYK scholarship lure) at 2026-10-15 13:10, shortly before a normal LMS login. The logs show no follow-on compromise but cannot rule out credential harvesting on the phishing site. This is confirmed exposure with insufficient evidence to close, requiring human investigation (password reset, mail forwarding/rule check, phishing-page intake) — not benign and stronger than a weak monitor signal.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ci8y2m32"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlihtmr_062c406b21",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlihtmr_062c406b21/trace.jsonl",
+  "execution_time_seconds": 45.305
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlimgfo_7c0b439c8f",
+  "case_id": "ho-07",
+  "verdict": "contain",
+  "confidence": 0.85,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.85. Account k.erdem@aegean.edu shows concurrent/impossible-travel access: legitimate business-hour logins from the user's known device (dev-ke-ws) on the university AS (AS-AEGEAN-EDU, Manisa, TR) alternate with repeated ~02:00 logins from 203.0.113.45 (DigitalOcean, Frankfurt, DE) across portal, mail, and sis with no device_id and mfa_prompt_count=0. The Frankfurt cloud-IP sessions at odd hours, accessing mail and SIS from a different country while the real user is active in Turkey, are not explained by any legitimate signal and indicate confirmed account takeover warranting containment (disable account, reset credentials, revoke sessions).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_618t7j0j"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlimgfo_7c0b439c8f",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlimgfo_7c0b439c8f/trace.jsonl",
+  "execution_time_seconds": 19.251
+}

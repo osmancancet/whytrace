@@ -1,0 +1,234 @@
+{
+  "run_id": "mvlcaw6s_1a2c0f5b93",
+  "case_id": "ho-03",
+  "verdict": "escalate",
+  "confidence": 0.75,
+  "summary": "ESCALATE @ 0.75 (deterministic summary). 2 confirmed signal(s) [F1, F2]. Techniques: T1078.004, T1114.003. Reasons: partial chain: 1 abuse + 1 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain.",
+  "timeline": [
+    {
+      "ts": "2026-10-08 20:10:00.0",
+      "event": "F1 Impossible travel: Manisa → Frankfurt in 156 min",
+      "sql_id": "c2bedd40e590"
+    },
+    {
+      "ts": "2026-10-08 22:46:12.0",
+      "event": "F1 Impossible travel: Manisa → Frankfurt in 156 min",
+      "sql_id": "c2bedd40e590"
+    },
+    {
+      "ts": "2026-10-08 22:49:02.0",
+      "event": "F2 Inbox forwarding rule to c.aydin.ogr@proton.me (created via owa)",
+      "sql_id": "1dcab444766e"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Manisa → Frankfurt in 156 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "c2bedd40e590",
+        "315245fffe03"
+      ],
+      "row_refs": [
+        "c2bedd40e590#16",
+        "c2bedd40e590#9"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:c.aydin@aegean.edu"
+      ],
+      "facts": {
+        "upn": "c.aydin@aegean.edu",
+        "from_event": "evt_ho_003076",
+        "to_event": "evt_ho_003112",
+        "from_country": "TR",
+        "to_country": "DE",
+        "minutes": 156
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to c.aydin.ogr@proton.me (created via owa)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "1dcab444766e",
+        "62417e81864c"
+      ],
+      "row_refs": [
+        "1dcab444766e#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:c.aydin@aegean.edu"
+      ],
+      "facts": {
+        "upn": "c.aydin@aegean.edu",
+        "target": "c.aydin.ogr@proton.me",
+        "via": "owa",
+        "name": null,
+        "detail": "target=c.aydin.ogr@proton.me via=owa",
+        "event_id": "r:rule-ho03",
+        "ts": "2026-10-08 22:49:02.0"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1078.004",
+        "T1114.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 156 min apart",
+      "check_sql_id": "315245fffe03"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "forwards outside the university to c.aydin.ogr@proton.me (created via owa)",
+      "check_sql_id": "62417e81864c"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F2",
+        "claim": "Inbox forwarding rule to c.aydin.ogr@proton.me (created via owa)",
+        "attack": [
+          "T1114.003"
+        ],
+        "sql_ids": [
+          "1dcab444766e",
+          "62417e81864c"
+        ],
+        "shapley": 0.425,
+        "rank": 1
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Manisa → Frankfurt in 156 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "c2bedd40e590",
+          "315245fffe03"
+        ],
+        "shapley": 0.325,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.8,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.7,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F2",
+        "F1"
+      ],
+      "cited_ids": [
+        "F1",
+        "F2"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.75,
+    "rationale": "partial chain: 1 abuse + 1 access signal(s), not enough to contain",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 7,
+    "model_calls": 1
+  },
+  "models": [],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvlcaw6s_1a2c0f5b93",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlcaw6s_1a2c0f5b93/trace.jsonl",
+  "execution_time_seconds": 588.939
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli87pl_c8ca7abdf6",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for c.aydin@aegean.edu. Baseline is two known devices: dev-ca-laptop on campus AS-AEGEAN-EDU (Manisa) midday and dev-ca-phone on Turkcell AS16135 (Manisa) evenings. On 2026-10-08 at ~22:41-22:44, six consecutive portal login failures came from 192.0.2.61 (AS60068 Datacamp Limited, Frankfurt, DE) via unknown device dev-unk-7f3a, followed immediately by an MFA-approved portal login and successful mail/sis logins from the same Frankfurt IP/device. A mail event at 22:49:02 confirms an OWA forwarding rule to external address c.aydin.ogr@proton.me. Credential brute-force + MFA approval + access from an unfamiliar foreign ASN + exfiltration-style forwarding rule constitute a confirmed compromise requiring containment (disable session, force password reset, revoke MFA, remove forwarding rule, investigate dev-unk-7f3a).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_00z10qv1"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli87pl_c8ca7abdf6",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli87pl_c8ca7abdf6/trace.jsonl",
+  "execution_time_seconds": 8.796
+}

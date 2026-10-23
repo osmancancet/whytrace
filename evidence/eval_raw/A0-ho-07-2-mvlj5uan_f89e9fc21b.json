@@ -1,0 +1,123 @@
+{
+  "run_id": "mvlj5uan_f89e9fc21b",
+  "case_id": "ho-07",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "The alert for k.erdem@aegean.edu is assessed as benign (confidence 0.8). The sole claim—password spray from 193.140.10.9 ending in a successful sign-in—was rejected because that address is shared egress with 188 distinct MFA-authenticated accounts over 30 days, making 71 failures across 68 accounts expected background noise. No compromise signals survived the Risk Gate.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Monitor 193.140.10.9 for single-account authentication anomalies or MFA bypass; investigated but unconfirmed.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Verify MFA registration and conditional access policies for k.erdem@aegean.edu; no confirmed valid-account misuse.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Maintain shared-egress IP baselines to suppress low-fidelity password-spray alerts.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "No verified findings remain; ATT&CK mapping is limited to the rejected password-spray claim only."
+  ],
+  "not_checked": [
+    "Host endpoint telemetry, full sign-in logs, and device compliance for k.erdem@aegean.edu were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "b4a2d7aa8954"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "bf85c4b0f8ea"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "15c724fb4627"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.8,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.8,
+    "rationale": "No surviving verified findings exist for case ho-07 (k.erdem@aegean.edu). The only alleged account-takeover chain — password spray from 193.140.10.9 followed by a successful sign-in as this user — was rejected: that IP is shared egress (188 distinct accounts completed MFA from it in the last 30 days vs. threshold of 10), so failures across many accounts are expected background noise, not a coordinated spray. With no unexplained signal and no data-quality conflicts, the suspicious signal is explained away.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 13,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_wmh6l2wl"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_4yc2iucq"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_39gfa6he"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlj5uan_f89e9fc21b",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlj5uan_f89e9fc21b/trace.jsonl",
+  "execution_time_seconds": 102.072
+}

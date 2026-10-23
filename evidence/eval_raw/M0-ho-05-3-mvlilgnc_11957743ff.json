@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlilgnc_11957743ff",
+  "case_id": "ho-05",
+  "verdict": "contain",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.82. Account t.bulut@aegean.edu shows a stable baseline: afternoon logins from Manisa (193.140.10.57, AS-AEGEAN-EDU) and evening logins from İzmir (198.51.100.120, AS34984 Superonline), both in Turkey, on dev-tb-laptop/dev-tb-phone, with periodic MFA approvals from İzmir. On 2026-10-13 this baseline is broken by multiple successful authentications from 192.0.2.200 (AS9009 M247 Europe, Bucharest, Romania) — a foreign country and a hosting/cloud ASN never seen for this account — using the same device_id dev-tb-laptop, followed by an mfa_approved from Bucharest and interleaved with İzmir logins. The same laptop cannot be in Bucharest and İzmir minutes apart, several \"success\" logins from Romania completed without MFA, and an MFA approval originating from Romania are not explainable by normal user behavior or travel. This constitutes confirmed account takeover indicators (impossible geography, unfamiliar hosting ASN, MFA satisfied from a foreign location), warranting immediate containment (disable session, force password reset, re-enroll MFA). No mail events are present to corroborate post-compromise activity, but the sign-in evidence alone is sufficie",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5eccfikh"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlilgnc_11957743ff",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlilgnc_11957743ff/trace.jsonl",
+  "execution_time_seconds": 22.719
+}

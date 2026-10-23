@@ -1,0 +1,42 @@
+{
+  "run_id": "mvliisld_a36bccced3",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.93,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.93. Confirmed account takeover for z.korkmaz@aegean.edu. Chain of evidence: (1) phishing email from typosquat domain docusign-aegean-share.com delivered 07:52, link clicked 07:58; (2) within one minute, an MFA-approved portal login from 203.0.113.77 (DigitalOcean, Amsterdam, NL) — a cloud IP with no associated device, outside the user's normal Manisa/TR pattern (university IP 193.140.10.44 by day, TTNET home IP 198.51.100.23 evenings with MFA on device dev-zk-01); (3) subsequent mail logins from 192.0.2.150 (OVH SAS, Gravelines, FR), a datacenter IP with empty device_id and zero MFA prompts, indicating session reuse after the initial MFA; (4) an inbox rule created via API at 08:20 moving mail to RSS Feeds — a classic evidence-hiding action post-takeover. This is not explainable by travel or normal behavior; the account is compromised and requires immediate containment (disable session, force password reset, review MFA methods, remove mailbox rule).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_n3piomny"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvliisld_a36bccced3",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvliisld_a36bccced3/trace.jsonl",
+  "execution_time_seconds": 15.643
+}

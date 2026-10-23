@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlia39c_13fd55bad5",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.80. Alert for g.sen@aegean.edu. Authentication logs (130 events over ~7 weeks) show a consistent, explained pattern: same device (dev-gs-phone), same two IPs (198.51.100.140 Superonline mobile ISP and 193.140.10.62 AS-AEGEAN-EDU university network), both geolocated TR/Manisa, normal MFA behavior (mfa_approved with prompt on mobile ISP; success with 0 prompts on trusted university network), no new locations/devices, no impossible travel, no MFA fatigue. No confirmed account takeover in the sign-in data, so \"contain\" is not supported. However, there is a real exposure: on 2026-10-15 a phishing email (sender edevlet-burs-basvuru.com, subject \"KYK burs ödemeniz beklemede\") was delivered and the user clicked the link at 13:10:09 — a credential-phishing domain mimicking Turkish e-devlet. The logs alone cannot confirm or exclude that credentials were entered/compromised (the 13:31:50 login is from the normal university IP/device). Suspicious signal is not fully explained (not benign), and it is stronger than a weak unexplained signal (not monitor). Exposure with insufficient evidence to confirm takeover requires human review (password reset, mailbox rul",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_jeih4ntv"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlia39c_13fd55bad5",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlia39c_13fd55bad5/trace.jsonl",
+  "execution_time_seconds": 73.316
+}

@@ -1,0 +1,162 @@
+{
+  "run_id": "mvl8wtwv_52428fde5d",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.8,
+  "summary": "ESCALATE @ 0.80 (deterministic summary). 1 confirmed signal(s) [F1]. Techniques: T1566.002. Reasons: partial chain: 0 abuse + 1 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain.",
+  "timeline": [
+    {
+      "ts": "2026-10-15 13:02:44.0",
+      "event": "F1 Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "sql_id": "1cf83dc33a92"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "1cf83dc33a92",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "1cf83dc33a92#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "sender_domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:02:44.0",
+        "subject": "KYK burs ödemeniz beklemede",
+        "detail": "subject=KYK burs ödemeniz beklemede",
+        "event_id": "d:msg-ho08-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for edevlet-burs-basvuru.com",
+      "check_sql_id": "0985c067c3ba"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.8,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "1cf83dc33a92",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.8,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.8,
+    "rationale": "partial chain: 0 abuse + 1 access signal(s), not enough to contain",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 6,
+    "model_calls": 1
+  },
+  "models": [],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvl8wtwv_52428fde5d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvl8wtwv_52428fde5d/trace.jsonl",
+  "execution_time_seconds": 2055.258
+}

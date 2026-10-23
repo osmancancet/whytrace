@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlij4ny_c9c2a2d3ff",
+  "case_id": "ho-02",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. All activity is geolocated to Manisa, TR with no impossible travel or foreign access. The recurring evening logins from 198.51.100.40 (AS9121 TTNET) on dev-ho-mbp show result mfa_approved with mfa_prompt_count=1 and a consistent schedule — consistent with the user signing in from home over MFA, not an MFA bypass. The 2026-10-11 burst from dev-lab-ce-07 (193.140.10.87, AS-AEGEAN-EDU) is a different device but remains on the trusted university network in the same city, with no MFA prompts expected on campus and only lms/sis access typical of a lab session. Mail events are empty (no rules/forwarding), and there is no confirmed account takeover evidence. Suspicious signals (new device, non-edu ISP evening logins) are explained.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_bz5rui6q"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlij4ny_c9c2a2d3ff",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlij4ny_c9c2a2d3ff/trace.jsonl",
+  "execution_time_seconds": 19.81
+}

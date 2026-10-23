@@ -1,0 +1,70 @@
+{
+  "run_id": "mvlb3c9e_42dc205be9",
+  "case_id": "ho-02",
+  "verdict": "escalate",
+  "confidence": 0.75,
+  "summary": "ESCALATE @ 0.75 (deterministic summary). 0 confirmed signal(s). Techniques: none. Reasons: no compromise signal survived the Critic; a model step was degraded.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 1
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "no compromise signal survived the Critic",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 5,
+    "model_calls": 1
+  },
+  "models": [],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvlb3c9e_42dc205be9",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlb3c9e_42dc205be9/trace.jsonl",
+  "execution_time_seconds": 2032.005
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli7nxt_6b5a0e6ec6",
+  "case_id": "ho-02",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. All sign-ins originate from Turkey/Manisa with no impossible travel. Off-campus/evening logins come from a single stable residential ISP IP (198.51.100.40, AS9121 TTNET) using device dev-ho-mbp with MFA consistently approved (mfa_prompt_count 1) across weeks — consistent with normal remote access from home, not an attacker rotating infrastructure. Campus logins (193.140.10.45/193.140.10.87) occur on trusted university ASN without MFA, including a Sunday-evening lab device (dev-lab-ce-07) within the same trusted network. The lone VPN-appliance-tagged event uses the same TTNET IP and device already seen with MFA, so it is explained by existing remote-access behavior rather than a new vector. There are no authentication failures, no new countries/ASNs, no mail events, and no indicators of account takeover. Suspicious signals (new lab device, VPN tag, TTNET IP) are adequately explained.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h4fa1p1m"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli7nxt_6b5a0e6ec6",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli7nxt_6b5a0e6ec6/trace.jsonl",
+  "execution_time_seconds": 25.622
+}

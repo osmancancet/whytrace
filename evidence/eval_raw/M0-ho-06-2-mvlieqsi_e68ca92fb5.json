@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlieqsi_e68ca92fb5",
+  "case_id": "ho-06",
+  "verdict": "benign",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: BENIGN @ 0.95. All 200 sign-in events show a single consistent pattern: success logins from IP 193.140.10.21 (AS-AEGEAN-EDU, the university's own ASN), Turkey/Manisa, device dev-fy-pc, alternating mail/sis apps during regular business hours, MFA prompt count 0, and no VPN appliance use. There are no mail events, no failed logins, no new devices, no impossible travel, no anomalous geolocation, and no MFA bypass. The activity is fully explained as normal legitimate use of the account from the user's regular on-campus device and network. No indicators of account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_d0djcl25"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlieqsi_e68ca92fb5",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlieqsi_e68ca92fb5/trace.jsonl",
+  "execution_time_seconds": 25.584
+}

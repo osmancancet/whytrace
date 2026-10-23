@@ -1,0 +1,398 @@
+{
+  "run_id": "mvlip56w_2cd7c71f25",
+  "case_id": "ho-01",
+  "verdict": "escalate",
+  "confidence": 0.64,
+  "summary": "F4 confirms a phishing email from docusign-aegean-share.com with a purchase-contract signature subject. F1 shows impossible travel from Amsterdam to Gravelines in 15 minutes. F2 confirms a suspicious sign-in from DigitalOcean NL (AS14061) outside the account baseline. F3 confirms the user clicked the phishing link. Escalate per Risk Gate despite no confirmed abuse chain.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 07:52:10.0",
+      "event": "F4 Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "sql_id": "b9a792b53327"
+    },
+    {
+      "ts": "2026-10-14 07:58:41.0",
+      "event": "F3 User clicked a link to docusign-aegean-share.com",
+      "sql_id": "ad83c6dc4698"
+    },
+    {
+      "ts": "2026-10-14 07:59:30.0",
+      "event": "F1 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 07:59:30.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+      "sql_id": "b2981f4c8645"
+    },
+    {
+      "ts": "2026-10-14 08:14:02.0",
+      "event": "F1 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "92a083819d3a",
+        "56ab410a8809"
+      ],
+      "row_refs": [
+        "92a083819d3a#5",
+        "92a083819d3a#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "from_event": "evt_ho_002861",
+        "to_event": "evt_ho_002862",
+        "from_country": "NL",
+        "to_country": "FR",
+        "minutes": 15
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b2981f4c8645",
+        "c3682760d2b8"
+      ],
+      "row_refs": [
+        "b2981f4c8645#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu",
+        "ip:net:203.0.113.77"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "asn_org": "AS14061 DigitalOcean",
+        "country": "NL",
+        "ip": "203.0.113.77",
+        "first_ts": "2026-10-14 07:59:30.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "User clicked a link to docusign-aegean-share.com",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "ad83c6dc4698",
+        "00f57257b433"
+      ],
+      "row_refs": [
+        "ad83c6dc4698#0"
+      ],
+      "attack": [
+        "T1204.001"
+      ],
+      "confidence": 0.7,
+      "kind": "click",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "domain": "docusign-aegean-share.com",
+        "ts": "2026-10-14 07:58:41.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H3",
+      "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b9a792b53327",
+        "00f57257b433"
+      ],
+      "row_refs": [
+        "b9a792b53327#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "sender_domain": "docusign-aegean-share.com",
+        "ts": "2026-10-14 07:52:10.0",
+        "subject": "Satın alma sözleşmesi – imza bekliyor",
+        "detail": "subject=Satın alma sözleşmesi – imza bekliyor",
+        "event_id": "d:msg-ho01-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Reset the user password and force MFA re-registration; review and invalidate sign-in sessions from AS14061 and Amsterdam/Gravelines.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block docusign-aegean-share.com at the email gateway and web proxy; search mailboxes for duplicate phishing messages.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Interview the user about the clicked link and check for credential entry, OAuth grants, or mailbox changes.",
+      "attack": [
+        "T1204.001"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Rejected password-spray claim; 193.140.10.44 is shared egress with 204 MFA successes in 30 days, so no coordinated spray confirmed.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Mailbox audit logs for inbox rules, forwarding, or sent items after the click; endpoint telemetry for malware or session-token theft."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 156,
+      "invalid": 0,
+      "scope": "account:z.korkmaz@aegean.edu",
+      "sql_id": "f9bdefb17ff2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 156,
+      "invalid": 0,
+      "scope": "account:z.korkmaz@aegean.edu",
+      "sql_id": "467f8abd1051"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 15 min apart",
+      "check_sql_id": "56ab410a8809"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "1 sign-in(s) from AS14061 DigitalOcean; not via university VPN, no managed device",
+      "check_sql_id": "c3682760d2b8"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "clicked domain docusign-aegean-share.com matches a phish_suspect delivery",
+      "check_sql_id": "00f57257b433"
+    },
+    {
+      "finding_id": "F4",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for docusign-aegean-share.com",
+      "check_sql_id": "00f57257b433"
+    },
+    {
+      "finding_id": "F5",
+      "status": "rejected",
+      "reason": "193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "d7235c0a35d1"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.74,
+    "mode": "exact",
+    "n_findings": 4,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F4",
+        "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "b9a792b53327",
+          "00f57257b433"
+        ],
+        "shapley": 0.2217,
+        "rank": 1
+      },
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "b2981f4c8645",
+          "c3682760d2b8"
+        ],
+        "shapley": 0.195,
+        "rank": 2
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "92a083819d3a",
+          "56ab410a8809"
+        ],
+        "shapley": 0.1617,
+        "rank": 3
+      },
+      {
+        "finding_id": "F3",
+        "claim": "User clicked a link to docusign-aegean-share.com",
+        "attack": [
+          "T1204.001"
+        ],
+        "sql_ids": [
+          "ad83c6dc4698",
+          "00f57257b433"
+        ],
+        "shapley": 0.1617,
+        "rank": 4
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.75,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.73,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F3",
+          "verdict_without": "escalate",
+          "confidence_without": 0.75,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F4",
+          "verdict_without": "escalate",
+          "confidence_without": 0.72,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F4",
+        "F2",
+        "F1"
+      ],
+      "cited_ids": [
+        "F4",
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "overlap": 3,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "contain",
+    "confidence": 0.64,
+    "rationale": "Verified findings form a coherent account takeover chain: phishing-suspect mail delivered (F4, T1566.002), user clicked the malicious link (F3, T1204.001), followed by a sign-in from a non-baseline ASN (DigitalOcean NL, F2, T1078.004) and impossible travel Amsterdam→Gravelines in 15 min (F1, T1078.004). All four findings are CONFIRMED. The rejected password-spray claim is explained away as shared-egress background noise and does not undermine the confirmed chain. This meets the contain threshold (confirmed account takeover chain).",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 17,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_augk1syk"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_gzjknfo3"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_m8zx4ph9"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlip56w_2cd7c71f25",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlip56w_2cd7c71f25/trace.jsonl",
+  "execution_time_seconds": 68.055
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli8ehy_ed975dea33",
+  "case_id": "ho-04",
+  "verdict": "contain",
+  "confidence": 0.75,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.75. Account takeover pattern for n.guler@aegean.edu: a payroll/IBAN phishing email (phish_suspect, aegean-edu.com.tr) was delivered on 2026-10-16 06:12, and later that same evening the account authenticated via MFA from 198.51.100.15 (AS9121 TTNET, residential ISP) instead of the usual university ASN (193.140.10.52, AS-AEGEAN-EDU), followed by an OWA inbox rule moving mail to \"Arşiv-2026\" minutes before the portal/mail logins. This credential-phish → MFA-approved session from a non-university network → mailbox rule chain is consistent with compromise and mailbox tampering, warranting containment (password reset, MFA re-enrollment, rule removal) rather than monitor/benign. Same device_id and MFA-approved status leave residual uncertainty, but the combined signals are sufficient to treat as confirmed/suspected account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_qg6wbzto"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli8ehy_ed975dea33",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli8ehy_ed975dea33/trace.jsonl",
+  "execution_time_seconds": 25.744
+}

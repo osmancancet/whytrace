@@ -1,0 +1,254 @@
+{
+  "run_id": "mvl1ojqa_f30e59ebf5",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "ESCALATE @ 0.65 (deterministic summary). 2 confirmed signal(s) [F1, F2]. Techniques: T1566.002, T1204.001. Reasons: partial chain: 0 abuse + 2 access signal(s), not enough to contain; signals of compromise without a confirmed abuse chain; model proposed monitor, evidence policy says escalate.",
+  "timeline": [
+    {
+      "ts": "2026-10-15 13:02:44.0",
+      "event": "F1 Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "sql_id": "1cf83dc33a92"
+    },
+    {
+      "ts": "2026-10-15 13:10:09.0",
+      "event": "F2 User clicked a link to edevlet-burs-basvuru.com",
+      "sql_id": "82d86197585c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H3",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "1cf83dc33a92",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "1cf83dc33a92#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "sender_domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:02:44.0",
+        "subject": "KYK burs ödemeniz beklemede",
+        "detail": "subject=KYK burs ödemeniz beklemede",
+        "event_id": "d:msg-ho08-phish"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "User clicked a link to edevlet-burs-basvuru.com",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "82d86197585c",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "82d86197585c#0"
+      ],
+      "attack": [
+        "T1204.001"
+      ],
+      "confidence": 0.7,
+      "kind": "click",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:10:09.0"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1566.002",
+        "T1204.001"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Reporter model unavailable; deterministic summary built from findings.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "5a3a5ad5dea2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "8c2354c28414"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for edevlet-burs-basvuru.com",
+      "check_sql_id": "0985c067c3ba"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "clicked domain edevlet-burs-basvuru.com matches a phish_suspect delivery",
+      "check_sql_id": "0985c067c3ba"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "1cf83dc33a92",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.425,
+        "rank": 1
+      },
+      {
+        "finding_id": "F2",
+        "claim": "User clicked a link to edevlet-burs-basvuru.com",
+        "attack": [
+          "T1204.001"
+        ],
+        "sql_ids": [
+          "82d86197585c",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.325,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.7,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.8,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1",
+        "F2"
+      ],
+      "cited_ids": [
+        "F1",
+        "F2"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "revised": false,
+      "score_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "monitor",
+    "confidence": 0.65,
+    "rationale": "Verified findings show a phishing email delivered to g.sen@aegean.edu from a suspicious KYK burs domain (F1) and that the user clicked a link to that same domain (F2). This is a consistent, confirmed signal of phishing engagement, so it cannot be dismissed as benign. However, there is no confirmed account takeover chain (no credential submission, no successful login from the phish, no downstream malicious activity), so contain is not supported. The evidence is not conflicting or insufficient, so escalate is not required. Appropriate tier: monitor for follow-on compromise.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_9z4i6iy4"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_kif7n8ux"
+    }
+  ],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 2,
+  "model_steps_total": 3,
+  "trace_id": "mvl1ojqa_f30e59ebf5",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvl1ojqa_f30e59ebf5/trace.jsonl",
+  "execution_time_seconds": 396.361
+}

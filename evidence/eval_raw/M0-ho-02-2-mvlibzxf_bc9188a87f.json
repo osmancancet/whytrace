@@ -1,0 +1,42 @@
+{
+  "run_id": "mvlibzxf_bc9188a87f",
+  "case_id": "ho-02",
+  "verdict": "benign",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: BENIGN @ 0.82. All sign-ins originate from Turkey, Manisa — the user's consistent city — with no impossible travel or foreign ASN. Two clean patterns dominate: dev-ho-mbp on the university AS (193.140.10.45) during daytime with no MFA (trusted campus zone), and the same device on TTNET (198.51.100.40) evenings via VPN with MFA approved (mfa_prompt_count=1), matching weeks of routine academic LMS/SIS/mail use. The only deviation is dev-lab-ce-07 on 2026-10-11 from campus IP 193.140.10.87 doing alternating lms/sis logins every ~20–27 minutes over ~1.5 hours with no MFA — consistent with an on-campus lab/study session on the trusted university network, not automated abuse (intervals are human-scale, not seconds-apart). No mail events, no failed logins, no new MFA devices, no password-reset or mail-rule indicators. Suspicious signal (new device + repeated logins) is explained by trusted-campus lab activity; no evidence of account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_s5l9rd8b"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlibzxf_bc9188a87f",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlibzxf_bc9188a87f/trace.jsonl",
+  "execution_time_seconds": 50.189
+}

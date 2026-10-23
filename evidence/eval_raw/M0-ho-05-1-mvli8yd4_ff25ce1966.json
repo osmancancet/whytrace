@@ -1,0 +1,42 @@
+{
+  "run_id": "mvli8yd4_ff25ce1966",
+  "case_id": "ho-05",
+  "verdict": "contain",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.80. Confirmed account takeover indicators for t.bulut@aegean.edu. On 2026-10-13 the account shows impossible travel: repeated logins from 192.0.2.200 (AS9009 M247 Europe, Bucharest, RO) interleaved within minutes with normal logins from 198.51.100.120 / 193.140.10.57 (İzmir/Manisa, TR) — the user cannot be in Romania and Turkey simultaneously. The Bucharest source is a hosting/cloud ASN (not a consumer ISP) using the reserved TESTNET-2 range 192.0.2.200, consistent with VPN/proxy or attacker infrastructure, and it is a never-before-seen country/ASN for this user. Most foreign logins succeeded with mfa_prompt_count=0 after only a single MFA approval (20:31:07), indicating MFA was bypassed/session-reused (same device_id dev-tb-laptop), fitting session hijack/cookie reuse rather than legitimate travel. No mail events to contradict. Recommend immediate containment: force password reset, revoke all sessions/tokens, and re-enroll MFA.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_gruu5d5w"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvli8yd4_ff25ce1966",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvli8yd4_ff25ce1966/trace.jsonl",
+  "execution_time_seconds": 31.233
+}
