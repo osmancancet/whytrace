@@ -509,7 +509,13 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
           { role: "system", content: `You write analyst-ready incident notes for a university SOC. The verdict is already decided by the Risk Gate: ${g.decision} (confidence ${g.confidence}). Do not change it. Be brief: summary <= 120 words with one short sentence per finding citation (F1…). Actions: 2–4 bullet recommendations for the analyst, each with ATT&CK ids from the findings. Limitations and not_checked: 1–2 lines each.` },
           { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nRisk Gate reasons: ${[...basePolicy.reasons, ...g.escalate_reasons].join("; ")}` },
         ],
-        toolName: "submit_note", description: "Submit the incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 4000, agent: "reporter",
+        // Reporter needs the same 6000-token headroom as the planner: live
+        // telemetry on 23 Oct showed real reporter runs at 3129, 3187, 3206
+        // and 3666 completion tokens (max_tokens 4000, finish_reason stop /
+        // tool_calls), 3666 is 91.6% of the old 4000 cap — one more line of
+        // evidence would truncate the tool call. Bumping to 6000 keeps the
+        // reporter safely out of the max_tokens_hit zone (DAY3B TODO 3).
+        toolName: "submit_note", description: "Submit the incident note.", schema: REPORT_NOTE_SCHEMA, lane: "deep", maxTokens: 6000, agent: "reporter",
         parse: (a) => ({ summary: String(a.summary ?? ""), actions: (Array.isArray(a.actions) ? a.actions : []).map((x: { action?: unknown; attack?: unknown }) => ({ action: String(x.action ?? ""), attack: toArr(x.attack) })).filter((x) => x.action), limitations: toArr(a.limitations), not_checked: toArr(a.not_checked) }),
       });
       note = rep.value;
