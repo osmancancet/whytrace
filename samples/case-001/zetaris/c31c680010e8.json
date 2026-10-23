@@ -1,1 +1,1 @@
-{"headers":["event_id","ts","verdict","detail"],"data":[["r:rule-001","2026-10-14 07:03:00.0","forward","target=d.yilmaz.payroll@gmail.com via=api"]],"total":1,"timeUsed":281}
+{"headers":["event_id","ts","verdict","detail"],"data":[["r:rule-001","2026-10-14 07:03:00.0","forward","target=d.yilmaz.payroll@gmail.com via=api"]],"total":1,"timeUsed":199}

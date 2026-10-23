@@ -1,13 +1,14 @@
 {
   "case_id": "case-002",
-  "recorded_from_run": "mvk5xobg_003daa038a",
+  "recorded_from_run": "mvk8lh7m_3eba187c34",
   "verdict": "escalate",
   "confidence": 0.65,
-  "recorded_at": "2026-10-22T23:23:38.165Z",
-  "sql_calls": 22,
+  "recorded_at": "2026-10-23T00:35:17.498Z",
+  "sql_calls": 24,
   "model_calls": 4,
   "rounds": 2,
   "routed_models": [
+    "nvidia/nemotron-3.5-super-vl-120b-a12b",
     "nvidia/nemotron-3.5-super-vl-120b-a12b",
     "nvidia/nemotron-3.5-super-vl-120b-a12b",
     "nvidia/nemotron-3.5-super-vl-120b-a12b"
