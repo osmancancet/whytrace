@@ -35,18 +35,6 @@ export function App() {
     refreshRuns();
   }, [refreshRuns]);
 
-  // Deep link: if the page URL carries ?run=<id>, open that recorded run in
-  // replay mode so a screenshot / shared link always lands on the same report.
-  // The run must already exist in the runs listing — we do not kick off a new
-  // investigation from a URL (that would make shared links non-deterministic).
-  useEffect(() => {
-    if (selectedRunId) return;
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-    const wanted = params.get("run");
-    if (!wanted || !runs.length) return;
-    if (runs.some((r) => r.run_id === wanted)) loadRun(wanted, true);
-  }, [runs, selectedRunId, loadRun]);
-
   const loadRun = useCallback(async (id: string, replay: boolean) => {
     setSelectedRunId(id);
     setReplayMode(replay);
@@ -110,6 +98,18 @@ export function App() {
   }, [selectedCase, refreshRuns]);
 
   useEffect(() => () => { if (stopRef.current) stopRef.current(); }, []);
+
+  // Deep link: if the page URL carries ?run=<id>, open that recorded run in
+  // replay mode so a screenshot / shared link always lands on the same report.
+  // The run must already exist in the runs listing — we do not kick off a new
+  // investigation from a URL (that would make shared links non-deterministic).
+  useEffect(() => {
+    if (selectedRunId) return;
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const wanted = params.get("run");
+    if (!wanted || !runs.length) return;
+    if (runs.some((r) => r.id === wanted)) loadRun(wanted, true);
+  }, [runs, selectedRunId, loadRun]);
 
   const submitFeedback = useCallback(async (body: { verdict?: "contain" | "monitor" | "benign" | "escalate"; rejected?: string[]; confirmed?: string[]; note?: string }) => {
     if (!selectedRunId) return;

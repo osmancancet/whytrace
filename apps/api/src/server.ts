@@ -113,9 +113,20 @@ function startRun(caseId: string, opts: { ablate?: { critic?: boolean; dq?: bool
 
 async function readReport(id: string): Promise<Report | null> {
   if (!existsSync(OUTPUT_DIR)) return null;
-  for (const f of readdirSync(OUTPUT_DIR)) {
-    if (!f.includes(`-${id}`) || !f.endsWith(".json")) continue;
-    try { return JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Report; } catch { return null; }
+  const files = readdirSync(OUTPUT_DIR).filter((f) => f.endsWith(".json"));
+  // Fast path: filename encodes the run_id (default name pattern case-xxx-<id>.json).
+  for (const f of files) {
+    if (f.includes(`-${id}`)) {
+      try { return JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Report; } catch { /* keep scanning */ }
+    }
+  }
+  // Fallback: a sample has been renamed (e.g. canonical demo file). Match on
+  // the file's run_id field so renamed exemplars still resolve by id.
+  for (const f of files) {
+    try {
+      const r = JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Partial<Report>;
+      if (r.run_id === id) return r as Report;
+    } catch { /* skip malformed */ }
   }
   return null;
 }

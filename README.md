@@ -34,6 +34,15 @@ npm run investigate -- case-002
 npm run dev
 ```
 
+Four recorded-run screenshots of the live console live in `docs/media/` — contain (case-001), benign (case-002, shared-egress rejection), escalate (case-003), and contain with the Scout prompt-injection panel (case-007). Each was taken with `node scripts/capture_console.mjs` driving the installed Brave over the Chrome DevTools Protocol against the real dev server (no browser binary or driver installed globally); the `?run=<id>` deep link makes every URL deterministic:
+
+| scenario | file |
+|---|---|
+| case-001 contain (phishing → MFA fatigue → bulk SIS) | [console-case-001-contain.png](docs/media/console-case-001-contain.png) |
+| case-002 benign (shared-egress rejection) | [console-case-002-benign.png](docs/media/console-case-002-benign.png) |
+| case-003 escalate (KEV-exposed appliance) | [console-case-003-escalate.png](docs/media/console-case-003-escalate.png) |
+| case-007 contain + Scout prompt-injection panel | [console-case-007-contain-prompt-injection.png](docs/media/console-case-007-contain-prompt-injection.png) |
+
 **Zero-dependency replay with the Docker image.** The default image boots the API in `SAMPLE_MODE=true` so a judge can run it with no keys, no local containers and no Nightshift:
 
 ```bash
