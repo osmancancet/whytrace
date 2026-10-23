@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgv5je_590e8ef969",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover pattern for privileged lab-admin account s.demir@aegean.edu. All sign-ins originate from Cloudvault VPS IP 45.142.10.9 (Frankfurt, DE) via the flagged vulnerable appliance vpn-edge-01 — a geolocational and infrastructure anomaly for an Aegean University account. A single MFA approval at 21:31 is followed by seven consecutive MFA-free successes alternating between portal and LMS with no device_id recorded, consistent with MFA bypass/session hijacking through the compromised VPN appliance. The account is privileged (lab-admin), the access is repeated and automated across multiple applications, and there is no explaining context for the foreign VPS or vulnerable-appliance vector. Containment is warranted: disable the account, reset credentials, revoke sessions, and investigate the vpn-edge-01 appliance.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_gt5bc5wy"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgv5je_590e8ef969",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgv5je_590e8ef969/trace.jsonl",
+  "execution_time_seconds": 14.933
+}

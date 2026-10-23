@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgwzw0_a6b9db8d99",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. New device PH-9900 signed in from IP 78.187.4.44 (Turkcell, Manisa, TR), which matches the established baseline geography/city/ASN of the known device LT-6002 (193.140.10.17, Manisa, Turkcell) used Oct 10–16. The sign-in was challenged for MFA (prompt_count 1) and an explicit mfa_approved event precedes the success, indicating second-factor completion by the account holder—consistent with a user enrolling a new phone rather than an attacker. No mail events or post-auth anomalies are present. The new-device signal is explained by successful MFA from the same location/ISP.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_3m76kmi1"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgwzw0_a6b9db8d99",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgwzw0_a6b9db8d99/trace.jsonl",
+  "execution_time_seconds": 12.076
+}

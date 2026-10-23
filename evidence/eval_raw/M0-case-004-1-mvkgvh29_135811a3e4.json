@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgvh29_135811a3e4",
+  "case_id": "case-004",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover. The account shows a classic password-spray pattern: three failed portal sign-ins followed by a successful sign-in, all from the same IP (185.213.44.9, SprayNet AS, Moscow, RU). The successful auth had mfa_prompt_count=0 and no device_id, meaning no MFA challenge was presented and no trusted device was bound. A successful authentication from a high-risk foreign spray IP after repeated failures indicates the attacker obtained valid credentials and accessed the account, so the account should be contained (session revocation, password reset, MFA re-enrollment, and mailbox audit).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_cr6pkunx"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgvh29_135811a3e4",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgvh29_135811a3e4/trace.jsonl",
+  "execution_time_seconds": 7.355
+}

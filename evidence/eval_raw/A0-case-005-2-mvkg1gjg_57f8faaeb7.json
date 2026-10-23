@@ -1,0 +1,121 @@
+{
+  "run_id": "mvkg1gjg_57f8faaeb7",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "F1: IP 193.140.10.9 generated 71 failures across 68 accounts followed by one successful login, but Critic judged it shared egress noise due to 187 MFA logins from that IP in 30 days. F2: An OWA inbox forwarding rule to internal e.oz.archive@aegean.edu was assessed and determined not to be exfiltration. Risk Gate verdict: benign, confidence 0.75; no compromise signal survived.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 looks like shared egress: 187 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Inbox forwarding rule to e.oz.archive@aegean.edu (created via owa)",
+      "reason": "critic: forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Monitor auth failures from 193.140.10.9 across accounts and tune shared-egress baselines to avoid alert fatigue.",
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit OWA inbox rules for forwarding destinations and confirm rule ownership for e.oz.archive@aegean.edu.",
+      "attack": [
+        "T1114.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Validate the successful login for e.oz@aegean.edu via MFA and sign-in logs to confirm legitimate access.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "earlier model step was degraded; deterministic policy stood in on a complete chain, confidence lowered by 0.1.",
+    "No verified findings survived; note relies solely on Critic rejection rationale and Risk Gate output."
+  ],
+  "not_checked": [
+    "Endpoint telemetry, device posture, and external IP reputation were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "8953faaec17a"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 8,
+      "invalid": 0,
+      "scope": "account:e.oz@aegean.edu",
+      "sql_id": "599c5f87ebc6"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "193.140.10.9 looks like shared egress: 187 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "15c724fb4627"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "forwards to an internal @aegean.edu address (e.oz.archive@aegean.edu) created via owa: not exfiltration",
+      "check_sql_id": "01cd2ab399e9"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "No surviving verified findings exist for case-005. Both suspicious signals were rejected with explicit justification: the 193.140.10.9 activity is attributed to shared egress with 187 distinct MFA completions (above the 10 threshold) and broad failure noise rather than a coordinated password spray; the OWA forwarding rule targets an internal @aegean.edu archive address, not external exfiltration. With all suspicious signals explained away and no data-quality conflicts, the case fits benign.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 10,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_iozijgia"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_hb4nyd70"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 2,
+  "model_steps_total": 3,
+  "trace_id": "mvkg1gjg_57f8faaeb7",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkg1gjg_57f8faaeb7/trace.jsonl",
+  "execution_time_seconds": 226.547
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkh0sza_095693dfa2",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. The only suspicious signal is a new OWA inbox forwarding rule, but it targets an internal archive mailbox (e.oz.archive@aegean.edu) rather than an external address. Sign-ins are highly consistent: same device (LT-7701), same IP (193.140.10.9, Turkcell, Manisa TR), same app (mail), same daily time, all successful, with zero MFA prompts across 8 days. No impossible travel, new devices, anomalous geolocations, or MFA anomalies. The forwarding rule is explained as likely legitimate inbox archiving by the account owner; no indicators of confirmed account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_7nj91172"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkh0sza_095693dfa2",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkh0sza_095693dfa2/trace.jsonl",
+  "execution_time_seconds": 29.597
+}

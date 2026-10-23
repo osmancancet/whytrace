@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgvmqm_79193d54c8",
+  "case_id": "case-005",
+  "verdict": "monitor",
+  "confidence": 0.68,
+  "summary": "M0 model-only verdict: MONITOR @ 0.68. Account e.oz@aegean.edu shows 8 consistent successful mail logins from a single IP/device (193.140.10.9, Turkcell, Manisa TR, LT-7701) at the same daily time with 0 MFA prompts. Turkey is outside the expected location for a Greek university account, but the pattern is stable (one device/IP, no impossible travel, no multiple locations, no credential changes), so it is not confirmed ATO. Separately, a new OWA inbox forwarding rule was created to e.oz.archive@aegean.edu, an internal same-domain target, which limits immediate external exfiltration but is unexplained. The foreign login plus the new forwarding rule are suspicious but not confirmed compromise and not clearly explained by legitimate activity, so this is a weak-to-moderate unexplained signal best handled by monitoring (verify travel/rule ownership with the user; escalate to contain if confirmed unauthorized). Not benign (signals unresolved) and not yet contain (no confirmation of takeover) or escalate (no confirmed exposure; evidence is sufficient to watch rather than hand off blind).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_mnx8bj0h"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgvmqm_79193d54c8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgvmqm_79193d54c8/trace.jsonl",
+  "execution_time_seconds": 63.694
+}

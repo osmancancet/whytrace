@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgxi9i_6c1760d422",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for d.yilmaz@aegean.edu. Full compromise chain present: phish delivered from lookalike domain aegean-edu.co (subject \"Acil hesap doğrulaması\"), user clicked https://aegean-edu.co/verify at 06:15, then successful sign-ins appeared from hostile hosting IP 185.220.101.7 (BulwarkHost Ltd, Amsterdam, NL) with no registered device against mail/sis. Immediately before first mail success there was an MFA fatigue sequence (7x mfa_denied then mfa_approved at 06:59:00, prompt count up to 8), indicating credential use plus MFA bypass. Post-compromise, an inbox forwarding rule was created via API at 07:03 forwarding mail to external d.yilmaz.payroll@gmail.com — definitive data-exfiltration action. Legitimate baseline is 193.140.10.44 / Turkcell / Manisa / device LT-2207 with MFA 0. Meets contain = confirmed account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_sxl0jmpv"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgxi9i_6c1760d422",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgxi9i_6c1760d422/trace.jsonl",
+  "execution_time_seconds": 10.987
+}

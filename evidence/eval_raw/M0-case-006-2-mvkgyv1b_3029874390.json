@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkgyv1b_3029874390",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. The \"new device\" alert for PH-9900 on 2026-10-18 is explained: it is an MFA-approved sign-in (mfa_prompt_count=1, mfa_approved then success within 30s) from the same city (Manisa), country (TR), and ASN (Turkcell) as the user's established device LT-6002 used daily Oct 10–16. There is no impossible travel, no MFA fatigue/prompt bombing, and zero mail events (no forwarding, password-reset, or exfiltration signals). A new device alone with satisfied MFA and consistent geography does not indicate account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_vn3yh8rz"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkgyv1b_3029874390",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkgyv1b_3029874390/trace.jsonl",
+  "execution_time_seconds": 6.787
+}
