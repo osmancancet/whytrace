@@ -144,6 +144,15 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 5. Getting files in: with the local image we copy CSVs into the driver container with `docker cp`; an upload endpoint in the UI or API would make file sources one step.
 6. Least privilege for agents: a documented read-only agent recipe (view-only role, SELECT-only key, USL access control) up front would help every agent builder.
 
+### Least-privilege agent key
+The agents only ever send the 14 catalogue `SELECT`s, but a Zetaris API key carries all rights of its user. For a deployment, run `npm run bootstrap:zetaris` with an admin key and give the investigation process a separate view-only key (recipe from the Zetaris team; see the [permissions guide](https://zetaris.github.io/getting-started/docs/guides/permissions.html)):
+1. **Management → Permissions:** create a role with *View* rights only, including *View* on Unified Semantic Layer.
+2. **Management → Users:** add an agent user with that role and generate its API key.
+3. **Data Product → Unified Semantic Layer → `lightning.metastore.whytrace` → `security_usl` → Access Control:** assign the role to the namespace *and* the model, then tick `SELECT` (not `INSERT`) for the six tables and Apply.
+4. Put that key in `ZETARIS_API_KEY` for `npm run investigate` / `npm run dev`. Zetaris then refuses `CREATE`/`DROP`/`GRANT` from the agent, and `/sql-editor/sqls/run` rejects multi-statement requests.
+
+Rebuilding the USL gives it a new id, so repeat step 3 after every bootstrap. *Status:* documented, not yet enabled on the demo install, which uses the admin key.
+
 ## Evaluation
 
 Run `npm run eval -- --runs 3 --ablations` for the full matrix (A0 full · A1 no Critic · A2 no DQ · A3 memory cold/warm · A4 single-agent · B0 rules-only baseline · M0 model-only Nemotron with no tools or guard rails), or `npm run eval -- --runs 1 --baseline` for a quick A0 + B0 + M0 sweep. The optional `--wait-healthy <minutes>` flag (default 10) controls how long the eval waits for Nightshift to come back if the health gate reports `provider_error` or `auth_error`.
