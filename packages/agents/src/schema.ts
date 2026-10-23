@@ -211,6 +211,14 @@ export const RISK_TOOL_SCHEMA = {
     decision: { type: "string", enum: ["contain", "monitor", "benign", "escalate"] },
     confidence: { type: "number" },
     rationale: { type: "string" },
+    // Finding ids that justify the decision. The orchestrator / Risk Gate
+    // uses this list to tell *grounded* dissent (model cites one or more
+    // CONFIRMED findings) apart from *ungrounded* dissent (model cites no
+    // findings, or only findings the Critic rejected). An ungrounded dissent
+    // keeps the deterministic policy's verdict, drops confidence by 0.05 and
+    // records a limitation; a grounded dissent falls through to the usual
+    // gate behaviour.
+    cited_finding_ids: { type: "array", items: { type: "string" } },
   },
   required: ["decision", "confidence", "rationale"],
 } as const;

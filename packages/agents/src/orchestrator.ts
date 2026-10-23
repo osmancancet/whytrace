@@ -399,18 +399,23 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
   // showed oversized prompts starving the provider and amplifying 502s.
   const evidenceText = buildEvidenceText(findings);
   const rejectedText = buildRejectedText(rejected);
-  let modelOpinion: { decision: VerdictT; confidence: number; rationale: string } | undefined;
+  let modelOpinion: { decision: VerdictT; confidence: number; rationale: string; cited_finding_ids?: string[] } | undefined;
   if (budget.canModel()) {
     budget.model += 1;
     modelStepsTotal += 1;
     try {
       const rc = await opts.nightshift.callTool({
         messages: [
-          { role: "system", content: "You are the Risk Gate of a university SOC. Decide contain | monitor | benign | escalate from the verified evidence only. contain = confirmed account takeover chain; benign = suspicious signals explained away; monitor = weak unexplained signal; escalate = exposure or conflicting/insufficient evidence needing a human. Return via submit_risk." },
+          { role: "system", content: "You are the Risk Gate of a university SOC. Decide contain | monitor | benign | escalate from the verified evidence only. contain = confirmed account takeover chain; benign = suspicious signals explained away; monitor = weak unexplained signal; escalate = exposure or conflicting/insufficient evidence needing a human. Cite the finding ids (F1…) that support your decision in `cited_finding_ids` — if you dissent from the obvious policy call, the gate requires at least one CONFIRMED finding on this list to override. Return via submit_risk." },
           { role: "user", content: `Case ${caseInfo.id} (${caseInfo.upn}).\nVerified findings:\n${evidenceText}\n\nRejected claims:\n${rejectedText}\n\nData-quality conflicts:\n${dqConflicts.join("\n") || "(none)"}` },
         ],
         toolName: "submit_risk", description: "Submit the risk decision.", schema: RISK_TOOL_SCHEMA, lane: "deep", maxTokens: 4000, agent: "risk_gate",
-        parse: (a) => ({ decision: Verdict.parse(a.decision), confidence: Math.min(1, Math.max(0, Number(a.confidence))), rationale: String(a.rationale ?? "") }),
+        parse: (a) => ({
+          decision: Verdict.parse(a.decision),
+          confidence: Math.min(1, Math.max(0, Number(a.confidence))),
+          rationale: String(a.rationale ?? ""),
+          cited_finding_ids: Array.isArray(a.cited_finding_ids) ? a.cited_finding_ids.map(String) : [],
+        }),
       });
       modelOpinion = rc.value;
       modelStepsOk += 1;
@@ -451,8 +456,23 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     }
   }
   const pol = effectivePolicy;
-  const g = gate(pol, modelOpinion);
-  trace.emit({ agent: "risk_gate", action: "decide", parent_id: root.step_id, output_summary: `${g.decision} @ ${g.confidence} (policy ${basePolicy.decision}, model ${modelOpinion?.decision ?? (riskModelMissing ? "unavailable" : "n/a")}) ${pol.reasons.join("; ")}`.slice(0, 400), confidence: g.confidence, status: "ok" });
+  // Approved finding ids after Critic + DQ + Scout — the "evidence the gate
+  // can trust". Rejected ids come from the Critic's verdicts map and the
+  // explicit `rejected` list.
+  const approvedFindingIds = findings.map((f) => f.id);
+  const rejectedFindingIds = [
+    ...[...verdictsById.values()].filter((v) => v.status === "rejected").map((v) => v.finding_id),
+    // Rejected claims are stored as a separate list (claim + reason) with no
+    // id — any finding whose id is NOT in approvedFindingIds that the model
+    // cites is implicitly ungrounded. We still only treat *known* rejected
+    // ids as evidence of a rejected cite; the ungrounded check already
+    // covers "unknown id" too.
+  ];
+  const g = gate(pol, modelOpinion, { approvedFindingIds, rejectedFindingIds });
+  const dissentNote = g.dissent && g.dissent.kind !== "agreed" ? ` [dissent=${g.dissent.kind}]` : "";
+  trace.emit({ agent: "risk_gate", action: "decide", parent_id: root.step_id, output_summary: `${g.decision} @ ${g.confidence} (policy ${basePolicy.decision}, model ${modelOpinion?.decision ?? (riskModelMissing ? "unavailable" : "n/a")}${dissentNote}) ${pol.reasons.join("; ")}`.slice(0, 400), confidence: g.confidence, status: "ok" });
+  if (g.dissent && g.dissent.kind === "ungrounded_dissent") limitations.push(`model dissent not grounded in confirmed evidence (cited rejected: ${g.dissent.cited_rejected.join(", ") || "(none)"})`);
+  if (g.dissent && g.dissent.kind === "no_citations_dissent") limitations.push("model dissent carried no finding citations; policy verdict kept and confidence lowered by 0.05");
 
   // ---- Reporter (deep lane): narrates the decided verdict, cannot change it
   // Deterministic fallback (used when the model is degraded) is built from the

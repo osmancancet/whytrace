@@ -94,21 +94,74 @@ export function canStandUnderDegrade(pol: PolicyDecision, p: { dqConflicts: stri
   return pol.confidence - 0.1 >= ESCALATE_BELOW;
 }
 
-/** Combine the policy decision with the model's opinion. */
-export function gate(pol: PolicyDecision, model?: { decision: VerdictT; confidence: number; rationale: string }): { decision: VerdictT; confidence: number; escalate_reasons: string[]; agreed: boolean } {
+/** Model opinion from the Risk-Gate tool call. `cited_finding_ids` is new in
+ *  DAY3C — the model is expected to list the ids (F1…) of findings that
+ *  support its verdict so the gate can tell grounded from ungrounded dissent.
+ *  Absent / empty = ungrounded. */
+export type ModelOpinion = { decision: VerdictT; confidence: number; rationale: string; cited_finding_ids?: string[] };
+
+/** Classification of the model's opinion against the Critic-confirmed set. */
+export type DissentGrounding =
+  | { kind: "agreed" }
+  | { kind: "grounded_dissent"; cited_confirmed: string[]; cited_rejected: string[] }
+  | { kind: "ungrounded_dissent"; cited_rejected: string[] }
+  | { kind: "no_citations_dissent" };
+
+/** Tell *grounded* dissent (model cites one or more CONFIRMED findings) apart
+ *  from *ungrounded* dissent (model cites nothing, or only findings the
+ *  Critic rejected). Exported for unit tests. */
+export function classifyDissent(policyDecision: VerdictT, model: ModelOpinion, approvedFindingIds: string[], rejectedFindingIds: string[]): DissentGrounding {
+  if (model.decision === policyDecision) return { kind: "agreed" };
+  const cited = (model.cited_finding_ids ?? []).map((id) => id.trim()).filter(Boolean);
+  if (!cited.length) return { kind: "no_citations_dissent" };
+  const approvedSet = new Set(approvedFindingIds);
+  const rejectedSet = new Set(rejectedFindingIds);
+  const cited_confirmed = cited.filter((id) => approvedSet.has(id));
+  const cited_rejected = cited.filter((id) => rejectedSet.has(id));
+  if (cited_confirmed.length) return { kind: "grounded_dissent", cited_confirmed, cited_rejected };
+  return { kind: "ungrounded_dissent", cited_rejected };
+}
+
+/** Combine the policy decision with the model's opinion.
+ *  DAY3C: when the model dissents from the deterministic policy but cites only
+ *  findings the Critic rejected (or none), the dissent is ungrounded — the
+ *  policy verdict stands, confidence drops by 0.05 and a limitation line is
+ *  returned on `escalate_reasons` so the Report records it (the Report class
+ *  also moves these onto `limitations`). A dissent that cites at least one
+ *  CONFIRMED finding is grounded and uses the pre-DAY3C behaviour. */
+export function gate(
+  pol: PolicyDecision,
+  model?: ModelOpinion,
+  options?: { approvedFindingIds?: string[]; rejectedFindingIds?: string[] },
+): { decision: VerdictT; confidence: number; escalate_reasons: string[]; agreed: boolean; dissent?: DissentGrounding } {
   const escalate_reasons = [...pol.escalate_reasons];
   if (!model) return { decision: pol.decision, confidence: pol.confidence, escalate_reasons, agreed: false };
-  const agreed = model.decision === pol.decision;
+  const approvedFindingIds = options?.approvedFindingIds ?? [];
+  const rejectedFindingIds = options?.rejectedFindingIds ?? [];
+  const classification = classifyDissent(pol.decision, model, approvedFindingIds, rejectedFindingIds);
+  const agreed = classification.kind === "agreed";
   let confidence = pol.confidence;
   let decision = pol.decision;
   if (!agreed) {
-    confidence = r2(Math.max(0, confidence - 0.1));
-    escalate_reasons.push(`model proposed ${model.decision}, evidence policy says ${pol.decision}`);
-    // Any disagreement about a disruptive or dismissive verdict goes to a human.
-    if (pol.decision === "contain" || pol.decision === "benign" || model.decision === "contain") {
-      if (confidence < ESCALATE_BELOW) decision = "escalate";
+    const grounded = classification.kind === "grounded_dissent";
+    if (!grounded) {
+      // Ungrounded dissent: the model cited no findings, or cited only rejected
+      // ones. Keep the policy verdict, nick confidence by 0.05, record the
+      // reason. Never escalate on an ungrounded dissent alone.
+      confidence = r2(Math.max(0, confidence - 0.05));
+      escalate_reasons.push(`model dissent not grounded in confirmed evidence (model proposed ${model.decision}, evidence policy says ${pol.decision})`);
+    } else {
+      // Grounded dissent — the model is pointing at CONFIRMED findings the
+      // policy has interpreted differently. Keep the pre-DAY3C behaviour:
+      // -0.1 confidence and route the case to a human on disruptive /
+      // dismissive edges.
+      confidence = r2(Math.max(0, confidence - 0.1));
+      escalate_reasons.push(`model proposed ${model.decision}, evidence policy says ${pol.decision}`);
+      if (pol.decision === "contain" || pol.decision === "benign" || model.decision === "contain") {
+        if (confidence < ESCALATE_BELOW) decision = "escalate";
+      }
     }
   }
   if (decision !== "escalate" && confidence < ESCALATE_BELOW) { decision = "escalate"; escalate_reasons.push(`confidence ${confidence} < ${ESCALATE_BELOW}`); }
-  return { decision, confidence, escalate_reasons, agreed };
+  return { decision, confidence, escalate_reasons, agreed, dissent: classification };
 }

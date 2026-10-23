@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canStandUnderDegrade, gate, policy } from "./risk-gate.ts";
+import { canStandUnderDegrade, classifyDissent, gate, policy } from "./risk-gate.ts";
 import type { FindingT } from "./schema.ts";
 
 let n = 0;
@@ -51,28 +51,86 @@ describe("Risk Gate policy", () => {
 });
 
 describe("gate", () => {
+  // DAY3C: grounded-dissent tests use cited_finding_ids pointing at a
+  // CONFIRMED finding id so the old (-0.1 + edge-escalation) behaviour kicks
+  // in. The new ungrounded-dissent cases are covered in the dedicated
+  // "grounded vs ungrounded" describe block below.
   const contain = { decision: "contain" as const, confidence: 0.95, reasons: [], escalate_reasons: [] };
+  const groundedCited = { cited_finding_ids: ["F1"] };
+  const groundingOpts = { approvedFindingIds: ["F1"], rejectedFindingIds: [] as string[] };
+
   it("keeps the policy decision when the model agrees", () => {
-    expect(gate(contain, { decision: "contain", confidence: 0.9, rationale: "" })).toMatchObject({ decision: "contain", agreed: true, confidence: 0.95 });
+    expect(gate(contain, { decision: "contain", confidence: 0.9, rationale: "", ...groundedCited }, groundingOpts)).toMatchObject({ decision: "contain", agreed: true, confidence: 0.95 });
   });
-  it("the model cannot downgrade strong evidence by itself, but disagreement costs confidence", () => {
-    const g = gate(contain, { decision: "escalate", confidence: 0.9, rationale: "" });
+  it("the model cannot downgrade strong evidence by itself, but grounded disagreement costs 0.1 confidence", () => {
+    const g = gate(contain, { decision: "escalate", confidence: 0.9, rationale: "", ...groundedCited }, groundingOpts);
     expect(g).toMatchObject({ decision: "contain", agreed: false, confidence: 0.85 });
     expect(g.escalate_reasons[0]).toMatch(/model proposed escalate/);
   });
-  it("disagreement on a borderline contain sends the case to a human", () => {
-    expect(gate({ ...contain, confidence: 0.75 }, { decision: "monitor", confidence: 0.6, rationale: "" }).decision).toBe("escalate");
+  it("grounded disagreement on a borderline contain sends the case to a human", () => {
+    expect(gate({ ...contain, confidence: 0.75 }, { decision: "monitor", confidence: 0.6, rationale: "", ...groundedCited }, groundingOpts).decision).toBe("escalate");
   });
-  it("the model cannot turn weak evidence into contain", () => {
-    const g = gate({ decision: "monitor", confidence: 0.7, reasons: [], escalate_reasons: [] }, { decision: "contain", confidence: 0.99, rationale: "" });
+  it("the model cannot turn weak evidence into contain (even when its citation is confirmed)", () => {
+    const g = gate({ decision: "monitor", confidence: 0.7, reasons: [], escalate_reasons: [] }, { decision: "contain", confidence: 0.99, rationale: "", ...groundedCited }, groundingOpts);
     expect(g.decision).toBe("escalate");
   });
 
   it("the model proposing contain against a partial-chain escalate stays escalate (never contain)", () => {
     const partial = { decision: "escalate" as const, confidence: 0.6, reasons: ["partial chain"], escalate_reasons: ["signals of compromise without a confirmed abuse chain"] };
-    const g = gate(partial, { decision: "contain", confidence: 0.95, rationale: "" });
+    const g = gate(partial, { decision: "contain", confidence: 0.95, rationale: "", ...groundedCited }, groundingOpts);
     expect(g.decision).toBe("escalate");
     expect(g.escalate_reasons.join(" ")).toMatch(/model proposed contain/);
+  });
+});
+
+describe("gate — grounded vs ungrounded model dissent", () => {
+  const policyBenign = { decision: "benign" as const, confidence: 0.85, reasons: ["no surviving signal"], escalate_reasons: [] };
+  const approved = ["F1", "F2"];
+  const rejected = ["F3"];
+
+  it("grounded dissent (model cites CONFIRMED finding) keeps the pre-DAY3C behaviour: -0.1 confidence and may escalate on edge", () => {
+    const g = gate(policyBenign, { decision: "escalate", confidence: 0.9, rationale: "", cited_finding_ids: ["F1"] }, { approvedFindingIds: approved, rejectedFindingIds: rejected });
+    expect(g.dissent?.kind).toBe("grounded_dissent");
+    expect(g.confidence).toBe(0.75);
+    // policy = benign, model = escalate → disruptive edge, confidence 0.75 ≥ 0.7 → still benign (but escalate_reasons records the dissent)
+    expect(g.escalate_reasons.join(" ")).toMatch(/model proposed escalate/);
+  });
+
+  it("ungrounded dissent (model cites only REJECTED findings) keeps the policy verdict, drops confidence by only 0.05, and records the limitation", () => {
+    const g = gate(policyBenign, { decision: "escalate", confidence: 0.9, rationale: "", cited_finding_ids: ["F3"] }, { approvedFindingIds: approved, rejectedFindingIds: rejected });
+    expect(g.dissent?.kind).toBe("ungrounded_dissent");
+    expect(g.confidence).toBe(0.8);
+    expect(g.decision).toBe("benign");
+    expect(g.escalate_reasons.join(" ")).toMatch(/model dissent not grounded/);
+  });
+
+  it("no-citations dissent (model lists no finding ids) is also ungrounded: policy kept, -0.05, limitation recorded", () => {
+    const g = gate(policyBenign, { decision: "escalate", confidence: 0.9, rationale: "", cited_finding_ids: [] }, { approvedFindingIds: approved, rejectedFindingIds: rejected });
+    expect(g.dissent?.kind).toBe("no_citations_dissent");
+    expect(g.confidence).toBe(0.8);
+    expect(g.decision).toBe("benign");
+    expect(g.escalate_reasons.join(" ")).toMatch(/model dissent not grounded/);
+  });
+
+  it("no-citations dissent omitting cited_finding_ids entirely is still ungrounded", () => {
+    const g = gate(policyBenign, { decision: "escalate", confidence: 0.9, rationale: "" }, { approvedFindingIds: approved, rejectedFindingIds: rejected });
+    expect(g.dissent?.kind).toBe("no_citations_dissent");
+    expect(g.confidence).toBe(0.8);
+    expect(g.decision).toBe("benign");
+  });
+
+  it("agreed opinion is reported as `agreed`, not as any dissent kind", () => {
+    const g = gate(policyBenign, { decision: "benign", confidence: 0.9, rationale: "", cited_finding_ids: ["F1"] }, { approvedFindingIds: approved, rejectedFindingIds: rejected });
+    expect(g.dissent?.kind).toBe("agreed");
+    expect(g.confidence).toBe(0.85);
+  });
+
+  it("classifyDissent catalogues the shapes directly", () => {
+    expect(classifyDissent("benign", { decision: "benign", confidence: 1, rationale: "" }, approved, rejected)).toEqual({ kind: "agreed" });
+    expect(classifyDissent("benign", { decision: "contain", confidence: 1, rationale: "" }, approved, rejected)).toEqual({ kind: "no_citations_dissent" });
+    expect(classifyDissent("benign", { decision: "contain", confidence: 1, rationale: "", cited_finding_ids: ["F3"] }, approved, rejected)).toEqual({ kind: "ungrounded_dissent", cited_rejected: ["F3"] });
+    expect(classifyDissent("benign", { decision: "contain", confidence: 1, rationale: "", cited_finding_ids: ["F99"] }, approved, rejected)).toEqual({ kind: "ungrounded_dissent", cited_rejected: [] });
+    expect(classifyDissent("benign", { decision: "contain", confidence: 1, rationale: "", cited_finding_ids: ["F1", "F3"] }, approved, rejected)).toEqual({ kind: "grounded_dissent", cited_confirmed: ["F1"], cited_rejected: ["F3"] });
   });
 });
 
