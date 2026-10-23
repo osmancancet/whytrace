@@ -35,7 +35,7 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
       // Every surviving claim cites queries that really ran in this run.
       const logged = new Set(readQueryLog(trace.files().queries).filter((q) => q.status === "ok").map((q) => q.sql_id));
       for (const f of r.findings) for (const id of f.sql_ids) expect(logged.has(id)).toBe(true);
-      expect(r.budget!.sql_calls).toBeLessThanOrEqual(25);
+      expect(r.budget!.sql_calls).toBeLessThanOrEqual(30);
       expect(r.budget!.model_calls).toBeLessThanOrEqual(30);
       expect(r.risk?.policy_decision).toBeDefined();
       expect(existsSync(join(trace.rootDir, "world-model-audit.jsonl"))).toBe(true);

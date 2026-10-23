@@ -36,7 +36,13 @@ const DEMO_CASES: Record<string, Case> = {
   "case-007": { id: "case-007", upn: "a.sahin@aegean.edu", expected: "contain", description: "Prompt-injection payload hidden in a mail-rule name" },
 };
 
-export const LIMITS = { sql: 25, model: 30, wallMs: 8 * 60_000, rounds: 3 };
+// DAY7: SQL budget bumped from 25 to 30 to make room for identity_for
+// coverage (needed by L1 / L4) + the Critic re-queries on L1 and L6 claims
+// (each lesson adds 1-2 verifying SQL calls). 30 keeps every observed real
+// run under the cap in the DAY7 regression; before the bump, case-002 lost
+// its Critic re-check on the vpn-edge-01 pivot and the SUSPECTED claim
+// then dragged the policy down to monitor → escalate under model dissent.
+export const LIMITS = { sql: 30, model: 30, wallMs: 8 * 60_000, rounds: 3 };
 
 export type ZetarisLike = Pick<Zetaris, "runSql">;
 export type NightshiftLike = Pick<Nightshift, "callTool" | "chat">;
