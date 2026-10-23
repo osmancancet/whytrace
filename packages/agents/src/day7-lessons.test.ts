@@ -176,6 +176,38 @@ describe("L3 null-device + zero-prompt + concurrent legit → token replay", () 
     const findings = deriveFindings("signins_for", { upn, hypothesis_id: "H1", params: { upn } }, r.rows, r.sql_id, ids);
     expect(findings.find((f) => f.kind === "token_replay")).toBeUndefined();
   });
+
+  it("Critic rejects a non-interactive mail-sync token masquerading as replay (case-002 ExchangeSync regression guard)", async () => {
+    // Fake "replay" is actually an ExchangeSync token from the campus relay;
+    // its concurrent session is the user travelling on their own device.
+    // Investigator would emit the candidate because UA is only in auth_pg,
+    // but the Critic re-queries the raw feed and rejects on the UA.
+    const upn = "prof.kaya@aegean.edu";
+    const t = emptyTables();
+    t.identity.push({ upn, role: "faculty", mfa_method: "totp" });
+    t.device.push({ device_id: "LT-3104", owner_upn: upn, managed: "true", type: "laptop", os_version: "15", firmware: "n/a", last_seen: T("2026-10-16T18:00:00Z") });
+    t.signin_event.push({ event_id: "mail-sync", ts: T("2026-10-15T06:40:00Z"), upn, result: "success", ip: "193.140.10.51", asn_org: "Turkcell", country: "TR", city: "Manisa", device_id: null, app: "mail", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "ExchangeSync/15" });
+    t.signin_event.push({ event_id: "lisbon", ts: T("2026-10-15T07:12:00Z"), upn, result: "success", ip: "89.180.44.17", asn_org: "MEO", country: "PT", city: "Lisbon", device_id: "LT-3104", app: "lms", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: "vpn-edge-02", user_agent: "Mozilla/5.0" });
+    const z = new FakeZetaris(t);
+    const replay = finding({
+      kind: "token_replay",
+      status: "LIKELY",
+      attack: ["T1550.004", "T1078.004"],
+      confidence: 0.75,
+      facts: {
+        upn,
+        replay_event: "mail-sync",
+        concurrent_event: "lisbon",
+        replay_asn_org: "Turkcell",
+        baseline_asn_org: "MEO",
+        baseline_device_id: "LT-3104",
+        minutes_apart: 32,
+      },
+    });
+    const c = await critique(z, [replay]);
+    expect(c.approved).toEqual([]);
+    expect(c.rejected[0]!.reason).toMatch(/non-interactive mail-sync token/);
+  });
 });
 
 // ------ L4 phish-exposure-only path ------
@@ -267,6 +299,12 @@ describe("L6 carrier-geolocation guard on impossible travel", () => {
     // The two sign-ins the finding will cite — campus PC + roaming phone.
     // Different devices so L2 does not fire; L6 is the only L-rule left.
     t.device.push({ device_id: "pc-office", owner_upn: upn, managed: "true", type: "desktop", os_version: "Windows 11", firmware: "n/a", last_seen: T("2026-10-19T18:00:00Z") });
+    // The "other" endpoint also needs long-baseline history on its own
+    // (asn, device) for L6 to accept the travel as a carrier artefact —
+    // otherwise it is a real new-ASN sign-in (see ho-03 shape).
+    for (let i = 0; i < 15; i++) {
+      t.signin_event.push({ event_id: `pc-base-${i}`, ts: T(`2026-09-${String(i + 1).padStart(2, "0")}T07:00:00Z`), upn, result: "success", ip: "193.140.10.21", asn_org: "AS-AEGEAN-EDU", country: "TR", city: "Manisa", device_id: "pc-office", app: "mail", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0" });
+    }
     t.signin_event.push({ event_id: "inc-manisa", ts: T("2026-10-09T10:02:00Z"), upn, result: "success", ip: "193.140.10.21", asn_org: "AS-AEGEAN-EDU", country: "TR", city: "Manisa", device_id: "pc-office", app: "mail", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0" });
     t.signin_event.push({ event_id: "inc-rome", ts: T("2026-10-09T10:09:00Z"), upn, result: "mfa_approved", ip: "198.51.100.91", asn_org: "AS16135 Turkcell", country: "IT", city: "Rome", device_id: DEV, app: "mail", mfa_prompt_count: 1, risk_flag: "impossible_travel", via_vpn_appliance: null, user_agent: "Mozilla/5.0" });
     return t;

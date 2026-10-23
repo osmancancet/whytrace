@@ -185,14 +185,17 @@ export function deriveFindings(
           if (idx.length <= 2 && main[1].length >= 5) out.push(mk({ kind: "new_device", claim: `Sign-in from a device not seen before for this account: ${dev} (usual device ${main[0]})`, confidence: 0.6, attack: ["T1078"], rowIdx: idx, entities: [`device:cmdb:${dev}`], facts: { device_id: dev, usual_device: main[0] } }));
         }
       }
-      // L1 — "admin baseline-break on a long-baseline IP". For each IP, split
-      // the user's sign-ins into (older than most-recent-day) baseline and
-      // (most-recent-day) today; the finding fires when today's app set is a
-      // strict superset of the baseline app set AND the baseline covers at
-      // least L1_BASELINE_MIN_DAYS distinct calendar days AND the new apps
-      // include at least one high-value app. The claim is only raised as
-      // *access* (never abuse); the Critic further gates on role/mfa_method
-      // via identity_for so the rule stays general.
+      // L1 — "admin baseline-break on a long-baseline IP". For each IP where
+      // the user has at least L1_BASELINE_MIN_DAYS of history, look at every
+      // day in the user's history on this IP: the finding fires on the first
+      // day whose app set is a strict superset of the union of ALL PRIOR
+      // DAYS' apps AND the newly-reached apps include a high-value class.
+      // Checking "prior days" (not "all other days") means a baseline that
+      // continues *after* the break day — a jump host that keeps running its
+      // nightly schedule after a one-off incident — still triggers the rule.
+      // The claim is only raised as *access* (never abuse); the Critic
+      // further gates on role/mfa_method via identity_for so the rule stays
+      // general.
       const perIp = new Map<string, Row[]>();
       for (const r of rows) {
         if (!(r.result === "success" || r.result === "mfa_approved")) continue;
@@ -206,45 +209,63 @@ export function deriveFindings(
         const ms = toMs(r.ts);
         return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : null;
       };
+      const l1Seen = new Set<string>();
       for (const [ip, bucket] of perIp) {
         const sorted = [...bucket].sort((a, b) => toMs(a.ts) - toMs(b.ts));
-        const lastRow = sorted[sorted.length - 1];
-        if (!lastRow) continue;
-        const lastDay = dayOf(lastRow);
-        if (!lastDay) continue;
-        const baselineRows = sorted.filter((r) => dayOf(r) !== lastDay);
-        const todayRows = sorted.filter((r) => dayOf(r) === lastDay);
-        if (!baselineRows.length || !todayRows.length) continue;
-        const baselineDays = new Set(baselineRows.map(dayOf).filter((d): d is string => !!d));
-        if (baselineDays.size < L1_BASELINE_MIN_DAYS) continue;
-        const baselineApps = new Set(baselineRows.map((r) => str(r.app)).filter((a): a is string => !!a));
-        const todayApps = new Set(todayRows.map((r) => str(r.app)).filter((a): a is string => !!a));
-        const newApps = [...todayApps].filter((a) => !baselineApps.has(a));
-        if (!newApps.length) continue;
-        const highValueHits = newApps.filter((a) => L1_HIGH_VALUE_APPS.has(a));
-        if (!highValueHits.length) continue;
-        const todayIdx = sorted
-          .map((r, i) => ({ r, i }))
-          .filter(({ r }) => dayOf(r) === lastDay)
-          .map(({ i }) => rows.indexOf(sorted[i]!))
-          .filter((i) => i >= 0)
-          .slice(0, 5);
-        out.push(mk({
-          kind: "admin_baseline_break",
-          claim: `Known-baseline IP ${ip} broadens to new app class(es) on ${lastDay}: baseline served ${[...baselineApps].sort().join(",")} across ${baselineDays.size} day(s), today added ${newApps.sort().join(",")} (high-value: ${highValueHits.sort().join(",")})`,
-          confidence: 0.6,
-          attack: ["T1078.004"],
-          rowIdx: todayIdx,
-          entities: [`ip:net:${ip}`],
-          facts: {
-            ip,
-            baseline_days: baselineDays.size,
-            baseline_apps: [...baselineApps].sort().join(","),
-            new_apps: newApps.sort().join(","),
-            high_value_new_apps: highValueHits.sort().join(","),
-            day: lastDay,
-          },
-        }));
+        // Group rows by day.
+        const perDay = new Map<string, Row[]>();
+        const dayOrder: string[] = [];
+        for (const r of sorted) {
+          const d = dayOf(r);
+          if (!d) continue;
+          if (!perDay.has(d)) { perDay.set(d, []); dayOrder.push(d); }
+          perDay.get(d)!.push(r);
+        }
+        if (dayOrder.length < 2) continue;
+        const seenApps = new Set<string>();
+        // Walk days in chronological order; the first day whose app set
+        // breaks the baseline (strict superset of apps seen so far, high-value
+        // new app included, baseline has ≥ L1_BASELINE_MIN_DAYS of history)
+        // emits the finding. We stop after one per IP to avoid duplicates.
+        for (let di = 0; di < dayOrder.length; di++) {
+          const day = dayOrder[di]!;
+          const dayRows = perDay.get(day)!;
+          const dayApps = new Set(dayRows.map((r) => str(r.app)).filter((a): a is string => !!a));
+          const priorDays = di;
+          if (priorDays < L1_BASELINE_MIN_DAYS) {
+            for (const a of dayApps) seenApps.add(a);
+            continue;
+          }
+          const newApps = [...dayApps].filter((a) => !seenApps.has(a));
+          if (!newApps.length) { for (const a of dayApps) seenApps.add(a); continue; }
+          const highValueHits = newApps.filter((a) => L1_HIGH_VALUE_APPS.has(a));
+          if (!highValueHits.length) { for (const a of dayApps) seenApps.add(a); continue; }
+          const key = `${ip}|${day}`;
+          if (l1Seen.has(key)) { for (const a of dayApps) seenApps.add(a); continue; }
+          l1Seen.add(key);
+          const dayIdx = dayRows
+            .map((r) => rows.indexOf(r))
+            .filter((i) => i >= 0)
+            .slice(0, 5);
+          out.push(mk({
+            kind: "admin_baseline_break",
+            claim: `Known-baseline IP ${ip} broadens to new app class(es) on ${day}: baseline served ${[...seenApps].sort().join(",")} across ${priorDays} prior day(s), today added ${newApps.sort().join(",")} (high-value: ${highValueHits.sort().join(",")})`,
+            confidence: 0.6,
+            attack: ["T1078.004"],
+            rowIdx: dayIdx,
+            entities: [`ip:net:${ip}`],
+            facts: {
+              ip,
+              baseline_days: priorDays,
+              baseline_apps: [...seenApps].sort().join(","),
+              new_apps: newApps.sort().join(","),
+              high_value_new_apps: highValueHits.sort().join(","),
+              day,
+            },
+          }));
+          for (const a of dayApps) seenApps.add(a);
+          break; // one break per IP keeps the finding focused.
+        }
       }
       // L3 — "null-device + zero-prompt + legit user active" → session-token
       // replay. For every success / mfa_approved row with no device_id and

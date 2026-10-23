@@ -16,6 +16,10 @@ import {
   toMs,
   type Row,
 } from "./investigator.ts";
+// L6 reuses L1's baseline-day floor as the "established user" threshold for
+// the other endpoint; keeping them in sync means lowering L1 or L6 doesn't
+// get the lessons out of lockstep by accident.
+void L1_BASELINE_MIN_DAYS;
 import type { SqlRunner } from "./dq.ts";
 
 // Vendor "fixed in" versions for KEV-listed Ivanti Connect Secure CVEs
@@ -222,22 +226,36 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
         const managed = dev && String(dev.managed).toLowerCase() === "true" && String(dev.owner_upn) === upn;
         if (managed) reasons.push(`both endpoints are the user's own managed device ${devA}`);
       }
-      // L6 — carrier-geolocation guard. For the "foreign" endpoint (the second
-      // row by ts), look at the user's own baseline on the SAME asn_org and
-      // SAME device_id: if ≥ L6_CARRIER_GEO_FRACTION of baseline rows for that
-      // (asn_org, device_id) came from the "foreign" city, the mobile carrier
-      // is geolocating the user there as a baseline artefact and the travel
-      // claim is the IdP's noise, not evidence.
+      // L6 — carrier-geolocation guard. The pattern we defend against is
+      // ho-06: a user's own phone (managed, baseline carrier ASN) geolocates
+      // to a city different from where their primary (campus / home) device
+      // sits, and the IdP calls it impossible travel. BOTH sides must be
+      // established baseline for the user — if the "other" side has zero
+      // history (a new attacker IP + unknown device, e.g. ho-03) the travel
+      // is a real new-ASN sign-in, not a carrier artefact. We therefore
+      // require: (a) the "foreign" row's (asn, device) has ≥ `L6_FRACTION`
+      // of baseline rows in its city, AND (b) the "other" row's (asn, device)
+      // also carries at least L1_BASELINE_MIN_DAYS of baseline history. If
+      // only one side is baseline, the travel is suspicious.
       const foreignCity = s(b.city);
       const foreignAsn = s(b.asn_org);
       const foreignDev = s(b.device_id);
-      if (foreignCity && foreignAsn && foreignDev) {
+      const otherAsn = s(a.asn_org);
+      const otherDev = s(a.device_id);
+      if (foreignCity && foreignAsn && foreignDev && otherAsn && otherDev) {
         const cRes = await z.runSql(`SELECT city, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(foreignAsn)}' AND device_id = '${esc(foreignDev)}' AND result IN ('success','mfa_approved') GROUP BY city`);
         const totals = cRes.rows.reduce((acc, r) => acc + n(r.n), 0);
         const foreign = cRes.rows.find((r) => s(r.city) === foreignCity);
         const foreignN = n(foreign?.n);
         if (totals > 0 && foreignN / totals >= L6_CARRIER_GEO_FRACTION) {
-          reasons.push(`${foreignN}/${totals} baseline sign-ins on the same ASN ${foreignAsn} + device ${foreignDev} already geolocate to ${foreignCity} (carrier-geolocation artefact ≥ ${Math.round(L6_CARRIER_GEO_FRACTION * 100)} %)`);
+          // Second half of the guard: the OTHER side must also be baseline.
+          // Baseline here is calendar-day history on the user's own
+          // (asn, device), the same shape L1 uses.
+          const otherBaseline = await z.runSql(`SELECT COUNT(DISTINCT CAST(ts AS DATE)) AS days FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(otherAsn)}' AND device_id = '${esc(otherDev)}' AND result IN ('success','mfa_approved') AND ts < '${esc(String(a.ts))}'`);
+          const otherDays = n(otherBaseline.rows[0]?.days);
+          if (otherDays >= L1_BASELINE_MIN_DAYS) {
+            reasons.push(`carrier-geolocation artefact: ${foreignN}/${totals} baseline sign-ins on the same ASN ${foreignAsn} + device ${foreignDev} already geolocate to ${foreignCity}, and the other endpoint on ${otherAsn}/${otherDev} has ${otherDays} days of history (both sides are the real user)`);
+          }
         }
       }
       if (reasons.length) return { status: "rejected", reason: `premature impossible-travel claim: ${reasons.join("; ")}`, sql_id };
@@ -293,11 +311,18 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       const ids = [replayId, concurrentId].map((x) => `'${esc(x)}'`).join(",");
       let rows: Row[] = [];
       let sqlId: string | undefined;
+      // Prefer the raw auth_pg feed because the USL does not carry user_agent;
+      // the L3 Critic needs it to exclude non-interactive mail-sync tokens
+      // (ExchangeSync/ActiveSync/Outlook sync) which share the "null-device +
+      // zero-prompt" shape but are the real user's mailbox client, not a
+      // stolen session.
+      let rawFeed = true;
       try {
-        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result FROM auth_pg.signin_events WHERE event_id IN (${ids})`);
+        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result, user_agent, app FROM auth_pg.signin_events WHERE event_id IN (${ids})`);
         rows = r.rows; sqlId = r.sql_id;
       } catch {
-        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result FROM ${USL}.signin_event WHERE event_id IN (${ids})`);
+        rawFeed = false;
+        const r = await z.runSql(`SELECT event_id, ts, asn_org, ip, device_id, mfa_prompt_count, result, app FROM ${USL}.signin_event WHERE event_id IN (${ids})`);
         rows = r.rows; sqlId = r.sql_id;
       }
       const replay = rows.find((x) => x.event_id === replayId);
@@ -305,6 +330,13 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       if (!replay || !concurrent) return { status: "rejected", reason: `token_replay cites events ${replayId} / ${concurrentId}; ${!replay ? "replay" : "concurrent"} does not resolve on independent re-query`, sql_id: sqlId };
       if (s(replay.device_id)) return { status: "rejected", reason: `replay row has a device_id (${s(replay.device_id)}); the pattern needs a null-device session`, sql_id: sqlId };
       if (n(replay.mfa_prompt_count) !== 0) return { status: "rejected", reason: `replay row has ${n(replay.mfa_prompt_count)} MFA prompts; the pattern needs a zero-prompt session`, sql_id: sqlId };
+      // Non-interactive mail-sync tokens share the shape (null-device, zero
+      // prompt, mail app) but are the real user's mailbox client, not a
+      // stolen session. Reject them from the token-replay interpretation.
+      // This is the same NON_INTERACTIVE_UA guard the Critic already uses on
+      // impossible-travel claims — see case-002 in the dev set.
+      if (rawFeed && NON_INTERACTIVE_UA.test(String(replay.user_agent ?? ""))) return { status: "rejected", reason: `replay row is a non-interactive mail-sync token (${replay.user_agent}); not a session-token replay`, sql_id: sqlId };
+      if (!rawFeed && !s(replay.device_id) && n(replay.mfa_prompt_count) === 0 && replay.app === "mail") return { status: "rejected", reason: `replay row matches the mail-sync pattern (null-device, zero-prompt, app=mail) in the USL and the raw user_agent is unavailable; refusing to promote to token-replay without the UA check`, sql_id: sqlId };
       if (!s(concurrent.device_id)) return { status: "rejected", reason: `concurrent row has no device_id — cannot prove the real user is active`, sql_id: sqlId };
       // Confirm the concurrent device is actually managed+owned.
       const d = await z.runSql(`SELECT device_id, owner_upn, managed FROM ${USL}.device WHERE device_id = '${esc(s(concurrent.device_id) ?? "")}'`);
