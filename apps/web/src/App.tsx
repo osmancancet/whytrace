@@ -51,6 +51,11 @@ export function App() {
     try {
       const [r, q, m] = await Promise.all([fetchReport(id), fetchQueries(id), fetchMarkovian(id)]);
       setReport(r);
+      // Keep the Case selector + queue in sync with the run that was just opened.
+      // Without this, the header / highlighted case can be stuck on an unrelated
+      // case while the main pane shows a different case's report (seen on the
+      // console-case-002-benign.png screenshot).
+      if (r?.case_id) setSelectedCase(r.case_id);
       setQueries(q);
       setMarkovian(m);
       setTrace([]);
