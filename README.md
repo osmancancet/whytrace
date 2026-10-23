@@ -118,6 +118,32 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 | NVIDIA Nemotron (via Nightshift) | Super VL 120B (deep) + Lightning 30B (fast) | `routed_model` from each response's `meterless` receipt is surfaced in the UI (model chip) and recorded in `evidence/eval.md`. |
 | Cursor | Development environment | Commits authored by the builder; all AI-authored work happens inside the editor during the build window. |
 
+## Zetaris USL: build and reflection
+
+### Build
+1. **Identify sources.** Four sources a university security team actually has, each in a different place: identity and sign-in logs (Postgres), mail-gateway deliveries, clicks and forwarding rules (REST), the asset inventory (CSV in the Zetaris file store) and the public CISA KEV catalogue (live REST).
+2. **Onboard.** `npm run bootstrap:zetaris` registers all four with `CREATE DATASOURCE`, `CREATE REST TABLE` (+ `CACHE TABLE`) and `CREATE FILESTORE TABLE`. The idempotent bootstrap is 39 steps and about 18 s end to end, 7 s of which is the KEV download (`evidence/zetaris-bootstrap.txt`).
+3. **Query sources in place.** No copies and no ETL job; each source is queried where it lives.
+4. **Create the USL.** One `COMPILE USL security_usl` with six entities (`identity`, `signin_event`, `vpn_session`, `mail_event`, `device`, `vulnerability`) and their primary and foreign keys, then one `ACTIVATE` per entity. `mail_event` unions three REST feeds into one entity.
+5. **Query the USL.** Agents reach the USL only through a fixed catalogue of 14 named, parameterised, read-only queries (`packages/agents/src/sql-catalogue.ts`); the model never writes SQL. Over the last 20 investigations a case ran a median of 21.5 USL queries at a median of 0.22 s each (p90 0.79 s, `logs/*/queries.jsonl`).
+6. **Data quality.** `RUN DQ TABLE` on every entity checks the generated PK/FK rules, plus five named checks of our own (`valid_upn`, `ts_not_null`, `known_result`, `vpn_session_order`, `asset_seen_recent`). On our data 12 VPN sessions end before they start. A finding that rests on rows from a table with failing DQ rows gets a limitation line and lower confidence (`packages/agents/src/dq.ts`).
+
+### Reflection
+**How it saved time.**
+- Without the USL, each investigation step means another console (identity provider, mail gateway, asset spreadsheet, KEV website) and a manual join on user name and IP. With it, a whole case is one cross-source join path answered in seconds.
+- The PK/FK model makes data cleaning a by-product: orphan and out-of-order rows are found by `RUN DQ`, not by an analyst who happens to notice.
+- Because the semantic model is fixed, agent queries stay short and reviewable, and the Critic can re-run the exact same named query to check a claim.
+
+**How it helps in this kind of work.** Account-compromise triage at a university needs identity, mail, VPN, device and vulnerability context that lives in separate systems, and privacy rules (KVKK/GDPR) often forbid copying raw personal data into one central store. Querying in place through one semantic layer with data-quality rules lets the investigation cross those systems while every fact stays a query with an id.
+
+**How Zetaris could improve (issues we hit on the local install):**
+1. Custom DQ rules: `REGISTER DQ` did not work for us and `SHOW DQ RULES` is not supported, so our extra checks live in application code next to `RUN DQ`. First-class custom rules and a rule listing would close this gap.
+2. Idempotent DDL: `CREATE SCHEMASTORE CONTAINER` has no `IF NOT EXISTS` and several `DROP` forms are not supported, so bootstrap scripts need error-string handling.
+3. Typed results: the REST API returns every value as a string; typed JSON or column types in the response would remove a casting layer in every client.
+4. Paging and timeouts: there is no paging API beyond `limit`, and a stuck FILESTORE registration did not return for about 300 s; cursor paging and a server-side timeout would help agents.
+5. Getting files in: with the local image we copy CSVs into the driver container with `docker cp`; an upload endpoint in the UI or API would make file sources one step.
+6. Least privilege for agents: a documented read-only agent recipe (view-only role, SELECT-only key, USL access control) up front would help every agent builder.
+
 ## Evaluation
 
 Run `npm run eval -- --runs 3 --ablations` for the full matrix (A0 full · A1 no Critic · A2 no DQ · A3 memory cold/warm · A4 single-agent · B0 rules-only baseline · M0 model-only Nemotron with no tools or guard rails), or `npm run eval -- --runs 1 --baseline` for a quick A0 + B0 + M0 sweep. The optional `--wait-healthy <minutes>` flag (default 10) controls how long the eval waits for Nightshift to come back if the health gate reports `provider_error` or `auth_error`.
