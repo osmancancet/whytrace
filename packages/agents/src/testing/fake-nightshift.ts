@@ -13,6 +13,12 @@ export class FakeNightshift {
     note?: () => Record<string, unknown>;
     chat?: (messages: Msg[], lane: string) => { text: string; tokens_in?: number; tokens_out?: number };
     failTools?: string[];
+    /** When provided, every default plan has these query names stripped before
+     *  it is returned to the orchestrator. Models the real-world DAY3C
+     *  observation that a stochastic Planner occasionally omits a step; the
+     *  coverage fill must still include it so the deterministic policy sees
+     *  the full chain. */
+    dropSteps?: string[];
   } = {}) {}
 
   async callTool<T>(opts: { messages: Msg[]; toolName: string; parse: (a: Record<string, unknown>) => T; lane?: "deep" | "fast" }): Promise<{ value: T; model: string; latencyMs: number; retryCount: number; receipt?: { receipt_id?: string }; raw: never }> {
@@ -22,7 +28,9 @@ export class FakeNightshift {
     let args: Record<string, unknown>;
     if (opts.toolName === "submit_plan") {
       const round = /^Round (\d+)/.exec(user) ? Number(/^Round (\d+)/.exec(user)![1]) : 1;
-      args = (this.script.plan ?? defaultPlan)(round, user) as unknown as Record<string, unknown>;
+      const plan = (this.script.plan ?? defaultPlan)(round, user);
+      if (this.script.dropSteps?.length) plan.steps = plan.steps.filter((s) => !this.script.dropSteps!.includes(s.query_name));
+      args = plan as unknown as Record<string, unknown>;
     } else if (opts.toolName === "submit_risk") {
       args = (this.script.risk ?? (() => ({ decision: "escalate", confidence: 0.6, rationale: "fake" })))(user);
     } else {

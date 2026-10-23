@@ -157,6 +157,92 @@ describe("Critic — spray-noise detection", () => {
   });
 });
 
+describe("Critic — new_asn shared-egress rejection (case-002 pattern)", () => {
+  /** Build fixture tables for a user whose per-UPN baseline is one ASN but who
+   *  has a single sign-in from a *different* ASN whose IP serves many distinct
+   *  MFA-completed users. The per-UPN baseline (≥ 2 distinct days) flags the
+   *  second ASN as "new"; the shared-egress check must reject it as
+   *  organisational infrastructure. `otherMfaCount` ≥ 10 triggers the rule;
+   *  smaller numbers model an attacker-controlled host (should NOT reject). */
+  function sharedEgressFixture(opts: { upn: string; baselineAsn: string; newAsn: string; newIp: string; newUa?: string; otherMfaCount: number }) {
+    const base = {
+      signin_event: [] as Record<string, string | number | null>[],
+      mail_event: [] as Record<string, string | number | null>[],
+      device: [] as Record<string, string | number | null>[],
+      vulnerability: [] as Record<string, string | number | null>[],
+      vpn_session: [] as Record<string, string | number | null>[],
+      identity: [{ upn: opts.upn }],
+    };
+    let seq = 0;
+    const soon = (dBack: number, h = 9, m = 0) => new Date(Date.now() - dBack * 86_400_000 + h * 3_600_000 + m * 60_000).toISOString().replace("T", " ").replace("Z", ".0");
+    const push = (r: Record<string, string | number | null>) => {
+      seq += 1;
+      base.signin_event.push({
+        event_id: `evt_${seq}`, device_id: null, country: "TR", city: "Manisa", app: "mail", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0", ...r,
+      });
+    };
+    // Baseline for the user: 7 successful sign-ins on the baseline ASN across 7 distinct days.
+    for (let d = 7; d <= 13; d++) push({ ts: soon(d, 9, 0), upn: opts.upn, result: "success", ip: "10.0.0.5", asn_org: opts.baselineAsn, device_id: "LT-OWN", mfa_prompt_count: 1 });
+    // The one sign-in that will trip the new_asn detector (today's "mail-sync" style event).
+    push({ ts: soon(0, 6, 40), upn: opts.upn, result: "success", ip: opts.newIp, asn_org: opts.newAsn, user_agent: opts.newUa ?? "Mozilla/5.0" });
+    // Other distinct accounts that have completed MFA from the SAME IP as the new_asn (shared-egress signal).
+    for (let i = 0; i < Math.max(0, opts.otherMfaCount - 1); i++) {
+      push({ ts: soon(1 + (i % 5), 10, i), upn: `student${i}@aegean.edu`, result: "mfa_approved", ip: opts.newIp, asn_org: opts.newAsn, mfa_prompt_count: 1 });
+    }
+    return base;
+  }
+
+  it("rejects a new_asn claim when every sign-in from that ASN uses a shared-egress IP (ExchangeSync-style mail-sync token through the campus NAT)", async () => {
+    const tables = sharedEgressFixture({ upn: "prof.kaya@aegean.edu", baselineAsn: "home-isp", newAsn: "campus-nat", newIp: "203.0.113.21", newUa: "ExchangeSync/15", otherMfaCount: 15 });
+    const z = new FakeZetaris(tables);
+    const f = await draft(z, "prof.kaya@aegean.edu", ["new_asn"]);
+    expect(f).toHaveLength(1);
+    expect(f[0]!.kind).toBe("new_asn");
+    const c = await critique(z, f);
+    expect(c.approved).toEqual([]);
+    expect(c.rejected).toHaveLength(1);
+    expect(c.rejected[0]!.reason).toMatch(/shared-egress/i);
+    expect(c.rejected[0]!.reason).toMatch(/\d+ distinct accounts completed MFA/);
+    // The reason must stay data-derived — no ISP, carrier, campus or UPN name baked into product strings.
+    expect(c.rejected[0]!.reason).not.toMatch(/Turkcell|TTNET|Superonline|AS-AEGEAN-EDU|Aegean|prof\.kaya|Vodafone/i);
+  });
+
+  it("keeps a new_asn claim CONFIRMED when the IP serves only the alerting user (attacker-controlled host)", async () => {
+    // otherMfaCount = 1 → only the alerting user; the shared-egress threshold (≥ 10) is NOT met.
+    const tables = sharedEgressFixture({ upn: "victim@aegean.edu", baselineAsn: "home-isp", newAsn: "sprayhost", newIp: "198.51.100.7", otherMfaCount: 1 });
+    const z = new FakeZetaris(tables);
+    const f = await draft(z, "victim@aegean.edu", ["new_asn"]);
+    expect(f).toHaveLength(1);
+    const c = await critique(z, f);
+    expect(c.rejected).toEqual([]);
+    expect(c.approved).toHaveLength(1);
+    expect(c.approved[0]!.status).toBe("CONFIRMED");
+    expect(c.approved[0]!.sql_ids.length).toBeGreaterThanOrEqual(2); // original + Critic's re-query
+  });
+
+  it("rejects even when the shared-egress IP sits just at the threshold (≥ SHARED_EGRESS_MFA_COMPLETED_UPNS)", async () => {
+    const tables = sharedEgressFixture({ upn: "prof.kaya@aegean.edu", baselineAsn: "home-isp", newAsn: "campus-nat", newIp: "203.0.113.21", otherMfaCount: SHARED_EGRESS_MFA_COMPLETED_UPNS });
+    const z = new FakeZetaris(tables);
+    const f = await draft(z, "prof.kaya@aegean.edu", ["new_asn"]);
+    const c = await critique(z, f);
+    expect(c.rejected).toHaveLength(1);
+    expect(c.rejected[0]!.reason).toMatch(/shared-egress/i);
+  });
+
+  it("does NOT reject when the alerting user has mixed IPs on the ASN (one shared, one attacker-controlled) — defensive: a mix is suspicious", async () => {
+    // Baseline + one shared-egress sign-in + one unique-IP sign-in on the same ASN.
+    const tables = sharedEgressFixture({ upn: "victim@aegean.edu", baselineAsn: "home-isp", newAsn: "campus-nat", newIp: "203.0.113.21", otherMfaCount: 15 });
+    tables.signin_event.push({ event_id: "evt_mixed", ts: new Date().toISOString().replace("T", " ").replace("Z", ".0"), upn: "victim@aegean.edu", result: "success", ip: "198.51.100.9", asn_org: "campus-nat", device_id: null, country: "TR", city: "Manisa", app: "mail", mfa_prompt_count: 0, risk_flag: null, via_vpn_appliance: null, user_agent: "Mozilla/5.0" });
+    const z = new FakeZetaris(tables);
+    const f = await draft(z, "victim@aegean.edu", ["new_asn"]);
+    expect(f).toHaveLength(1);
+    const c = await critique(z, f);
+    // 198.51.100.9 serves only 1 account → not shared; because *every* IP must be shared to reject, the ASN stays suspicious.
+    expect(c.approved).toHaveLength(1);
+    expect(c.approved[0]!.status).toBe("CONFIRMED");
+  });
+});
+
 describe("rubric", () => {
   it("penalises a contain verdict without confirmed abuse", () => {
     const s = rubric({ approved: [], rejected: 0, verdict: "contain", confidence: 0.9, actions: [], conflicts: [] });

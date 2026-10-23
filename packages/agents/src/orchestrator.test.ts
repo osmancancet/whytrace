@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { RunTrace } from "@whytrace/adapters";
-import { investigate, listDemoCases } from "./orchestrator.ts";
+import { defaultSteps, investigate, listDemoCases } from "./orchestrator.ts";
 import { CaseMemory } from "./memory.ts";
 import { readQueryLog } from "./validate.ts";
 import { FakeZetaris } from "./testing/fake-zetaris.ts";
@@ -173,6 +173,28 @@ describe("orchestrator end-to-end on the six labelled cases (fake Zetaris + fake
     // The real forwarding rule finding stayed in the report — Scout quarantined the string,
     // it did not drop the evidence.
     expect(r.findings.some((f) => f.kind === "forward_rule")).toBe(true);
+  });
+
+  it("defaultSteps includes mfa_fatigue so a stochastic Planner cannot drop a complete chain into 'partial'", () => {
+    const steps = defaultSteps("test@aegean.edu").map((s) => s.query_name);
+    expect(steps).toContain("mfa_fatigue");
+    // Guard against regressions: these four are the chain the deterministic policy expects.
+    expect(steps).toEqual(expect.arrayContaining(["mail_chain", "signins_for", "rules_for", "mfa_fatigue"]));
+  });
+
+  it("case-007 contains even when the Planner omits mfa_fatigue — the coverage fill restores it", async () => {
+    // The Planner's "submit_plan" tool is intact (so the plan still runs) but
+    // we simulate the DAY3C run-3 symptom: the plan never names mfa_fatigue.
+    const nightshift = new FakeNightshift({ risk: riskModel, dropSteps: ["mfa_fatigue"] });
+    const logsRoot = mkdtempSync(join(tmpdir(), "whytrace-mfa-cov-"));
+    const trace = new RunTrace({ logsRoot });
+    const zetaris = new FakeZetaris(undefined, trace);
+    const r = await investigate({ caseId: "case-007", trace, zetaris, nightshift });
+    expect(r.verdict).toBe("contain");
+    // The fatigue signal must survive — if coverage missed it, the policy would
+    // see 1 abuse + 1 access and escalate.
+    expect(r.findings.some((f) => f.kind === "mfa_fatigue" && f.status === "CONFIRMED")).toBe(true);
+    expect(r.budget!.sql_calls).toBeLessThanOrEqual(30);
   });
 
   it("H-MEM: case-003 recalls the lesson stored by case-002 and still escalates", async () => {

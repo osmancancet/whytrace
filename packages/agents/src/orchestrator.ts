@@ -78,6 +78,13 @@ export function defaultSteps(upn: string): PlannerStep[] {
     { hypothesis_id: "H1", query_name: "signins_for", params: { upn }, why: "coverage: identity provider" },
     { hypothesis_id: "H1", query_name: "spray_source_for", params: { upn }, why: "coverage: credential attacks behind successful sign-ins" },
     { hypothesis_id: "H1", query_name: "rules_for", params: { upn }, why: "coverage: inbox forwarding rules (post-auth abuse)" },
+    // mfa_fatigue is a post-authentication abuse signal (T1621) and belongs in
+    // the "chain complete" baseline. If a stochastic Planner forgets this step
+    // the deterministic policy reads a chain that includes new-ASN access and
+    // a forwarding rule but is missing the fatigue burst, counts the chain as
+    // partial, and escalates — see DAY3C case-007 run 3. Pulling it into the
+    // coverage fill makes every live run see the same abuse-signal set.
+    { hypothesis_id: "H1", query_name: "mfa_fatigue", params: { upn }, why: "coverage: MFA fatigue (post-auth abuse signal T1621)" },
   ];
 }
 

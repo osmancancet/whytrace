@@ -91,6 +91,33 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
         const allManagedOwned = devices.every((id) => d.rows.some((x) => x.device_id === id && String(x.owner_upn) === upn && String(x.managed).toLowerCase() === "true"));
         if (allManagedOwned) return { status: "rejected", reason: `explained: every ${asn} sign-in came through the university VPN on the user's own managed device (${devices.join(", ")})`, sql_id: d.sql_id };
       }
+      // Shared-egress ASN: if every sign-in from this "new" ASN uses an IP that
+      // many distinct real humans have completed MFA from (data-derived
+      // threshold), the ASN is the organisation's own shared exit — a campus
+      // NAT or mail-relay egress — not a new personal network. The per-UPN
+      // baseline (data-derived, ≥ 2 distinct days) still flags it as "new" for
+      // this account because the user's own role on that exit is thin (e.g. a
+      // single non-interactive ExchangeSync token), but the many-accounts
+      // signal is the strongest possible evidence that the IP is legitimate
+      // shared infrastructure. An attacker-controlled host that happens to
+      // appear as a "new ASN" will not have 10 distinct accounts completing MFA
+      // from it; the threshold is deliberately high (see SHARED_EGRESS_*).
+      // Legacy-auth abuse is not exempted wholesale — an attacker spraying
+      // legacy clients from an external IP still fails this gate because that
+      // IP never serves many MFA-completing humans.
+      const ips = [...new Set(r.rows.map((x) => s(x.ip)).filter((ip): ip is string => !!ip))];
+      if (ips.length) {
+        try {
+          const egressResults = await Promise.all(ips.map((ip) => isSharedEgressIp(z, ip)));
+          if (egressResults.every((e) => e.shared)) {
+            const sample = egressResults[0]!;
+            const detail = ips.length === 1
+              ? `${sample.distinct_mfa_upns} distinct accounts completed MFA from ${ips[0]} in the last ${SHARED_EGRESS_LOOKBACK_DAYS} days (threshold ${sample.threshold})`
+              : `every sign-in from this ASN uses an IP that serves ≥ ${sample.threshold} MFA-completed accounts (${ips.length} IPs checked)`;
+            return { status: "rejected", reason: `shared-egress ASN: ${detail}; this ASN is the organisation's own exit (shared NAT / mail relay), not a new personal network for the user`, sql_id: sample.sql_id };
+          }
+        } catch { /* if the lookback query is not supported here, fall through to approve */ }
+      }
       return { status: "approved", reason: `${r.rows.length} sign-in(s) from ${asn}; ${viaUni ? "via VPN" : "not via university VPN"}, ${devices.length ? `device ${devices.join(",")}` : "no managed device"}`, sql_id: r.sql_id, confirm: true };
     }
     case "phish_delivery": {
