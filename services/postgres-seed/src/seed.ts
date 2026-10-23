@@ -307,7 +307,15 @@ function writeMailSnapshots(suite: Suite) {
   mkdirSync(resolvePath(DATA_DIR, "mailgw"), { recursive: true });
   writeFileSync(resolvePath(DATA_DIR, "mailgw", "deliveries.json"), JSON.stringify({ data: suite.deliveries }, null, 2));
   writeFileSync(resolvePath(DATA_DIR, "mailgw", "clicks.json"), JSON.stringify({ data: suite.clicks }, null, 2));
-  writeFileSync(resolvePath(DATA_DIR, "mailgw", "rules.json"), JSON.stringify({ data: suite.rules }, null, 2));
+  // Strip optional `name` from the on-wire rules payload. Zetaris registered
+  // the MAILGW.rules REST table against the 6-column (rule_id, ts, upn,
+  // action, target, created_via) shape; adding a seventh field at runtime
+  // throws Spark's CatalystTypeConverters off ("Index 6 out of bounds for
+  // length 6"). The field stays on the typed row in-memory so that the
+  // in-process orchestrator tests (FakeZetaris) can still exercise it and
+  // the future USL extension does not need a type change.
+  const rulesWire = suite.rules.map(({ name: _n, ...rest }) => rest);
+  writeFileSync(resolvePath(DATA_DIR, "mailgw", "rules.json"), JSON.stringify({ data: rulesWire }, null, 2));
 }
 
 /** Build the deterministic suite (identities + sign-ins + mail + VPN + assets).

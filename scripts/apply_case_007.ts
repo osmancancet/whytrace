@@ -76,9 +76,12 @@ async function upsertPostgres(allIdents: ReturnType<typeof buildSuite>["identiti
 function rewriteMailJson(suite: ReturnType<typeof buildSuite>["suite"]) {
   const dir = resolvePath(REPO, "data", "mailgw");
   writeFileSync(resolvePath(dir, "deliveries.json"), JSON.stringify({ data: suite.deliveries }, null, 2));
-  writeFileSync(resolvePath(dir, "rules.json"), JSON.stringify({ data: suite.rules }, null, 2));
+  // Strip optional `name` from the on-wire payload — matches the main
+  // seed.ts behaviour. See the comment in writeMailSnapshots() for why.
+  const rulesWire = suite.rules.map(({ name: _n, ...rest }) => rest);
+  writeFileSync(resolvePath(dir, "rules.json"), JSON.stringify({ data: rulesWire }, null, 2));
   console.log(`  data/mailgw/deliveries.json: ${suite.deliveries.length} rows`);
-  console.log(`  data/mailgw/rules.json:      ${suite.rules.length} rows`);
+  console.log(`  data/mailgw/rules.json:      ${rulesWire.length} rows (name field stripped on-wire)`);
 }
 
 async function refreshMailgwCache() {

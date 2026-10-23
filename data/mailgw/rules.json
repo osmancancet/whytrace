@@ -55,6 +55,14 @@
       "action": "move",
       "target": "g.avcı112.archive@aegean.edu",
       "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-007",
+      "ts": "2026-10-19T04:28:00.000Z",
+      "upn": "a.sahin@aegean.edu",
+      "action": "forward",
+      "target": "a.sahin.copy@outlook.com",
+      "created_via": "api"
     }
   ]
 }
