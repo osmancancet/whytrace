@@ -48,6 +48,31 @@ export type Report = {
   trace_id: string;
   log_file: string;
   execution_time_seconds: number;
+  explanation?: Explanation;
+};
+
+export type AttributionRow = {
+  finding_id: string;
+  claim: string;
+  attack: string[];
+  sql_ids: string[];
+  shapley: number;
+  rank: number;
+};
+
+export type Explanation = {
+  verdict: Verdict;
+  confidence: number;
+  mode: "exact" | "sampled";
+  n_findings: number;
+  samples_used: number;
+  attribution: AttributionRow[];
+  counterfactuals: {
+    leave_one_out: Array<{ finding_id: string; verdict_without: Verdict; confidence_without: number; changes_verdict: boolean }>;
+    minimal_set: { finding_ids: string[]; verdict: Verdict; confidence: number } | null;
+  };
+  contrastive: { runner_up: Verdict; explanation: string; blocking_findings: string[]; missing_evidence: string[] } | null;
+  faithfulness: { top_k: number; top_shapley_ids: string[]; cited_ids: string[]; overlap: number; score: number; revised: boolean; score_before_revision: number | null } | null;
 };
 
 export type SavedRun = { id: string; case_id: string; verdict: Verdict; confidence: number; file: string; ts: string };

@@ -263,3 +263,27 @@ footer.sponsor-strip {
 .rubric { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-family: var(--mono); font-size: 12px; }
 .rubric div { background: var(--panel-2); padding: 6px; border-radius: 6px; text-align: center; }
 .rubric .score { font-size: 18px; color: var(--accent); display: block; }
+
+/* Why this verdict (DAY5) */
+.explain-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px; }
+.explain-panel h3 { font-size: 12px; margin: 0 0 6px; text-transform: uppercase; color: var(--fg-dim); letter-spacing: 0.5px; }
+.explain-panel .attribution { display: grid; gap: 4px; margin-bottom: 10px; }
+.explain-panel .attribution .row { display: grid; grid-template-columns: 44px 70px 1fr 40px; gap: 6px; align-items: center; font-family: var(--mono); font-size: 11px; }
+.explain-panel .attribution .claim { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.explain-panel .attribution .claim .fid { color: var(--accent); margin-right: 4px; }
+.explain-panel .attribution .score { color: var(--fg-dim); text-align: right; }
+.explain-panel .attribution .barwrap { height: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.explain-panel .attribution .barwrap > div { height: 100%; background: var(--accent); }
+.explain-panel .attribution .rank { color: var(--fg-dim); font-size: 10px; text-align: center; }
+
+.cf-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 10px; }
+.cf-chip { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; font-family: var(--mono); font-size: 11px; color: var(--fg-dim); }
+.cf-chip strong { color: var(--escalate); }
+
+.contrastive-line { font-size: 12px; color: var(--fg-dim); margin: 4px 0 8px; }
+.contrastive-line strong { color: var(--fg); }
+
+.faith-badge { display: inline-flex; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); font-family: var(--mono); font-size: 11px; background: var(--panel-2); color: var(--fg-dim); }
+.faith-badge.good { color: var(--benign); border-color: var(--benign); }
+.faith-badge.weak { color: var(--escalate); border-color: var(--escalate); }
+.faith-badge.bad { color: var(--contain); border-color: var(--contain); }

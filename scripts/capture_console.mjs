@@ -21,6 +21,11 @@ const SHOTS = [
   { run: "mvkop4ww_ef8b857b21", file: "console-case-002-benign.png",  caption: "case-002 benign (DAY3D shared-egress rejection on a DAY3E fresh-store run)" },
   { run: "mvkpwabw_095790bc2d", file: "console-case-003-escalate.png", caption: "case-003 escalate (DQ conflict; risk-gate degraded → policy fallback)" },
   { run: "mvkpsitu_a27519248c", file: "console-case-007-contain-prompt-injection.png", caption: "case-007 contain + prompt-injection panel" },
+  // DAY5: dedicated capture of the "Why this verdict" panel for case-001.
+  // Uses the same URL but asks the SPA to scroll the Verdict aside into view
+  // and crops the shot to its bounding box (attribution bars + counterfactual
+  // chips + "why not <runner-up>" line + faithfulness badge).
+  { run: "mvkpcv7i_5b2ce0bc39", file: "console-explain-case-001.png", caption: "case-001 explain-why panel (attribution + counterfactuals + faithfulness)", focusAside: true },
 ];
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -111,7 +116,44 @@ async function run() {
       const info = await browser.send("Runtime.evaluate", { expression: "JSON.stringify({ title: document.title, loc: location.href, body: (document.body?.innerText || '').slice(0,200), html_len: document.documentElement.outerHTML.length })", returnByValue: true });
       console.log(`  diag: ${info.result.value}`);
     } catch { /* best effort */ }
-    const { data } = await browser.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    let captureParams = { format: "png", captureBeyondViewport: false };
+    if (shot.focusAside) {
+      // Grow the viewport so the full aside fits, scroll the explain panel to
+      // the top, then clip to a tight box that spans only the explain panel
+      // (and the small verdict-chip header right above it in the aside).
+      try {
+        // Resize the viewport tall enough that the full aside renders without
+        // needing to scroll; this guarantees the explain panel's bounding box
+        // is a stable rectangle we can clip to.
+        await browser.send("Emulation.setDeviceMetricsOverride", { width: WIDTH, height: 2800, deviceScaleFactor: 2, mobile: false });
+        await sleep(500);
+        const box = await browser.send("Runtime.evaluate", {
+          expression: `(function(){
+            // Make sure we are at the top of the page so getBoundingClientRect
+            // values are absolute positions on the first screen.
+            window.scrollTo(0, 0);
+            const el = document.querySelector('.explain-panel');
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            // Add a small margin on all sides so the shot has breathing room.
+            return JSON.stringify({ x: Math.max(0, Math.floor(r.left) - 12), y: Math.max(0, Math.floor(r.top) - 12), width: Math.ceil(r.width) + 24, height: Math.ceil(r.height) + 24 });
+          })()`,
+          returnByValue: true,
+        });
+        if (box.result.value) {
+          const clip = JSON.parse(box.result.value);
+          captureParams = { format: "png", captureBeyondViewport: true, clip: { ...clip, scale: 1 } };
+          console.log(`  focus clip: ${clip.width}x${clip.height} @ (${clip.x}, ${clip.y})`);
+        }
+      } catch (err) {
+        console.log(`  focus clip failed, falling back to full shot: ${err.message}`);
+      }
+    }
+    const { data } = await browser.send("Page.captureScreenshot", captureParams);
+    if (shot.focusAside) {
+      // Restore the main viewport for subsequent shots.
+      try { await browser.send("Emulation.setDeviceMetricsOverride", { width: WIDTH, height: HEIGHT, deviceScaleFactor: 2, mobile: false }); } catch { /* ignore */ }
+    }
     writeFileSync(join(OUT_DIR, shot.file), Buffer.from(data, "base64"));
     console.log(`  wrote ${shot.file} (${Buffer.from(data, "base64").length.toLocaleString()} bytes)`);
   }

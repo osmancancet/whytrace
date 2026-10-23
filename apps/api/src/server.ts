@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSy
 import { basename, resolve as resolvePath, join } from "node:path";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { Nightshift, RunTrace, Zetaris } from "@whytrace/adapters";
-import { applyAnalystFeedback, CaseMemory, investigate, listDemoCases, type Report, Verdict } from "@whytrace/agents";
+import { applyAnalystFeedback, CaseMemory, explain, extractCitedFindingIds, faithfulness, investigate, listDemoCases, type Report, Verdict } from "@whytrace/agents";
 
 const PORT = Number(process.env.PORT ?? 8000);
 const ROOT = resolvePath(process.cwd());
@@ -111,13 +111,44 @@ function startRun(caseId: string, opts: { ablate?: { critic?: boolean; dq?: bool
   return entry;
 }
 
+/** Compute `explanation` for a report that was saved before DAY5 wired the
+ *  payload into the orchestrator. The policy context is reconstructed from
+ *  the report's own fields (rejected count, DQ invalid rows, decided_by →
+ *  degraded, core-sources default). Pure function — no model calls. */
+function enrichExplanation(r: Report): Report {
+  if (r.explanation || !Array.isArray(r.findings)) return r;
+  const rejectedCount = r.rejected_claims?.length ?? 0;
+  const dqConflicts: string[] = [];
+  for (const d of r.dq ?? []) if (d.invalid > 0) dqConflicts.push(`DQ ${d.rule} failing for ${d.table}${d.scope ? `@${d.scope}` : ""} (invalid=${d.invalid})`);
+  const degraded = r.decided_by === "policy_fallback";
+  const checkedSources = ["signin_event", "mail_event"];
+  const ex = explain({ findings: r.findings, rejectedCount, dqConflicts, degraded, checkedSources });
+  const narrative = [r.summary ?? "", ...(r.actions ?? []).map((a) => a.action)].join("\n");
+  const cited = extractCitedFindingIds(narrative);
+  const faith = ex.attribution.length ? faithfulness(ex.attribution, cited, 3) : null;
+  return {
+    ...r,
+    explanation: {
+      verdict: ex.verdict,
+      confidence: ex.confidence,
+      mode: ex.mode,
+      n_findings: ex.n_findings,
+      samples_used: ex.samples_used,
+      attribution: ex.attribution,
+      counterfactuals: ex.counterfactuals,
+      contrastive: ex.contrastive,
+      faithfulness: faith ? { ...faith, revised: false, score_before_revision: null } : null,
+    },
+  };
+}
+
 async function readReport(id: string): Promise<Report | null> {
   if (!existsSync(OUTPUT_DIR)) return null;
   const files = readdirSync(OUTPUT_DIR).filter((f) => f.endsWith(".json"));
   // Fast path: filename encodes the run_id (default name pattern case-xxx-<id>.json).
   for (const f of files) {
     if (f.includes(`-${id}`)) {
-      try { return JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Report; } catch { /* keep scanning */ }
+      try { return enrichExplanation(JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Report); } catch { /* keep scanning */ }
     }
   }
   // Fallback: a sample has been renamed (e.g. canonical demo file). Match on
@@ -125,7 +156,7 @@ async function readReport(id: string): Promise<Report | null> {
   for (const f of files) {
     try {
       const r = JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Partial<Report>;
-      if (r.run_id === id) return r as Report;
+      if (r.run_id === id) return enrichExplanation(r as Report);
     } catch { /* skip malformed */ }
   }
   return null;

@@ -249,6 +249,7 @@ export function App() {
         <aside className="panel" aria-label="Verdict">
           <h2>Verdict</h2>
           <VerdictPanel report={report} />
+          <ExplainPanel report={report} />
           <FeedbackPanel report={report} verdictFeedback={verdictFeedback} onConfirm={confirmVerdict} onReject={rejectVerdict} lessons={feedbackLessons} />
           <h2 style={{ marginTop: 12 }}>Markovian long sweep</h2>
           <MarkovianBlock markovian={markovian} />
@@ -363,6 +364,73 @@ function VerdictPanel({ report }: { report: Report | null }) {
         <div style={{ marginTop: 8 }}>
           <strong>Not checked</strong>
           <ul style={{ fontSize: 12, color: "var(--fg-dim)", margin: 0, paddingLeft: 16 }}>{r.not_checked.map((l, i) => <li key={i}>{l}</li>)}</ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ExplainPanel({ report }: { report: Report | null }) {
+  if (!report?.explanation) return null;
+  const ex = report.explanation;
+  if (!ex.attribution.length) return null;
+  const maxShap = Math.max(0.0001, ...ex.attribution.map((a) => Math.abs(a.shapley)));
+  const sumShapley = ex.attribution.reduce((s, a) => s + a.shapley, 0);
+  const top = ex.attribution.slice(0, 5);
+  const faith = ex.faithfulness;
+  const faithClass = !faith ? "" : faith.score >= 0.66 ? "good" : faith.score >= 0.34 ? "weak" : "bad";
+  // Build "Would change the verdict" chips from LOO (single removals) and the minimal counterfactual set.
+  const flippingLoo = ex.counterfactuals.leave_one_out.filter((l) => l.changes_verdict);
+  const minSet = ex.counterfactuals.minimal_set;
+  return (
+    <div className="explain-panel" aria-label="Why this verdict">
+      <h3>Why this verdict</h3>
+      <div className="attribution">
+        {top.map((a) => {
+          const width = `${Math.min(100, (Math.abs(a.shapley) / maxShap) * 100)}%`;
+          return (
+            <div className="row" key={a.finding_id} title={`${a.finding_id} · Shapley ${a.shapley.toFixed(4)} · ${a.attack.join(",") || "no technique"}`}>
+              <span className="rank">#{a.rank}</span>
+              <div className="barwrap"><div style={{ width }} /></div>
+              <span className="claim"><span className="fid">{a.finding_id}</span>{a.claim}</span>
+              <span className="score">{a.shapley.toFixed(2)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--fg-dim)", marginBottom: 6, fontFamily: "var(--mono)" }}>
+        attribution Σ={sumShapley.toFixed(2)} · mode={ex.mode}{ex.mode === "sampled" ? ` (${ex.samples_used} samples)` : ""} · players={ex.n_findings}
+      </div>
+      {flippingLoo.length || minSet ? (
+        <div className="cf-chips" aria-label="Counterfactual chips">
+          {flippingLoo.map((l) => (
+            <span className="cf-chip" key={`loo-${l.finding_id}`} title={`Without ${l.finding_id} the policy would call this ${l.verdict_without}`}>
+              Without <strong>{l.finding_id}</strong> → {l.verdict_without}
+            </span>
+          ))}
+          {minSet && minSet.finding_ids.length > 1 ? (
+            <span className="cf-chip" title={`Removing all of ${minSet.finding_ids.join(", ")} would flip to ${minSet.verdict}`}>
+              Without <strong>{minSet.finding_ids.join(" + ")}</strong> → {minSet.verdict}
+            </span>
+          ) : null}
+          {!flippingLoo.length && !minSet ? <span className="cf-chip">verdict is robust (no ≤3-finding removal flips it)</span> : null}
+        </div>
+      ) : (
+        <div className="cf-chips"><span className="cf-chip">verdict is robust (no ≤3-finding removal flips it)</span></div>
+      )}
+      {ex.contrastive ? (
+        <p className="contrastive-line" aria-label="Why not runner-up">
+          <strong>Why not {ex.contrastive.runner_up}?</strong> {ex.contrastive.explanation}
+        </p>
+      ) : null}
+      {faith ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <span className={`faith-badge ${faithClass}`} title={`Top-3 Shapley findings: ${faith.top_shapley_ids.join(", ") || "(none)"} · Reporter cited: ${faith.cited_ids.join(", ") || "(none)"}`}>
+            faithfulness@{faith.top_k}: {faith.score.toFixed(2)} ({faith.overlap}/{faith.top_k})
+          </span>
+          {faith.revised ? (
+            <span className="model-chip" title={`Reporter revised; score ${faith.score_before_revision?.toFixed(2) ?? "n/a"} → ${faith.score.toFixed(2)}`}>revised</span>
+          ) : null}
         </div>
       ) : null}
     </div>
