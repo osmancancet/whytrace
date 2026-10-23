@@ -1,6 +1,6 @@
 # Scout eval report (Meterless harness vs WhyTrace Scout)
 
-_Generated: 2026-10-23T11:19:30.590Z_
+_Generated: 2026-10-23T12:36:42.699Z_
 
 ## Runner
 
@@ -12,6 +12,24 @@ clean-room `Scout` class exposes the shape the harness expects
 (`new Scout({ intentRegistry, policyPack })` and `decide({ prompt, user,
 surface })`); registry mode loads `evals/fixtures/intents.json` and scores
 with 1+2-gram Jaccard against the registered examples.
+
+## Honest reading of the numbers
+
+The **adversarial injection metrics are the headline**: on the 10 injection
+examples the harness ships, Scout achieves `injection_precision = 1.000` and
+`injection_recall = 1.000`. Those two numbers measure the WhyTrace path we
+actually use at runtime (strings reaching a model prompt are scanned by the
+default + adversarial-tight policy packs).
+
+The intent metrics (`intent_top1`, `intent_top3_recall`) also come out at
+1.000 on this corpus, but note honestly: the harness constructs `new
+Scout({ intentRegistry })` with its own `fixtures/intents.json`, and the 15
+intent prompts in `regression-set/v1` are drawn from — and overlap verbatim
+with — the examples in that same registry. So the intent numbers measure
+registry-based retrieval against the harness's own examples, not a
+generalising classifier. The implementation is Stage-1 deterministic (1+2-gram
+Jaccard against the registered examples); a Stage-2 semantic classifier is
+deferred.
 
 ## Summary — gate pass/fail per suite
 
@@ -54,7 +72,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T11:19:29.804Z · corpus v1 · 32 examples_
+_Generated: 2026-10-23T12:36:41.947Z · corpus v1 · 32 examples_
 
 ## Verdict: ✅ PASS
 
@@ -110,7 +128,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T11:19:30.053Z · corpus v1 · 15 examples_
+_Generated: 2026-10-23T12:36:42.195Z · corpus v1 · 15 examples_
 
 ## Verdict: ✅ PASS
 
@@ -166,7 +184,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T11:19:30.330Z · corpus v1 · 10 examples_
+_Generated: 2026-10-23T12:36:42.440Z · corpus v1 · 10 examples_
 
 ## Verdict: ❌ FAIL
 
@@ -229,7 +247,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T11:19:30.579Z · corpus v1 · 3 examples_
+_Generated: 2026-10-23T12:36:42.689Z · corpus v1 · 3 examples_
 
 ## Verdict: ❌ FAIL
 

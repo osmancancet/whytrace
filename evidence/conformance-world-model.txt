@@ -1,8 +1,8 @@
 # world-model conformance
 # runner: conformance/world-model/runner.ts
 # impl:   packages/engines/world-model/src/index.ts
-# ran:    2026-10-23T11:19:29.025Z
-# took:   350 ms
+# ran:    2026-10-23T12:36:41.189Z
+# took:   291 ms
 # exit:   0
 
 --- STDOUT ---

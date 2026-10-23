@@ -303,9 +303,9 @@ export class Scout {
     //   low    0.40 – 0.54 → clarify
     //   reject < 0.40 → fall back to GENERAL (no clarify)
     // We ask for clarification whenever the top score is below the proceed
-    // floor, including the Reject band, because the Meterless harness scores
-    // "handle the Acme situation" / "do the thing we talked about yesterday"
-    // as clarification=true from a very low raw score.
+    // floor, including the Reject band, because an ambiguous prompt with no
+    // clear registered intent should surface a clarification request rather
+    // than a confident low-score choice.
     const proceedFloor = Math.max(...this.policies.map((p) => p.proceedFloor));
     const confidence = clamp01(top.score);
     const clarification = (confidence < proceedFloor && !blocked && !injectionDetected)
