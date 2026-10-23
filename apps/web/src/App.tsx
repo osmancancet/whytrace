@@ -35,6 +35,18 @@ export function App() {
     refreshRuns();
   }, [refreshRuns]);
 
+  // Deep link: if the page URL carries ?run=<id>, open that recorded run in
+  // replay mode so a screenshot / shared link always lands on the same report.
+  // The run must already exist in the runs listing — we do not kick off a new
+  // investigation from a URL (that would make shared links non-deterministic).
+  useEffect(() => {
+    if (selectedRunId) return;
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const wanted = params.get("run");
+    if (!wanted || !runs.length) return;
+    if (runs.some((r) => r.run_id === wanted)) loadRun(wanted, true);
+  }, [runs, selectedRunId, loadRun]);
+
   const loadRun = useCallback(async (id: string, replay: boolean) => {
     setSelectedRunId(id);
     setReplayMode(replay);
@@ -43,6 +55,11 @@ export function App() {
     setFeedbackState({});
     setVerdictFeedback(null);
     setFeedbackLessons([]);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("run", id);
+      window.history.replaceState(null, "", url);
+    }
     try {
       const [r, q, m] = await Promise.all([fetchReport(id), fetchQueries(id), fetchMarkovian(id)]);
       setReport(r);
@@ -66,6 +83,11 @@ export function App() {
     try {
       const { run_id } = await startRun(selectedCase);
       setSelectedRunId(run_id);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("run", run_id);
+        window.history.replaceState(null, "", url);
+      }
       setReport(null);
       setTrace([]);
       setQueries([]);
