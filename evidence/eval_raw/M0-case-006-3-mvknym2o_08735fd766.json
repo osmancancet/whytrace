@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknym2o_08735fd766",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: BENIGN @ 0.80. New device (PH-9900) and new IP (78.187.4.44) triggered the alert, but both are on the same ASN (Turkcell) and same country/city (TR, Manisa) as the historical logins from LT-6002 / 193.140.10.17. The sign-in completed MFA (mfa_approved then success) with no anomalies, and there are zero mail events (no forwarding, rule changes, or post-compromise activity). Consistent with a legitimate user signing in from a new device on the same mobile network; suspicious signal is explained.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h8j53k2i"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknym2o_08735fd766",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknym2o_08735fd766/trace.jsonl",
+  "execution_time_seconds": 78.152
+}

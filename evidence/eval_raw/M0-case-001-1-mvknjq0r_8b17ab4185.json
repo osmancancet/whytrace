@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknjq0r_8b17ab4185",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.97,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.97. Confirmed account takeover for d.yilmaz@aegean.edu. Evidence chain: (1) phishing email from typosquat domain aegean-edu.co delivered and clicked at 06:12–06:15 on 2026-10-14; (2) MFA fatigue attack from 185.220.101.7 (BulwarkHost Ltd, Amsterdam, NL) — seven mfa_denied prompts (counts 1–7) followed by mfa_approved at count 8, then a successful mail login at 06:59:30, with no enrolled device and no VPN; (3) burst of successful sis/mail logins from the same foreign hosting IP minutes later, abnormal versus the user's established pattern (Turkcell, Manisa, TR, device LT-2207, MFA 0); (4) mail forwarding rule created at 07:03 to exfiltrate mail to d.yilmaz.payroll@gmail.com via API. Credentials phished, MFA bypassed via fatigue, mailbox accessed from hostile infrastructure, and exfiltration rule set — meets the definition of confirmed account takeover. Immediate containment: disable account, reset password, revoke sessions/MFA, remove forwarding rule, and inspect mailbox/audit logs.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_z7wfu3yi"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknjq0r_8b17ab4185",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknjq0r_8b17ab4185/trace.jsonl",
+  "execution_time_seconds": 10.127
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknv4o9_3ebfc5f5bb",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: MONITOR @ 0.70. prof.kaya@aegean.edu shows 10/11 successful sign-ins from a consistent pattern: Portugal (Lisbon, MEO ASN), via VPN appliance vpn-edge-02, device LT-3104, apps mail/lms, zero MFA prompts — consistent with a faculty member travelling abroad using their known device + VPN. One outlier sign-in from Turkey (Manisa, Turkcell mobile ASN), no device_id, not via VPN, app mail, zero MFA prompts. This deviates from the established device/VPN/geographic pattern but is a single event with no failed authentications, MFA fatigue, impossible travel against a confirmed location, or follow-on mail activity to confirm account takeover. The travelling-abroad context provides a partial explanation but does not fully account for the missing device/VPN and different country/ASN. Evidence is insufficient for contain (no confirmed takeover) and not clearly benign (unexplained deviation); no exposure requiring human escalation. Weak unexplained signal -> monitor.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_9yrknqc8"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknv4o9_3ebfc5f5bb",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknv4o9_3ebfc5f5bb/trace.jsonl",
+  "execution_time_seconds": 13.343
+}

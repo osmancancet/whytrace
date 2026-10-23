@@ -1,0 +1,56 @@
+{
+  "run_id": "mvkmhswc_0852047066",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.5,
+  "summary": "ESCALATE @ 0.50 (deterministic summary). 0 confirmed signal(s). Techniques: none. Reasons: no surviving signal, but coverage incomplete; core sources not checked: signin_event, mail_event.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "Escalation reason: core sources not checked: signin_event, mail_event"
+  ],
+  "not_checked": [
+    "travel calendar (not connected)",
+    "EDR process events (not ingested)"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 1
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "confidence": 0.5,
+    "rationale": "no surviving signal, but coverage incomplete",
+    "escalate_reasons": [
+      "core sources not checked: signin_event, mail_event"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 0,
+    "model_calls": 1
+  },
+  "models": [],
+  "decided_by": "policy_fallback",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvkmhswc_0852047066",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkmhswc_0852047066/trace.jsonl",
+  "execution_time_seconds": 1371.424
+}

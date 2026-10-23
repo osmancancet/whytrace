@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknveyx_e5014eb3f3",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover for s.demir@aegean.edu (lab-admin). All sign-ins originate from a foreign Cloudvault VPS in Frankfurt via the flagged vulnerable VPN appliance (vpn-edge-01), with no device_id recorded. A single MFA approval at 21:31 is followed by repeated portal/LMS successes with mfa_prompt_count 0 at 5-minute intervals, consistent with stolen session/token reuse after initial MFA bypass or consent. Privileged lab-admin access from an unexpected VPS through a vulnerable appliance warrants immediate containment.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_lwhsgb2p"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknveyx_e5014eb3f3",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknveyx_e5014eb3f3/trace.jsonl",
+  "execution_time_seconds": 34.883
+}

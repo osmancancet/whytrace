@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknsrjg_3d41c37ca8",
+  "case_id": "case-004",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Multiple failed portal sign-ins from a single high-risk IP (185.213.44.9, SprayNet AS, Russia) immediately followed by a successful sign-in for m.aslan@aegean.edu with no MFA prompts. This pattern is consistent with password spraying/brute force resulting in confirmed account compromise; no benign explanation is evident from the event dump.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_s4bawja6"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknsrjg_3d41c37ca8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknsrjg_3d41c37ca8/trace.jsonl",
+  "execution_time_seconds": 6.022
+}

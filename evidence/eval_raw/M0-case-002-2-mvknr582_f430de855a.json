@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknr582_f430de855a",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.72,
+  "summary": "M0 model-only verdict: MONITOR @ 0.72. The dominant pattern (10/11 events) matches expected faculty-travel behavior: same known device LT-3104, same Lisbon/MEO IP, via university VPN appliance vpn-edge-02, all successful, mfa_prompt_count 0, across lms and mail over two days — explained and consistent. The single outlier (2026-10-15 06:40, 193.140.10.21 Turkcell Manisa TR, mail, no device_id, not via VPN) is anomalous (impossible travel ~32 min before the first Portugal session, new ASN/country, no device/VPN) but isolated: no failed auth, no MFA fatigue, no repeat Turkey activity, and no mail events to indicate access or exfiltration. Insufficient to confirm account takeover (not contain) and not clearly benign due to impossible travel; no exposure requiring immediate human escalation. Watch for recurrence from Turkey or other new locations/devices.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xws2w7wy"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknr582_f430de855a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknr582_f430de855a/trace.jsonl",
+  "execution_time_seconds": 35.979
+}

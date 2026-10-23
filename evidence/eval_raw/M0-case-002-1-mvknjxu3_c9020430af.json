@@ -1,0 +1,36 @@
+{
+  "run_id": "mvknjxu3_c9020430af",
+  "case_id": "case-002",
+  "verdict": "escalate",
+  "confidence": 0.5,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.50. model-only call degraded: Nightshift HTTP 502: Meterless provider request failed.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "decided_by": "model_only",
+  "model_steps_ok": 0,
+  "model_steps_total": 1,
+  "trace_id": "mvknjxu3_c9020430af",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknjxu3_c9020430af/trace.jsonl",
+  "execution_time_seconds": 240.323
+}

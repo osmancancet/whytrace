@@ -1,0 +1,42 @@
+{
+  "run_id": "mvknqoxp_ddd1433a65",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for d.yilmaz@aegean.edu. Chain: phishing email from lookalike domain aegean-edu.co delivered and clicked (06:12–06:15), followed by MFA fatigue (seven mfa_denied prompts then one mfa_approved at 06:59) from 185.220.101.7 (BulwarkHost Ltd, Amsterdam, NL) — an unfamiliar hosting IP with no device_id — then a successful mail login at 06:59:30. Shortly after (07:03), a mail forwarding rule was created via API to external address d.yilmaz.payroll@gmail.com. This matches credential phishing → MFA bypass → session use → exfiltration/persistence. Normal baseline is 193.140.10.44 / Turkcell / Manisa / device LT-2207 with no MFA prompts. Recommend immediate containment: disable account, reset credentials, revoke sessions/app tokens, remove forwarding rule, and re-enroll MFA.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_o4ofnotl"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvknqoxp_ddd1433a65",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvknqoxp_ddd1433a65/trace.jsonl",
+  "execution_time_seconds": 21.107
+}
