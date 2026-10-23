@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkeu2kq_1d6527d231",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.68,
+  "summary": "M0 model-only verdict: MONITOR @ 0.68. prof.kaya@aegean.edu shows a consistent baseline: 10 successful sign-ins from 89.180.44.17 (MEO, Lisbon, PT) via VPN appliance vpn-edge-02, all from the same device LT-3104 (LMS/mail), MFA prompt count 0 — consistent with the stated \"travelling abroad, device + VPN\" context. One anomalous event stands out: 2026-10-15 06:40 from 193.140.10.21 (Turkcell, Manisa, TR), mail app, no device_id, no VPN, MFA 0. It is a single successful sign-in from a different country/ASN without the known device or VPN, with no failed logins, no MFA fatigue, no concurrent sessions, and no mail events (0) indicating follow-on activity. This is a weak, unexplained signal rather than confirmed takeover (no contain criteria met) and not sufficiently explained to call benign (travel context accounts for the Portugal VPN sessions, not the Turkcell/Manisa sign-in). No exposure or evidence requiring immediate human escalation. Recommend monitoring the account for repeat anomalous auth from unfamiliar devices/locations.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_8xx2thbd"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkeu2kq_1d6527d231",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkeu2kq_1d6527d231/trace.jsonl",
+  "execution_time_seconds": 27.036
+}

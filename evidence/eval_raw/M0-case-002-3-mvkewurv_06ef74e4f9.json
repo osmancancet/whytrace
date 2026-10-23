@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkewurv_06ef74e4f9",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.65,
+  "summary": "M0 model-only verdict: MONITOR @ 0.65. Baseline matches the stated context: ten successful logins from Lisbon, Portugal (MEO) via corporate VPN appliance vpn-edge-02 on known device LT-3104 (LMS/mail), consistent with \"faculty travelling abroad + device + VPN.\" One unexplained anomaly: a single successful mail login at 2026-10-15 06:40 from Manisa, Turkey (Turkcell mobile) with no device_id, no VPN appliance, and 0 MFA prompts — ~25 minutes before the first Portugal session (impossible travel) and inconsistent with the device+VPN pattern. No mail events and no follow-on activity, so not confirmed takeover (contain) and not explained (benign). It is a single weak unexplained signal, so monitor for recurrence rather than escalate.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_k1jbmvev"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkewurv_06ef74e4f9",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkewurv_06ef74e4f9/trace.jsonl",
+  "execution_time_seconds": 147.092
+}
