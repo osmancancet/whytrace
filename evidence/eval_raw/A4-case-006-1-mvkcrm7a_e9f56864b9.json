@@ -1,0 +1,214 @@
+{
+  "run_id": "mvkcrm7a_e9f56864b9",
+  "case_id": "case-006",
+  "verdict": "escalate",
+  "confidence": 0.6,
+  "summary": "Verdict: escalate, confidence 0.6. F2: IP 78.187.4.44 sprayed 67 accounts (72 failures) before authenticating as this user {T1110.003,T1078}. F3: IP 193.140.10.17 sprayed 56 accounts (61 failures) before authenticating as this user {T1110.003,T1078}. F4: Roster spray from 78.187.4.44 across 10 windows includes this account's UPN {T1110.003}. F1: New device PH-9900 replaced usual LT-6002 for this account {T1078}.",
+  "timeline": [
+    {
+      "ts": "2026-10-18 07:15:00.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    },
+    {
+      "ts": "2026-10-18 07:15:30.0",
+      "event": "F1 Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "sql_id": "c5ff277c6a7c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Sign-in from a device not seen before for this account: PH-9900 (usual device LT-6002)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c5ff277c6a7c"
+      ],
+      "row_refs": [
+        "c5ff277c6a7c#0",
+        "c5ff277c6a7c#1"
+      ],
+      "attack": [
+        "T1078"
+      ],
+      "confidence": 0.6,
+      "kind": "new_device",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "device:cmdb:PH-9900"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "device_id": "PH-9900",
+        "usual_device": "LT-6002"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 78.187.4.44 failed against 67 accounts (72 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84889a63e581"
+      ],
+      "row_refs": [
+        "84889a63e581#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "ip:net:78.187.4.44"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "ip": "78.187.4.44",
+        "accounts": 67,
+        "failures": 72,
+        "first_ts": "2026-10-05 08:56:00.0",
+        "last_ts": "2026-10-14 17:09:00.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.17 failed against 56 accounts (61 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84889a63e581"
+      ],
+      "row_refs": [
+        "84889a63e581#1"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "ip:net:193.140.10.17"
+      ],
+      "facts": {
+        "upn": "b.cetin@aegean.edu",
+        "ip": "193.140.10.17",
+        "accounts": 56,
+        "failures": 61,
+        "first_ts": "2026-10-05 09:18:00.0",
+        "last_ts": "2026-10-14 19:26:00.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H-spray",
+      "claim": "Password-spray roster from 78.187.4.44 (Markovian sweep across 10 time window(s)): 1 unique UPNs failed; this account appears in the roster.",
+      "status": "LIKELY",
+      "sql_ids": [
+        "d587f154fb6a",
+        "503623d5342b",
+        "e0e94a2e5236",
+        "f30f59814957",
+        "84298148cc17",
+        "c03b8fa460df",
+        "1bb25298c9fc",
+        "e6e7498a7d4c",
+        "9b39c2f8e778",
+        "22e7ce1b7e74"
+      ],
+      "row_refs": [],
+      "attack": [
+        "T1110.003"
+      ],
+      "confidence": 0.7,
+      "kind": "spray_roster",
+      "entity_ids": [
+        "account:idp:b.cetin@aegean.edu",
+        "ip:net:78.187.4.44"
+      ],
+      "facts": {
+        "ip": "78.187.4.44",
+        "victims": "u.tekin230@aegean.edu",
+        "unique_victims": 1,
+        "windows": 10,
+        "token_label": "measured",
+        "measured_tokens_total": 8434,
+        "model_calls": 10
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1078",
+        "T1110.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Confidence is moderate; all signals are unconfirmed and derived from authentication logs only.",
+    "Escalation reason: model proposed contain, evidence policy says monitor"
+  ],
+  "not_checked": [
+    "Email or VPN access from PH-9900 was not checked; lateral movement after the successful sign-ins was not reviewed."
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "contain",
+    "confidence": 0.6,
+    "rationale": "Confirmed account takeover chain. Two independent IPs (78.187.4.44 and 193.140.10.17) each conducted password spraying against many accounts (67/56 accounts, 72/61 failures) and subsequently signed in successfully as b.cetin@aegean.edu (T1110.003 + T1078). The account also appears in the password-spray roster from 78.187.4.44 (Markovian sweep, 10 time windows), and authentication occurred from a previously unseen device PH-9900 versus the usual LT-6002 (T1078). No rejected claims or data-quality conflicts. This meets the contain definition: confirmed account takeover chain, not merely weak or unexplained signal.",
+    "escalate_reasons": [
+      "model proposed contain, evidence policy says monitor"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 17,
+    "model_calls": 13
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_86zsrbp3"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0jjbl9of"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ot4mupho"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 13,
+  "model_steps_total": 13,
+  "trace_id": "mvkcrm7a_e9f56864b9",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkcrm7a_e9f56864b9/trace.jsonl",
+  "execution_time_seconds": 209.892
+}

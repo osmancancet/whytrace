@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkcz09x_7b348016af",
+  "case_id": "case-002",
+  "verdict": "escalate",
+  "confidence": 0.78,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.78. Case case-002 (prof.kaya@aegean.edu, faculty travelling abroad). Ten sign-ins from 89.180.44.17 (MEO, Lisbon, PT) via vpn-edge-02 with device LT-3104 match the expected \"faculty abroad + device + VPN\" profile. However, one sign-in at 2026-10-15 06:40 from 193.140.10.21 (Turkcell, Manisa, TR) has no device_id, is not via VPN, and is followed just 32 minutes later by a Lisbon VPN login — impossible travel across incompatible networks. Zero MFA prompts on all events is also notable but cannot be judged anomalous without the MFA policy. No mail events are available to corroborate or exonerate. The Turkey login is too significant to call benign or merely monitor, but there is insufficient evidence to confirm account takeover (contain). Human review is needed to verify the user's whereabouts, device registration, and MFA enforcement.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_vuhddqui"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkcz09x_7b348016af",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkcz09x_7b348016af/trace.jsonl",
+  "execution_time_seconds": 71.909
+}

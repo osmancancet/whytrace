@@ -1,0 +1,288 @@
+{
+  "run_id": "mvkbdqnq_e294f810cb",
+  "case_id": "case-002",
+  "verdict": "escalate",
+  "confidence": 0.6,
+  "summary": "F1: Impossible travel from Manisa to Lisbon in 32 minutes indicates credential misuse (T1078.004). F2: A sign-in from Turkcell ASN outside baseline suggests unauthorized access (T1078.004). F3: Password spraying against 54 accounts preceded a successful sign-in as this user (T1110.003, T1078). F4: Most sign-ins originate from Portugal with no ATT&CK mapping. F5: VPN appliance vpn-edge-02 runs CISA KEV-listed firmware vulnerable to external exploitation (T1133, T1190). F6: VPN appliance vpn-edge-01 similarly runs CISA KEV-listed firmware (T1133, T1190).",
+  "timeline": [
+    {
+      "ts": "2026-10-15 06:40:00.0",
+      "event": "F1 Impossible travel: Manisa → Lisbon in 32 min",
+      "sql_id": "829dec608c5e"
+    },
+    {
+      "ts": "2026-10-15 06:40:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: Turkcell (TR), 1 event(s)",
+      "sql_id": "0e0136ab5e75"
+    },
+    {
+      "ts": "2026-10-15 07:12:00.0",
+      "event": "F1 Impossible travel: Manisa → Lisbon in 32 min",
+      "sql_id": "829dec608c5e"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Manisa → Lisbon in 32 min",
+      "status": "LIKELY",
+      "sql_ids": [
+        "829dec608c5e"
+      ],
+      "row_refs": [
+        "829dec608c5e#10",
+        "829dec608c5e#9"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "from_event": "evt_000078",
+        "to_event": "evt_000079",
+        "from_country": "TR",
+        "to_country": "PT",
+        "minutes": 32
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: Turkcell (TR), 1 event(s)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "0e0136ab5e75"
+      ],
+      "row_refs": [
+        "0e0136ab5e75#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu",
+        "ip:net:193.140.10.21"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "asn_org": "Turkcell",
+        "country": "TR",
+        "ip": "193.140.10.21",
+        "first_ts": "2026-10-15 06:40:00.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.21 failed against 54 accounts (60 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "527d3b3a3848"
+      ],
+      "row_refs": [
+        "527d3b3a3848#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu",
+        "ip:net:193.140.10.21"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "ip": "193.140.10.21",
+        "accounts": 54,
+        "failures": 60,
+        "first_ts": "2026-10-05 09:44:00.0",
+        "last_ts": "2026-10-13 14:06:00.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "h1",
+      "claim": "Most sign-ins come from PT (10 events)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "a242e22e4b67"
+      ],
+      "row_refs": [
+        "a242e22e4b67#0"
+      ],
+      "attack": [],
+      "confidence": 0.5,
+      "kind": "foreign_majority",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "country": "PT"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H-infra",
+      "claim": "VPN appliance vpn-edge-02 (firmware 22.7R2.8) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "e280b9bdaef3"
+      ],
+      "row_refs": [
+        "e280b9bdaef3#0",
+        "e280b9bdaef3#1",
+        "e280b9bdaef3#2",
+        "e280b9bdaef3#3",
+        "e280b9bdaef3#4"
+      ],
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "confidence": 0.7,
+      "kind": "kev_exposure",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu",
+        "device:cmdb:vpn-edge-02"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "appliance_id": "vpn-edge-02",
+        "firmware": "22.7R2.8",
+        "cves": "CVE-2026-104935,CVE-2025-22457,CVE-2025-0282,CVE-2024-21893,CVE-2023-46805,CVE-2024-21887,CVE-2020-3433,CVE-2020-3153,CVE-2020-8218,CVE-2021-22893,CVE-2020-8243,CVE-2021-22900,CVE-2021-22894,CVE-2020-8260,CVE-2021-22899,CVE-2019-11510,CVE-2019-11539"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F6",
+      "hypothesis_id": "H-infra",
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "24f361a8665e"
+      ],
+      "row_refs": [
+        "24f361a8665e#0",
+        "24f361a8665e#1",
+        "24f361a8665e#2",
+        "24f361a8665e#3",
+        "24f361a8665e#4"
+      ],
+      "attack": [
+        "T1133",
+        "T1190"
+      ],
+      "confidence": 0.7,
+      "kind": "kev_exposure",
+      "entity_ids": [
+        "account:idp:prof.kaya@aegean.edu",
+        "device:cmdb:vpn-edge-01"
+      ],
+      "facts": {
+        "upn": "prof.kaya@aegean.edu",
+        "appliance_id": "vpn-edge-01",
+        "firmware": "22.7R2.3",
+        "cves": "CVE-2026-104935,CVE-2025-22457,CVE-2025-0282,CVE-2024-21893,CVE-2023-46805,CVE-2024-21887,CVE-2020-3433,CVE-2020-3153,CVE-2020-8218,CVE-2021-22893,CVE-2020-8243,CVE-2021-22900,CVE-2021-22894,CVE-2020-8260,CVE-2021-22899,CVE-2019-11510,CVE-2019-11539"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Open a human-review ticket; attach the trace and the findings referenced above.",
+      "attack": [
+        "T1078.004",
+        "T1110.003",
+        "T1078",
+        "T1133",
+        "T1190"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Confidence is moderate (0.6) and based on correlated signals without a confirmed abuse chain.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "No confirmation whether VPN vulnerabilities were actively exploited on these appliances."
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "contain",
+    "confidence": 0.6,
+    "rationale": "Confirmed account takeover chain for prof.kaya@aegean.edu. F3 (0.85) verifies password spraying (T1110.003: 193.140.10.21 failed against 54 accounts / 60 failures) followed by a successful sign-in as this specific user (T1078). This is corroborated by F1 (impossible travel Manisa→Lisbon in 32 min) and F2 (sign-in from ASN outside baseline, Turkcell TR), which indicate the successful authentication was not the legitimate user's normal behavior. F4 (PT sign-ins) does not explain away the spray-success chain. F5/F6 (VPN appliances on CISA KEV firmware) add exposure context but are not required for the contain decision. The password-spray-then-success pattern meets the definition of contain = confirmed account takeover chain.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 3,
+  "budget": {
+    "sql_calls": 25,
+    "model_calls": 12
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_majbfzg9"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6zn401sh"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q1xbjsft"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5kyzydh0"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_uhkax6sh"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 12,
+  "model_steps_total": 12,
+  "trace_id": "mvkbdqnq_e294f810cb",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkbdqnq_e294f810cb/trace.jsonl",
+  "execution_time_seconds": 301.011
+}

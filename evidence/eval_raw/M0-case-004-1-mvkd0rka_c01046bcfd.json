@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkd0rka_c01046bcfd",
+  "case_id": "case-004",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.90. Confirmed account takeover pattern: three failed sign-ins followed by one successful sign-in for m.aslan@aegean.edu, all from the same external IP 185.213.44.9 (SprayNet AS, Moscow, RU). The successful portal sign-in had mfa_prompt_count=0 and no device_id, meaning no MFA challenge was issued/completed and no device context exists. Signing in from Russia via an AS literally named \"SprayNet\" is inconsistent with a legitimate Aegean University user. This is a credential-spray success indicating compromised credentials; immediate containment (disable account, force password reset, revoke active sessions) is required.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_fkas9fpb"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkd0rka_c01046bcfd",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkd0rka_c01046bcfd/trace.jsonl",
+  "execution_time_seconds": 13.046
+}

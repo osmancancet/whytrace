@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkd1re5_86445d7a36",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: BENIGN @ 0.82. New device PH-9900 appears only on 2026-10-18 from 78.187.4.44, but it matches the user's established normal location: same ASN (Turkcell), country (TR), and city (Manisa) as the known device LT-6002. The sign-in required MFA (mfa_prompt_count=1) and the MFA was approved, followed by a successful token — indicating positive user authentication rather than a silent credential-only compromise. There are no mail events (no inbox rules, forwarding, or anomalous mail access) and no follow-on activity suggesting takeover. The MFA approval from the same city/ISP explains the new-device alert (likely the user's new phone). Weak residual uncertainty remains that MFA could have been phished in real time, but with no geographic anomaly and successful MFA, the signal is best treated as explained and low priority.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6neno2yy"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkd1re5_86445d7a36",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkd1re5_86445d7a36/trace.jsonl",
+  "execution_time_seconds": 10.46
+}

@@ -1,0 +1,42 @@
+{
+  "run_id": "mvkd11mr_9bfcb39c77",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: BENIGN @ 0.82. The new inbox forwarding rule points to an internal archive mailbox (e.oz.archive@aegean.edu via OWA), not an external address, indicating likely legitimate user archiving rather than exfiltration. Sign-ins are highly consistent: same device (LT-7701), same app (mail), same IP (193.140.10.9, Turkcell, Manisa, TR), same daily time (08:10) across 8 days — matching Aegean University's Turkish geography and suggesting a stable personal device rather than an attacker. No impossible travel, no new devices, no MFA fatigue/anomaly beyond a remembered device (mfa_prompt_count 0). Suspicious signal is explained.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_o99og5w5"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvkd11mr_9bfcb39c77",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkd11mr_9bfcb39c77/trace.jsonl",
+  "execution_time_seconds": 33.385
+}

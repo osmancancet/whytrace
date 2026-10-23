@@ -1,0 +1,83 @@
+{
+  "run_id": "mvkcbk76_c9fa66f273",
+  "case_id": "case-007",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "Case-007 (a.sahin@aegean.edu) is assessed benign at confidence 0.75; the Risk Gate found that no compromise signal survived the Critic. No verified finding citations (F1…) exist to report.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Maintain standard monitoring for a.sahin@aegean.edu; no malicious activity was confirmed.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Confirm alert telemetry and log sources for this case are complete and functioning.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document the benign closure; revisit Risk Gate tuning if similar alerts recur.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Reopen triage only if new compromise indicators emerge for this account.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "No verified findings were available to map to specific ATT&CK techniques; conclusion rests on the Risk Gate's negative determination."
+  ],
+  "not_checked": [
+    "Individual endpoints, mailbox contents, and authentication logs for a.sahin@aegean.edu were not independently verified beyond the Risk Gate output."
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "Case case-007 (a.sahin@aegean.edu) has no surviving verified findings, no rejected claims, and no data-quality conflicts. With no confirmed account takeover chain, no exposure, and no weak unexplained or conflicting evidence, there is nothing to contain, monitor, or escalate. The case is assessed as benign.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 7,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_23dchcs8"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5r7vraz2"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_rqelw8s2"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvkcbk76_c9fa66f273",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkcbk76_c9fa66f273/trace.jsonl",
+  "execution_time_seconds": 100.664
+}

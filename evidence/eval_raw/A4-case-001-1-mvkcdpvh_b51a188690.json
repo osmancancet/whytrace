@@ -1,0 +1,401 @@
+{
+  "run_id": "mvkcdpvh_b51a188690",
+  "case_id": "case-001",
+  "verdict": "escalate",
+  "confidence": 0.6,
+  "summary": "F1 — Phishing mail from aegean-edu.co titled “Acil hesap doğrulaması” was delivered. F2 — An API-created inbox forward to d.yilmaz.payroll@gmail.com was observed. F3 — 38 SIS events occurred within 60 minutes from 185.220.101.7. F4 — Impossible travel from Amsterdam to Manisa in 234 minutes. F5 — Seven denied MFA pushes followed by one approval from 185.220.101.7. F6 — 47 sign-ins from BulwarkHost Ltd (NL) fell outside account baseline. F7 — Most sign-ins originate from NL (47 events). F8 — Password spray against 66 accounts from 193.140.10.44 preceded a successful login as this user.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 06:12:00.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "sql_id": "873b7220b21c"
+    },
+    {
+      "ts": "2026-10-14 06:52:00.0",
+      "event": "F5 MFA fatigue: 7 denied pushes followed by 1 approval from 185.220.101.7",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:52:00.0",
+      "event": "F6 Suspicious sign-ins from an ASN outside the account's baseline: BulwarkHost Ltd (NL), 47 event(s)",
+      "sql_id": "1c2e95f7f7fd"
+    },
+    {
+      "ts": "2026-10-14 06:53:00.0",
+      "event": "F5 MFA fatigue: 7 denied pushes followed by 1 approval from 185.220.101.7",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 06:53:00.0",
+      "event": "F6 Suspicious sign-ins from an ASN outside the account's baseline: BulwarkHost Ltd (NL), 47 event(s)",
+      "sql_id": "1c2e95f7f7fd"
+    },
+    {
+      "ts": "2026-10-14 06:54:00.0",
+      "event": "F6 Suspicious sign-ins from an ASN outside the account's baseline: BulwarkHost Ltd (NL), 47 event(s)",
+      "sql_id": "1c2e95f7f7fd"
+    },
+    {
+      "ts": "2026-10-14 06:59:00.0",
+      "event": "F5 MFA fatigue: 7 denied pushes followed by 1 approval from 185.220.101.7",
+      "sql_id": "5c43abe6296d"
+    },
+    {
+      "ts": "2026-10-14 07:03:00.0",
+      "event": "F2 Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "sql_id": "c31c680010e8"
+    },
+    {
+      "ts": "2026-10-14 07:37:25.0",
+      "event": "F3 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:38:36.0",
+      "event": "F3 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F3 Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 07:39:47.0",
+      "event": "F4 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    },
+    {
+      "ts": "2026-10-14 11:34:00.0",
+      "event": "F4 Impossible travel: Amsterdam → Manisa in 234 min",
+      "sql_id": "84a920bc05ca"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.co (subject=Acil hesap doğrulaması)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "873b7220b21c"
+      ],
+      "row_refs": [
+        "873b7220b21c#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "sender_domain": "aegean-edu.co",
+        "ts": "2026-10-14 06:12:00.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to d.yilmaz.payroll@gmail.com (created via api)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "c31c680010e8"
+      ],
+      "row_refs": [
+        "c31c680010e8#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "target": "d.yilmaz.payroll@gmail.com",
+        "via": "api",
+        "name": null,
+        "detail": "target=d.yilmaz.payroll@gmail.com via=api",
+        "event_id": "r:rule-001",
+        "ts": "2026-10-14 07:03:00.0"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Bulk student-information-system access: 38 successful SIS events within 60 min from 185.220.101.7",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84a920bc05ca"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#7",
+        "84a920bc05ca#8",
+        "84a920bc05ca#9",
+        "84a920bc05ca#10"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85,
+      "kind": "bulk_sis",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "185.220.101.7",
+        "events": 38
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H1",
+      "claim": "Impossible travel: Amsterdam → Manisa in 234 min",
+      "status": "LIKELY",
+      "sql_ids": [
+        "84a920bc05ca"
+      ],
+      "row_refs": [
+        "84a920bc05ca#6",
+        "84a920bc05ca#5"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "from_event": "evt_000047",
+        "to_event": "evt_000072",
+        "from_country": "NL",
+        "to_country": "TR",
+        "minutes": 234
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H2",
+      "claim": "MFA fatigue: 7 denied pushes followed by 1 approval from 185.220.101.7",
+      "status": "LIKELY",
+      "sql_ids": [
+        "5c43abe6296d"
+      ],
+      "row_refs": [
+        "5c43abe6296d#0",
+        "5c43abe6296d#1",
+        "5c43abe6296d#7"
+      ],
+      "attack": [
+        "T1621"
+      ],
+      "confidence": 0.9,
+      "kind": "mfa_fatigue",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "denies": 7,
+        "approves": 1,
+        "ip": "185.220.101.7"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F6",
+      "hypothesis_id": "H2",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: BulwarkHost Ltd (NL), 47 event(s)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "1c2e95f7f7fd"
+      ],
+      "row_refs": [
+        "1c2e95f7f7fd#0",
+        "1c2e95f7f7fd#1",
+        "1c2e95f7f7fd#2",
+        "1c2e95f7f7fd#3",
+        "1c2e95f7f7fd#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:185.220.101.7"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "asn_org": "BulwarkHost Ltd",
+        "country": "NL",
+        "ip": "185.220.101.7",
+        "first_ts": "2026-10-14 06:52:00.0",
+        "via_vpn_appliance": null,
+        "events": 47
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F7",
+      "hypothesis_id": "H2",
+      "claim": "Most sign-ins come from NL (47 events)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "362fb4c1c0c2"
+      ],
+      "row_refs": [
+        "362fb4c1c0c2#0"
+      ],
+      "attack": [],
+      "confidence": 0.5,
+      "kind": "foreign_majority",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "country": "NL"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F8",
+      "hypothesis_id": "H1",
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "status": "LIKELY",
+      "sql_ids": [
+        "87d3e67f95c6"
+      ],
+      "row_refs": [
+        "87d3e67f95c6#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:d.yilmaz@aegean.edu",
+        "ip:net:193.140.10.44"
+      ],
+      "facts": {
+        "upn": "d.yilmaz@aegean.edu",
+        "ip": "193.140.10.44",
+        "accounts": 66,
+        "failures": 71,
+        "first_ts": "2026-10-05 07:17:00.0",
+        "last_ts": "2026-10-13 14:14:00.0"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Remove the external forwarding rule, reset the account password, and revoke all active sessions.",
+      "attack": [
+        "T1114.003",
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Enable MFA number matching and block IPs 185.220.101.7 and 193.140.10.44 at the perimeter/IdP.",
+      "attack": [
+        "T1621",
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit SIS access for data exfiltration and impose geo-velocity / ASN baseline alerts.",
+      "attack": [
+        "T1213",
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Hunt for lateral movement using harvested credentials and preserve logs from the NL ASN.",
+      "attack": [
+        "T1078",
+        "T1566.002"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Confidence is moderate (0.6); several findings remain unconfirmed by the Risk Gate.",
+    "Escalation reason: model proposed contain, evidence policy says monitor"
+  ],
+  "not_checked": [
+    "Endpoint telemetry for the user’s device and outbound mail to the personal Gmail were not examined."
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "contain",
+    "confidence": 0.6,
+    "rationale": "Confirmed account takeover chain: phishing lure (aegean-edu.co, F1) led to password-spray success as this user (F8), followed by MFA fatigue with a final approval (F5) from 185.220.101.7, then creation of an external inbox forwarding rule to d.yilmaz.payroll@gmail.com (F2) and 38 bulk SIS events within 60 minutes from the same IP (F3). Corroborated by suspicious/BulwarkHost NL sign-ins and impossible travel (F4/F6). All findings are verified LIKELY (0.7–0.9), with no rejected claims or data-quality conflicts. This matches T1566.002 → T1110.003/T1078 → T1621 → T1114.003 → T1213, i.e., a confirmed compromise requiring immediate containment.",
+    "escalate_reasons": [
+      "model proposed contain, evidence policy says monitor"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 17,
+    "model_calls": 13
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ahk5ab2c"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_oelnlwhs"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_8ldb6r45"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 13,
+  "model_steps_total": 13,
+  "trace_id": "mvkcdpvh_b51a188690",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvkcdpvh_b51a188690/trace.jsonl",
+  "execution_time_seconds": 248.739
+}
