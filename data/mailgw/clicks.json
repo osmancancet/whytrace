@@ -8,6 +8,24 @@
       "url": "https://aegean-edu.co/verify",
       "url_domain": "aegean-edu.co",
       "user_ip": "193.140.10.44"
+    },
+    {
+      "click_id": "clk-ho01",
+      "ts": "2026-10-14T07:58:41.000Z",
+      "message_id": "msg-ho01-phish",
+      "upn": "z.korkmaz@aegean.edu",
+      "url": "https://docusign-aegean-share.com/s/aegean",
+      "url_domain": "docusign-aegean-share.com",
+      "user_ip": "193.140.10.44"
+    },
+    {
+      "click_id": "clk-ho08",
+      "ts": "2026-10-15T13:10:09.000Z",
+      "message_id": "msg-ho08-phish",
+      "upn": "g.sen@aegean.edu",
+      "url": "https://edevlet-burs-basvuru.com/giris",
+      "url_domain": "edevlet-burs-basvuru.com",
+      "user_ip": "193.140.10.62"
     }
   ]
 }

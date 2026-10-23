@@ -1,0 +1,7 @@
+{
+  "case_id": "ho-03",
+  "upn": "c.aydin@aegean.edu",
+  "source": "IdP (failures then success) + mail gateway",
+  "raised_at": "2026-10-08T23:00:00Z",
+  "symptom": "Student: six failures from a Frankfurt hosting IP, then a one-shot SMS approval; a forward-all-and-delete rule to a Proton address was created."
+}

@@ -17,6 +17,23 @@ import { tmpdir } from "node:os";
 import { join, resolve as resolvePath } from "node:path";
 import { Nightshift, RunTrace, Zetaris } from "../packages/adapters/src/index.ts";
 import { CaseMemory, evaluateModelOnly, evaluateRulesOnly, investigate, listDemoCases, type Report } from "../packages/agents/src/index.ts";
+import { HOLDOUT_CASES } from "../services/postgres-seed/src/holdout.ts";
+
+// DAY6: held-out cases are seeded as data but not registered inside the frozen
+// product code (DEMO_CASES in packages/agents/src/orchestrator.ts). The eval
+// script keeps its own lookup and injects `caseInfo` as an override. The
+// orchestrator path already accepts `caseInfo` without changes.
+type CaseInfo = { id: string; upn: string; expected: string; description?: string };
+function resolveCase(caseId: string): CaseInfo | undefined {
+  const dev = listDemoCases().find((c) => c.id === caseId);
+  if (dev) return { id: dev.id, upn: dev.upn, expected: dev.expected ?? "?", description: dev.description };
+  const ho = (HOLDOUT_CASES as Record<string, { upn: string; expected: string }>)[caseId];
+  if (ho) return { id: caseId, upn: ho.upn, expected: ho.expected, description: `Held-out case ${caseId} (blind label)` };
+  return undefined;
+}
+function allCaseIds(): string[] {
+  return [...listDemoCases().map((c) => c.id), ...Object.keys(HOLDOUT_CASES)];
+}
 
 function loadDotenv() {
   const path = resolvePath(process.cwd(), ".env");
@@ -69,7 +86,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNonce?: string): Promise<Report> {
   const trace = new RunTrace();
   const zetaris = new Zetaris({ trace, agent: "investigator" });
-  const caseInfo = listDemoCases().find((c) => c.id === caseId);
+  const caseInfo = resolveCase(caseId);
   const upn = caseInfo?.upn ?? "";
   if (v.kind === "rules") {
     return evaluateRulesOnly({ caseId, upn, zetaris, trace });
@@ -87,7 +104,14 @@ async function one(caseId: string, v: Variant, memory: CaseMemory | null, runNon
   if (v.kind === "model_only") {
     return evaluateModelOnly({ caseId, upn, description: caseInfo?.description, zetaris, nightshift, trace });
   }
-  return investigate({ caseId, trace, zetaris, nightshift, memory, ablate: v.ablate });
+  // Pass `caseInfo` as an orchestrator override for held-out cases (DAY6).
+  // Dev cases keep the implicit DEMO_CASES[caseId] lookup, so behavior there
+  // is unchanged.
+  const investigateOpts = { caseId, trace, zetaris, nightshift, memory, ablate: v.ablate } as const;
+  if (caseInfo && !listDemoCases().find((c) => c.id === caseId)) {
+    return investigate({ ...investigateOpts, caseInfo: { id: caseInfo.id, upn: caseInfo.upn, expected: caseInfo.expected as "contain" | "monitor" | "benign" | "escalate", description: caseInfo.description } });
+  }
+  return investigate(investigateOpts);
 }
 
 type HealthAttempt = { ts: string; attempt: number; status: string; detail?: string; routed_model?: string; receipt_id?: string };
@@ -146,7 +170,7 @@ function readTraceSummary(runId: string): { degraded: boolean; provider_failures
 async function main() {
   loadDotenv();
   const runs = Number(arg("runs", "3"));
-  const cases = arg("cases", listDemoCases().map((c) => c.id).join(",")).split(",");
+  const cases = arg("cases", listDemoCases().map((c) => c.id).join(",")).split(",").map((c) => c.trim()).filter(Boolean);
   const noHealthGate = process.argv.includes("--no-health-gate");
   const variants: Variant[] = [{ id: "A0", label: "full system", kind: "orchestrator" }];
   if (process.argv.includes("--ablations")) variants.push(
@@ -187,7 +211,7 @@ async function main() {
   }
 
   for (const v of variants) for (let run = 1; run <= runs; run++) for (const caseId of cases) {
-    const expected = listDemoCases().find((c) => c.id === caseId)?.expected ?? "?";
+    const expected = resolveCase(caseId)?.expected ?? "?";
     const started = Date.now();
     if (!healthy && (v.kind === "orchestrator" || v.kind === "model_only")) {
       rows.push({ variant: v.id, case_id: caseId, expected, run, verdict: "infra_unavailable", ok: false, confidence: 0, rounds: 0, sql: 0, model: 0, seconds: 0, rejected: 0, run_id: "-", judged: false, degraded: true, provider_failures: 0, routed_models: [], model_calls_ok: 0, model_calls_total: 0, model_calls_cached: 0, decided_by: "-", failure_classes: {}, error: "nightshift unavailable" });

@@ -1,0 +1,7 @@
+{
+  "case_id": "ho-01",
+  "upn": "z.korkmaz@aegean.edu",
+  "source": "Mail gateway + IdP",
+  "raised_at": "2026-10-14T08:30:00Z",
+  "symptom": "Purchasing officer: phishing click early morning; later the same hour mailbox hit from foreign ASNs with no device/no MFA; a new 'RSS Sync' rule filters invoice mail."
+}

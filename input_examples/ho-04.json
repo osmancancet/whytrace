@@ -1,0 +1,7 @@
+{
+  "case_id": "ho-04",
+  "upn": "n.guler@aegean.edu",
+  "source": "Mail gateway + user tip",
+  "raised_at": "2026-10-17T09:00:00Z",
+  "symptom": "Payroll staff: lookalike 'IBAN update' mail arrived the morning before; that evening a rule was created hiding bank/IBAN mail into an archive folder."
+}

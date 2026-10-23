@@ -1,0 +1,7 @@
+{
+  "case_id": "case-001",
+  "upn": "d.yilmaz@aegean.edu",
+  "source": "IdP risk engine + user ticket",
+  "raised_at": "2026-10-14T07:00:00Z",
+  "symptom": "User reports her inbox pushing MFA prompts she didn't start; new forwarding to an outside Gmail."
+}

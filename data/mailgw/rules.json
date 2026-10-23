@@ -63,6 +63,30 @@
       "action": "forward",
       "target": "a.sahin.copy@outlook.com",
       "created_via": "api"
+    },
+    {
+      "rule_id": "rule-ho01",
+      "ts": "2026-10-14T08:20:47.000Z",
+      "upn": "z.korkmaz@aegean.edu",
+      "action": "move",
+      "target": "RSS Feeds",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "rule-ho03",
+      "ts": "2026-10-08T22:49:02.000Z",
+      "upn": "c.aydin@aegean.edu",
+      "action": "forward",
+      "target": "c.aydin.ogr@proton.me",
+      "created_via": "owa"
+    },
+    {
+      "rule_id": "rule-ho04",
+      "ts": "2026-10-16T21:55:03.000Z",
+      "upn": "n.guler@aegean.edu",
+      "action": "move",
+      "target": "Arşiv-2026",
+      "created_via": "owa"
     }
   ]
 }

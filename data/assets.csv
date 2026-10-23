@@ -26,3 +26,15 @@ BG-46,mert.çelik16@aegean.edu,bg-16.aegean.edu,Linux,14.4.1,false,2026-10-16T12
 BG-47,jale.koç17@aegean.edu,bg-17.aegean.edu,macOS,14.4.1,false,2026-10-17T12:00:00Z,laptop,n/a,Manisa
 BG-48,tuğçe.avcı18@aegean.edu,bg-18.aegean.edu,macOS,Ubuntu 24.04,true,2026-10-18T12:00:00Z,phone,n/a,Manisa
 BG-49,jale.polat19@aegean.edu,bg-19.aegean.edu,Linux,Ubuntu 24.04,true,2026-10-19T12:00:00Z,desktop,n/a,Manisa
+dev-zk-01,z.korkmaz@aegean.edu,sat-zk-01.aegean.edu,Windows,11 23H2,true,2026-10-19T18:00:00Z,laptop,n/a,Manisa / Satın Alma
+dev-ho-mbp,h.ozturk@aegean.edu,ce-ho-mbp.aegean.edu,macOS,15.6,true,2026-10-18T18:00:00Z,laptop,n/a,Manisa / CE
+dev-lab-ce-07,h.ozturk@aegean.edu,ce-lab-07.aegean.edu,Windows,11 23H2,true,2026-10-11T23:47:00Z,desktop,n/a,Manisa / CE Lab
+dev-ca-phone,c.aydin@aegean.edu,bp-ca-phone.aegean.edu,Android,14,false,2026-10-18T18:00:00Z,phone,n/a,Manisa
+dev-ca-laptop,c.aydin@aegean.edu,bp-ca-lt.aegean.edu,Windows,11 23H2,false,2026-10-15T18:00:00Z,laptop,n/a,Manisa
+dev-ng-01,n.guler@aegean.edu,hr-ng-01.aegean.edu,Windows,11 23H2,true,2026-10-17T18:00:00Z,laptop,n/a,Manisa / Payroll
+dev-tb-laptop,t.bulut@aegean.edu,ba-tb-lt.aegean.edu,Windows,11 22H2,false,2026-10-18T18:00:00Z,laptop,n/a,Manisa
+dev-tb-phone,t.bulut@aegean.edu,ba-tb-phone,Android,14,false,2026-10-17T18:00:00Z,phone,n/a,Manisa
+dev-fy-pc,f.yildiz@aegean.edu,si-fy-pc.aegean.edu,Windows,11 23H2,true,2026-10-19T18:00:00Z,desktop,n/a,Manisa / Student Affairs
+dev-fy-phone,f.yildiz@aegean.edu,si-fy-phone,iOS,18.6,true,2026-10-19T18:00:00Z,phone,n/a,Manisa / Student Affairs
+dev-ke-ws,k.erdem@aegean.edu,it-ke-ws.aegean.edu,Windows,11 23H2,true,2026-10-17T18:00:00Z,desktop,n/a,Manisa / IT
+dev-gs-phone,g.sen@aegean.edu,bp-gs-phone,Android,15,false,2026-10-19T18:00:00Z,phone,n/a,Manisa

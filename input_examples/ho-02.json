@@ -1,0 +1,7 @@
+{
+  "case_id": "ho-02",
+  "upn": "h.ozturk@aegean.edu",
+  "source": "IdP unfamiliar-device alert",
+  "raised_at": "2026-10-11T22:00:00Z",
+  "symptom": "Faculty: a new managed desktop started signing into SIS late Saturday without MFA from a campus IP."
+}

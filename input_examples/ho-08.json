@@ -1,0 +1,7 @@
+{
+  "case_id": "ho-08",
+  "upn": "g.sen@aegean.edu",
+  "source": "Mail gateway (phish click)",
+  "raised_at": "2026-10-15T13:30:00Z",
+  "symptom": "Student clicked a KYK scholarship phish; four days of follow-up sign-ins look normal."
+}

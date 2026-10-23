@@ -1,0 +1,7 @@
+{
+  "case_id": "case-006",
+  "upn": "b.cetin@aegean.edu",
+  "source": "IdP unfamiliar-device alert",
+  "raised_at": "2026-10-18T07:30:00Z",
+  "symptom": "Sign-in from a never-seen phone on the same ISP as the usual laptop. User unreachable."
+}

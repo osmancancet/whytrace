@@ -1,0 +1,7 @@
+{
+  "case_id": "case-004",
+  "upn": "m.aslan@aegean.edu",
+  "source": "IdP risk engine (password spray)",
+  "raised_at": "2026-10-18T02:30:00Z",
+  "symptom": "Password-spray burst from one IP across 60 accounts followed by one success for the Library staff account."
+}

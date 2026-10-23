@@ -8,6 +8,7 @@ import { dirname, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seededRng } from "./rng.ts";
 import type { AssetRow, IdentitySeed, MailClick, MailDelivery, MailRule, SigninSeed, VpnSeed } from "./scenarios.ts";
+import { appendHoldout } from "./holdout.ts";
 
 const SEED = 20261022;
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -322,7 +323,7 @@ function writeMailSnapshots(suite: Suite) {
  *  Exported so the seed-stability test can lock the byte-level output. Resets
  *  the RNG stream so repeated calls in-process return identical data.
  */
-export function buildSuite(opts: { withCaseSeven?: boolean } = {}): { suite: Suite; identities: IdentitySeed[] } {
+export function buildSuite(opts: { withCaseSeven?: boolean; withHoldout?: boolean } = {}): { suite: Suite; identities: IdentitySeed[] } {
   resetRng(SEED);
   const suite: Suite = { signins: [], vpnSessions: [], deliveries: [], clicks: [], rules: [], assets: [] };
   const signinSeq = { n: 1 };
@@ -340,6 +341,13 @@ export function buildSuite(opts: { withCaseSeven?: boolean } = {}): { suite: Sui
     idents.push(CASE_SEVEN_IDENTITY);
   }
   suite.assets = buildAssets();
+  // DAY6 held-out cases ho-01 … ho-08 — strictly appended after case-007 so
+  // no earlier row shifts (checked by seed-stability tests). Opt-in so the
+  // historical fixture hashes continue to pass.
+  if (opts.withHoldout === true) {
+    const holdoutIdents = appendHoldout(suite, signinSeq);
+    idents.push(...holdoutIdents);
+  }
   // The bg identities depend on the RNG stream that noise consumes, so they
   // belong after addNoise in the output order. case-007's identity is appended
   // last so it does not shift any earlier row.
@@ -347,7 +355,7 @@ export function buildSuite(opts: { withCaseSeven?: boolean } = {}): { suite: Sui
 }
 
 async function main() {
-  const { suite, identities: allIdents } = buildSuite();
+  const { suite, identities: allIdents } = buildSuite({ withHoldout: true });
   writeAssetsCsv(suite.assets);
   writeMailSnapshots(suite);
 

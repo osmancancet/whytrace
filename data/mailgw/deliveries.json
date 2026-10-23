@@ -545,6 +545,45 @@
       "spf": "fail",
       "dkim": "none",
       "dmarc": "fail"
+    },
+    {
+      "message_id": "msg-ho01-phish",
+      "ts": "2026-10-14T07:52:10.000Z",
+      "sender": "sign@docusign-aegean-share.com",
+      "sender_domain": "docusign-aegean-share.com",
+      "recipient_upn": "z.korkmaz@aegean.edu",
+      "subject": "Satın alma sözleşmesi – imza bekliyor",
+      "verdict": "phish_suspect",
+      "url_count": 1,
+      "spf": "fail",
+      "dkim": "none",
+      "dmarc": "fail"
+    },
+    {
+      "message_id": "msg-ho04-phish",
+      "ts": "2026-10-16T06:12:40.000Z",
+      "sender": "hr@aegean-edu.com.tr",
+      "sender_domain": "aegean-edu.com.tr",
+      "recipient_upn": "n.guler@aegean.edu",
+      "subject": "Ekim maaş bordrosu düzeltmesi – IBAN güncelleme",
+      "verdict": "phish_suspect",
+      "url_count": 1,
+      "spf": "fail",
+      "dkim": "none",
+      "dmarc": "fail"
+    },
+    {
+      "message_id": "msg-ho08-phish",
+      "ts": "2026-10-15T13:02:44.000Z",
+      "sender": "burs@edevlet-burs-basvuru.com",
+      "sender_domain": "edevlet-burs-basvuru.com",
+      "recipient_upn": "g.sen@aegean.edu",
+      "subject": "KYK burs ödemeniz beklemede",
+      "verdict": "phish_suspect",
+      "url_count": 1,
+      "spf": "fail",
+      "dkim": "none",
+      "dmarc": "fail"
     }
   ]
 }

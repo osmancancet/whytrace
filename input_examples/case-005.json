@@ -1,0 +1,7 @@
+{
+  "case_id": "case-005",
+  "upn": "e.oz@aegean.edu",
+  "source": "Mail gateway rule change",
+  "raised_at": "2026-10-16T11:30:00Z",
+  "symptom": "User created a forwarding rule to a .edu alias — asked to double-check it's not malicious."
+}

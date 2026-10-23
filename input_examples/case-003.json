@@ -1,0 +1,7 @@
+{
+  "case_id": "case-003",
+  "upn": "s.demir@aegean.edu",
+  "source": "IT ops: KEV alert for vpn-edge-01",
+  "raised_at": "2026-10-17T22:00:00Z",
+  "symptom": "A student lab-admin signed in via vpn-edge-01 from a hosting ASN; the appliance firmware is on CISA KEV."
+}
