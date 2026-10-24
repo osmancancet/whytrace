@@ -29,7 +29,7 @@ export async function fetchTrace(id: string): Promise<TraceEvent[]> {
   return txt.split("\n").filter(Boolean).map((l) => JSON.parse(l) as TraceEvent);
 }
 
-export async function fetchQueries(id: string): Promise<Array<{ sql_id: string; sql: string; rows: number; ms: number; ts: string; status: string }>> {
+export async function fetchQueries(id: string): Promise<Array<{ sql_id: string; sql: string; rows: number; ms: number; ts: string; status: string; sha256?: string | null; rows_total?: number | null }>> {
   const r = await fetch(`${base}/runs/${id}/queries`);
   if (!r.ok) return [];
   const txt = await r.text();

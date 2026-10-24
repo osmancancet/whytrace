@@ -3,6 +3,7 @@
 // investigation and POST /runs/:id/approve to persist an audit entry. The real
 // Nightshift / Zetaris adapters do the work; nothing is faked here.
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync, appendFileSync, watch } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, resolve as resolvePath, join } from "node:path";
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { Nightshift, RunTrace, Zetaris } from "@whytrace/adapters";
@@ -168,6 +169,44 @@ function readLogFile(id: string, name: string): string | null {
   return readFileSync(path, "utf8");
 }
 
+// Canonical-JSON SHA-256 of a Zetaris sample response's returned rows. The
+// sample file has {headers, data[], total, timeUsed}; we hash only the headers
+// + the full `data` payload (not timeUsed, which jitters per re-run) via a
+// deterministic key sort so the same row set always produces the same digest.
+// Returns `null` when no sample file is on disk — honest about the limit.
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+  const keys = Object.keys(value as Record<string, unknown>).sort();
+  return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson((value as Record<string, unknown>)[k])).join(",") + "}";
+}
+
+function sampleSha256For(caseId: string | undefined, sqlId: string): { sha256: string; total: number } | null {
+  if (!caseId) return null;
+  const path = resolvePath(ROOT, "samples", caseId, "zetaris", `${sqlId}.json`);
+  if (!existsSync(path)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(path, "utf8")) as { headers?: unknown; data?: unknown; total?: number };
+    const canon = canonicalJson({ headers: raw.headers ?? [], data: raw.data ?? [] });
+    const sha = createHash("sha256").update(canon, "utf8").digest("hex");
+    return { sha256: sha, total: typeof raw.total === "number" ? raw.total : Array.isArray(raw.data) ? (raw.data as unknown[]).length : 0 };
+  } catch {
+    return null;
+  }
+}
+
+function caseIdForRun(runId: string): string | undefined {
+  if (!existsSync(OUTPUT_DIR)) return undefined;
+  for (const f of readdirSync(OUTPUT_DIR)) {
+    if (!f.endsWith(".json")) continue;
+    try {
+      const r = JSON.parse(readFileSync(join(OUTPUT_DIR, f), "utf8")) as Partial<Report>;
+      if (r.run_id === runId && typeof r.case_id === "string") return r.case_id;
+    } catch { /* skip */ }
+  }
+  return undefined;
+}
+
 async function main() {
   loadDotenv();
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
@@ -201,7 +240,24 @@ async function main() {
   app.get<{ Params: { id: string } }>("/runs/:id/queries", async (req, reply) => {
     const q = readLogFile(req.params.id, "queries.jsonl");
     if (q === null) return reply.code(404).send({ error: "queries not found" });
-    reply.type("application/x-ndjson").send(q);
+    // Evidence provenance: enrich each row with sha256(canonical JSON of the
+    // Zetaris result's {headers, data}) when the recorded sample is on disk.
+    // Null when the sample has not been recorded — honest about the limit.
+    const caseId = caseIdForRun(req.params.id);
+    const enriched = q
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          const row = JSON.parse(line) as { sql_id?: string; rows?: number };
+          const prov = row.sql_id ? sampleSha256For(caseId, row.sql_id) : null;
+          return JSON.stringify({ ...row, sha256: prov?.sha256 ?? null, rows_total: prov?.total ?? row.rows ?? null });
+        } catch {
+          return line;
+        }
+      })
+      .join("\n");
+    reply.type("application/x-ndjson").send(enriched);
     return reply;
   });
 

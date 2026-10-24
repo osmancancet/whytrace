@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { approveRun, fetchCases, fetchMarkovian, fetchQueries, fetchReport, fetchRuns, sendFeedback, startRun, subscribeStream } from "./api.ts";
+import { approveRun, fetchCases, fetchMarkovian, fetchQueries, fetchReport, fetchRuns, fetchTrace, sendFeedback, startRun, subscribeStream } from "./api.ts";
 import type { MarkovianSummary, Report, SavedRun, TraceEvent } from "./types.ts";
 
 type Case = { id: string; upn: string; expected?: string; description?: string };
-type QueryRow = { sql_id: string; sql: string; rows: number; ms: number; ts: string; status: string };
+type QueryRow = { sql_id: string; sql: string; rows: number; ms: number; ts: string; status: string; sha256?: string | null; rows_total?: number | null };
 
 export function App() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -63,6 +63,13 @@ export function App() {
         // Subscribe to the SSE replay stream (API tags it as mode="replay").
         if (stopRef.current) stopRef.current();
         stopRef.current = subscribeStream(id, (e) => setTrace((prev) => [...prev, e]), () => setLiveMode(false));
+      } else {
+        // Non-replay saved runs: fetch the recorded trace once so the
+        // "How this answer was made" panel can show per-call latency + tokens.
+        try {
+          const t = await fetchTrace(id);
+          if (t.length) setTrace(t);
+        } catch { /* non-fatal */ }
       }
     } catch (err) {
       setError((err as Error).message);
@@ -270,6 +277,8 @@ export function App() {
         </div>
         <h2 style={{ marginTop: 12 }}>Data quality</h2>
         <DqStrip dq={report?.dq ?? []} />
+        <h2 style={{ marginTop: 12 }}>How this answer was made</h2>
+        <HowItWasMade trace={trace} report={report} />
       </section>
 
       <footer className="sponsor-strip" aria-label="Sponsor strip">
@@ -590,8 +599,17 @@ function EvidenceDetail({ finding, queries, verdicts }: { finding: Report["findi
         <div key={q.sql_id} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span className="badge">{q.sql_id}</span>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--fg-dim)" }}>{q.rows} rows · {q.ms} ms · {q.status}</span>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--fg-dim)" }}>{q.rows_total ?? q.rows} rows · {q.ms} ms · {q.status} · {q.ts.slice(0, 19)}Z</span>
           </div>
+          {q.sha256 ? (
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--fg-dim)", marginTop: 2 }} title="SHA-256 of canonical JSON of the Zetaris result ({headers, data}); recomputed every page load from the recorded sample on disk.">
+              sha256 <span style={{ color: "var(--fg)" }}>{q.sha256.slice(0, 16)}</span>…{q.sha256.slice(-8)}
+            </div>
+          ) : (
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--fg-dim)", marginTop: 2 }} title="No recorded sample on disk for this sql_id — the SHA-256 provenance line is only shown for runs where samples/<case>/zetaris/<sql_id>.json exists.">
+              sha256 unavailable (no recorded sample)
+            </div>
+          )}
           <pre className="sql">{q.sql}</pre>
         </div>
       ))}
@@ -617,6 +635,68 @@ function EvidenceDetail({ finding, queries, verdicts }: { finding: Report["findi
       </div>
       <p style={{ marginTop: 6, color: "var(--fg-dim)", fontSize: 12 }}>Cited row offsets: {[...citedIndexes].join(", ") || "—"}</p>
     </div>
+  );
+}
+
+function HowItWasMade({ trace, report }: { trace: TraceEvent[]; report: Report | null }) {
+  // One row per model call: agent, routed_model, receipt_id, latency, tokens, cache flag.
+  // Pulled from the live trace stream (chat_nightshift events); for recorded
+  // runs the trace is replayed through SSE so this panel also fills in.
+  type Row = { ts: string; agent: string; action: string; routed_model: string; receipt_id?: string; ms?: number; completion_tokens?: number; cache_hit?: boolean; max_tokens?: number; retry_count?: number };
+  const rows: Row[] = (trace ?? []).filter((e) => (e.action ?? "").startsWith("chat_nightshift")).map((e) => ({
+    ts: e.ts, agent: e.agent, action: e.action, routed_model: e.routed_model ?? "", receipt_id: e.receipt_id,
+    ms: e.ms,
+    // These fields are present in the trace emitter but typed loosely in TraceEvent.
+    completion_tokens: (e as unknown as { completion_tokens?: number }).completion_tokens,
+    cache_hit: (e as unknown as { cache_hit?: boolean }).cache_hit,
+    max_tokens: (e as unknown as { max_tokens?: number }).max_tokens,
+    retry_count: e.retry_count,
+  }));
+  if (!rows.length && report?.models?.length) {
+    // Fallback for runs where the trace stream has not been subscribed to:
+    // use the Report's model receipts, which carry agent + routed_model + receipt_id.
+    return (
+      <table className="row-table" style={{ fontSize: 12 }}>
+        <thead><tr><th>agent</th><th>routed_model</th><th>receipt</th><th>latency</th><th>tokens</th><th>cache</th></tr></thead>
+        <tbody>
+          {report.models.map((m, i) => (
+            <tr key={i}>
+              <td>{m.agent}</td>
+              <td style={{ fontFamily: "var(--mono)" }}>{m.routed_model || "—"}</td>
+              <td style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{m.receipt_id ?? "—"}</td>
+              <td className="muted" title="Open the trace to see per-call latency and token usage.">—</td>
+              <td className="muted">—</td>
+              <td className="muted">—</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+  if (!rows.length) return <p style={{ color: "var(--fg-dim)" }}>No model calls recorded for this run yet (B0 rules-only runs have none).</p>;
+  return (
+    <table className="row-table" style={{ fontSize: 12 }}>
+      <thead>
+        <tr><th>#</th><th>ts</th><th>agent</th><th>action</th><th>routed_model</th><th>receipt</th><th>latency (ms)</th><th>completion tokens</th><th>max_tokens</th><th>cache</th><th>retries</th></tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i}>
+            <td>{i + 1}</td>
+            <td>{r.ts.slice(11, 19)}</td>
+            <td>{r.agent}</td>
+            <td style={{ fontFamily: "var(--mono)" }}>{r.action}</td>
+            <td style={{ fontFamily: "var(--mono)" }}>{r.routed_model.split("/").pop() || "—"}</td>
+            <td style={{ fontFamily: "var(--mono)", fontSize: 11 }}>{r.receipt_id ?? "—"}</td>
+            <td>{r.ms ?? "—"}</td>
+            <td>{r.completion_tokens ?? "—"}</td>
+            <td>{r.max_tokens ?? "—"}</td>
+            <td>{r.cache_hit === true ? "hit" : r.cache_hit === false ? "miss" : "—"}</td>
+            <td>{r.retry_count ?? 0}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
