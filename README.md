@@ -6,7 +6,7 @@ Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Expla
 
 ## TL;DR
 
-**Demo video (3:51):** https://youtu.be/CeU9bjrZ2zg · **Live replay:** https://osmancancet.github.io/whytrace/
+**Demo video (3:51):** https://youtu.be/CeU9bjrZ2zg · **Live replay:** https://osmancancet.github.io/whytrace/ · **Deck (PDF):** https://osmancancet.github.io/whytrace/WhyTrace_deck.pdf
 
 - **User:** one analyst in a university SOC, with Entra ID + a mail gateway + an asset CMDB + CISA KEV and no time to copy-paste across them.
 - **Problem:** phishing → account takeover is the most common incident; a wrong *benign* leaks student records, a wrong *contain* locks a lecturer out mid-exam.
