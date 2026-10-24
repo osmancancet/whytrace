@@ -105,7 +105,13 @@ export function policy(p: PolicyInput): PolicyDecision {
     const mfa = (p.mfaMethod ?? "").toLowerCase();
     const hasRawRuleEvent = (p.rawRuleEventCount ?? 0) > 0;
     if (phishExposure.length && !abuse.length && !credentialAccess.length && !exposure.length && !p.dqConflicts.length && !hasRawRuleEvent) {
-      const confBase = r2(Math.max(0.6, mean(phishExposure.map((f) => f.confidence)) - 0.05));
+      // Confidence floor is intentionally above `ESCALATE_BELOW + 0.1` so that
+      // `canStandUnderDegrade` (which deducts 0.1) still clears the escalate
+      // threshold — a planner glitch on an otherwise-clean exposure case must
+      // not force the verdict from `monitor` back to `escalate`. L4 is a
+      // defensive downgrade and its confidence reflects that it's based on
+      // the ABSENCE of downstream signal, which is a positive observation.
+      const confBase = r2(Math.max(ESCALATE_BELOW + 0.1, mean(phishExposure.map((f) => f.confidence)) - 0.05));
       const exposureNote = phishExposure.map((f) => ({ finding_id: f.id, claim: f.claim }));
       if (mfa === "none") {
         reasons.push(`phish exposure (${phishExposure.map((f) => f.id).join(",")}) on an account with mfa_method=none; the loss of a password without MFA is already compromise`);
