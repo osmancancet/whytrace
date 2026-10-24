@@ -1,0 +1,244 @@
+{
+  "run_id": "mvlluxd6_4c45b4a240",
+  "case_id": "ho-04",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "F1 confirms a spearphishing email (T1566.002) was delivered to n.guler@aegean.edu from aegean-edu.com.tr with an IBAN/payroll lure; no additional compromise signals (new ASN, device, rule, fatigue, bulk-SIS, or token replay) were observed in the follow-up window.",
+  "timeline": [
+    {
+      "ts": "2026-10-16 06:12:40.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+      "sql_id": "87aa8a8c7e11"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "87aa8a8c7e11",
+        "c84a1da608a3"
+      ],
+      "row_refs": [
+        "87aa8a8c7e11#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:n.guler@aegean.edu"
+      ],
+      "facts": {
+        "upn": "n.guler@aegean.edu",
+        "sender_domain": "aegean-edu.com.tr",
+        "ts": "2026-10-16 06:12:40.0",
+        "subject": "Ekim maaş bordrosu düzeltmesi – IBAN güncelleme",
+        "detail": "subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme",
+        "event_id": "d:msg-ho04-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "reason": "critic: vpn-edge-01 did not carry a sign-in for n.guler@aegean.edu; its KEV status is not relevant to this account's exposure"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Block aegean-edu.com.tr and lookalike domains at the email gateway; retroactively search delivered mail for the same lure to other recipients.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Force password reset and MFA re-enrollment for n.guler@aegean.edu; audit sign-ins and mailbox forwarding/inbox rules.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Send targeted phishing awareness to n.guler and payroll staff; warn against IBAN update links.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Assessment relies solely on F1; no post-delivery user activity or endpoint data was correlated.",
+    "Escalation reason: model proposed escalate, evidence policy says monitor",
+    "Escalation reason: confidence 0.65 < 0.7"
+  ],
+  "not_checked": [
+    "Mailbox audit logs, device endpoint telemetry, and DNS/proxy logs for link interaction were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 148,
+      "invalid": 0,
+      "scope": "account:n.guler@aegean.edu",
+      "sql_id": "fe6fdac725b8"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 148,
+      "invalid": 0,
+      "scope": "account:n.guler@aegean.edu",
+      "sql_id": "e3f7f785285f"
+    },
+    {
+      "table": "vpn_session",
+      "rule": "vpn_session_order",
+      "valid": 1,
+      "invalid": 12,
+      "scope": "appliance:vpn-edge-01",
+      "sql_id": "7663def5e66e"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for aegean-edu.com.tr",
+      "check_sql_id": "c84a1da608a3"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "vpn-edge-01 did not carry a sign-in for n.guler@aegean.edu; its KEV status is not relevant to this account's exposure",
+      "check_sql_id": "67badb46569e"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [
+    {
+      "finding_id": "F1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)"
+    }
+  ],
+  "explanation": {
+    "verdict": "monitor",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "87aa8a8c7e11",
+          "c84a1da608a3"
+        ],
+        "shapley": 0.75,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.8,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.8
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 as unsupported would leave zero surviving signals and the policy would call this benign.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "escalate",
+    "confidence": 0.65,
+    "rationale": "Verified evidence establishes only a confirmed spearphishing email delivery (F1, T1566.002, confidence 0.8) with a financial-fraud lure (IBAN/payroll update) to n.guler@aegean.edu. This confirms exposure/initial-access attempt but does not establish a completed account takeover chain (no evidence of link click, credential entry, valid-account use, or unauthorized access). It cannot be benign (suspicious signal not explained away; rejected VPN KEV claim is irrelevant to this account). It is not weak, so monitor does not fit. Insufficient evidence to contain per the confirmed-account-takeover definition; human investigation is required to determine whether the user interacted with the message or credentials were compromised.",
+    "escalate_reasons": [
+      "model proposed escalate, evidence policy says monitor",
+      "confidence 0.65 < 0.7"
+    ]
+  },
+  "rounds": 2,
+  "budget": {
+    "sql_calls": 22,
+    "model_calls": 4
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q3x6uzys"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_kv3s3v4q"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_64n8wrlg"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_to4aiimf"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 4,
+  "model_steps_total": 4,
+  "trace_id": "mvlluxd6_4c45b4a240",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlluxd6_4c45b4a240/trace.jsonl",
+  "execution_time_seconds": 53.665
+}

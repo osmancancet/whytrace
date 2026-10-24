@@ -1,0 +1,36 @@
+{
+  "run_id": "mvlm0n1f_025116979a",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.8,
+  "summary": "B0 rules-only baseline: CONTAIN. impossible travel: DE ↔ TR ~2348 km in 0.3 h; impossible travel: DE ↔ TR ~2348 km in 0.2 h; impossible travel: DE ↔ TR ~2348 km in 0.0 h; impossible travel: TR ↔ DE ~2348 km in 0.0 h; sign-in from new ASN(s): AS60068 Datacamp Limited; external email forwarding rule detected: target=c.aydin.ogr@proton.me via=owa",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "decided_by": "rules_only",
+  "model_steps_ok": 0,
+  "model_steps_total": 0,
+  "trace_id": "mvlm0n1f_025116979a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm0n1f_025116979a/trace.jsonl",
+  "execution_time_seconds": 0.512
+}

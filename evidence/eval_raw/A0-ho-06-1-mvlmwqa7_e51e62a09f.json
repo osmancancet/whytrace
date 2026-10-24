@@ -1,0 +1,136 @@
+{
+  "run_id": "mvlmwqa7_e51e62a09f",
+  "case_id": "ho-06",
+  "verdict": "benign",
+  "confidence": 0.85,
+  "summary": "Case ho-06 (f.yildiz@aegean.edu) is assessed as benign (confidence 0.85). No compromise signal survived Critic review. The claimed 100 SIS successes from 193.140.10.21 were re-counted as 461, within tolerance. The alleged password spray was rejected; 193.140.10.21 is shared egress with 202 distinct MFA accounts in 30 days, and failures are background noise.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Bulk student-information-system access: 100 successful SIS events within 60 min from 193.140.10.21",
+      "reason": "critic: claimed 100 SIS successes from 193.140.10.21 but independent re-count returns 461 (tolerance 47 = 10 %)"
+    },
+    {
+      "claim": "Password spray then success: 193.140.10.21 failed against 54 accounts (60 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.21 looks like shared egress: 202 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Monitor 193.140.10.21 for recurring SIS access anomalies and correlate with user HR status.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Tune password-spray detection to exclude shared egress IPs exhibiting high MFA account diversity.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Verify MFA enrollment and recent device logins for f.yildiz@aegean.edu.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Assessment relies on authentication and SIS logs; no endpoint or email telemetry was analyzed."
+  ],
+  "not_checked": [
+    "Email access, SIS data exports, and device integrity for the subject account were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 582,
+      "invalid": 0,
+      "scope": "account:f.yildiz@aegean.edu",
+      "sql_id": "a9003bef5406"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 582,
+      "invalid": 0,
+      "scope": "account:f.yildiz@aegean.edu",
+      "sql_id": "b7b8d90c9c13"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "claimed 100 SIS successes from 193.140.10.21 but independent re-count returns 461 (tolerance 47 = 10 %)",
+      "check_sql_id": "7b15fe300be9"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "193.140.10.21 looks like shared egress: 202 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "94be0aa15c28"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.85,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.85,
+    "rationale": "No surviving verified findings exist for f.yildiz@aegean.edu. Both suspicious claims were rejected with explanatory evidence: (1) the claimed 100 SIS successes from 193.140.10.21 fails independent recount (461 events, outside the 10% tolerance), and (2) the alleged password-spray-then-success is explained by 193.140.10.21 being shared egress — 202 distinct accounts completed MFA from that IP in 30 days (threshold 10), making cross-account failures expected background noise rather than a coordinated spray. With all signals explained away and no confirmed account takeover chain, the case is benign.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 15,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_tau5ff0u"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_r8iqy4br"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_fcv2h4gr"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlmwqa7_e51e62a09f",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlmwqa7_e51e62a09f/trace.jsonl",
+  "execution_time_seconds": 24.248
+}

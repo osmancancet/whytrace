@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnpmgw_b5147ed997",
+  "case_id": "ho-02",
+  "verdict": "monitor",
+  "confidence": 0.65,
+  "summary": "M0 model-only verdict: MONITOR @ 0.65. Account h.ozturk@aegean.edu shows a long-standing baseline from device dev-ho-mbp: daytime on-campus access (193.140.10.45, AS-AEGEAN-EDU, Manisa, mail/sis/lms, no MFA) and evening remote access via TTNET (198.51.100.40) with MFA approved through VPN appliance vpn-edge-02 (lms/vpn). On 2026-10-11 a previously unseen device, dev-lab-ce-07 (193.140.10.87, same AS-AEGEAN-EDU/Manisa), appears in the evening immediately after the user's normal VPN MFA login and repeatedly accesses lms/sis at exact ~24-minute intervals for over two hours with no MFA prompts. No mail events are available to check for rules/forwarding, and no overt malicious actions (password changes, external exfil, impossible travel) are observed — all activity is within Turkey, Manisa, on the trusted university AS. The new device plus clockwork automation is an unexplained anomaly, but it is not confirmed takeover (same trusted network/city, no confirmed malicious action), so it does not meet the contain threshold; it is not fully explained as benign either; escalation is not required because evidence is adequate but ambiguous rather than insufficient/exposure-based. Recommend moni",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_x7bkj6i6"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnpmgw_b5147ed997",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnpmgw_b5147ed997/trace.jsonl",
+  "execution_time_seconds": 21.435
+}

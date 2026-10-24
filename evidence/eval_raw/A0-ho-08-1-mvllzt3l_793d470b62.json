@@ -1,0 +1,289 @@
+{
+  "run_id": "mvllzt3l_793d470b62",
+  "case_id": "ho-08",
+  "verdict": "monitor",
+  "confidence": 0.7,
+  "summary": "Verdict: monitor (confidence 0.7). F1 confirms delivery of a phishing email from edevlet-burs-basvuru.com with KYK burs subject line (T1566.002). F2 confirms the user clicked the link to the same domain (T1204.001). No new ASN, device, rule, fatigue, bulk-SIS, or token-replay signals survived the follow-up window.",
+  "timeline": [
+    {
+      "ts": "2026-10-15 13:02:44.0",
+      "event": "F1 Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "sql_id": "1cf83dc33a92"
+    },
+    {
+      "ts": "2026-10-15 13:10:09.0",
+      "event": "F2 User clicked a link to edevlet-burs-basvuru.com",
+      "sql_id": "82d86197585c"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "1cf83dc33a92",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "1cf83dc33a92#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "sender_domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:02:44.0",
+        "subject": "KYK burs ödemeniz beklemede",
+        "detail": "subject=KYK burs ödemeniz beklemede",
+        "event_id": "d:msg-ho08-phish"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "User clicked a link to edevlet-burs-basvuru.com",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "82d86197585c",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "82d86197585c#0"
+      ],
+      "attack": [
+        "T1204.001"
+      ],
+      "confidence": 0.7,
+      "kind": "click",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:10:09.0"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Block edevlet-burs-basvuru.com at the email gateway and web proxy; hunt for additional recipients of the same lure.",
+      "attack": [
+        "T1566.002",
+        "T1204.001"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Reset g.sen@aegean.edu credentials and review recent login/VPN logs for anomalous access.",
+      "attack": [
+        "T1204.001"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Issue targeted phishing awareness refresher to the user and similar departments.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Monitor for follow-on payload delivery or credential reuse for 30 days.",
+      "attack": [
+        "T1566.002",
+        "T1204.001"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Limited to verified email delivery and click telemetry; full mailbox and endpoint forensics were not performed."
+  ],
+  "not_checked": [
+    "Endpoint EDR logs, mailbox inbox rules, and downstream credential use were not checked in this cycle."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "5a3a5ad5dea2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "8c2354c28414"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for edevlet-burs-basvuru.com",
+      "check_sql_id": "0985c067c3ba"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "clicked domain edevlet-burs-basvuru.com matches a phish_suspect delivery",
+      "check_sql_id": "0985c067c3ba"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [
+    {
+      "finding_id": "F1",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)"
+    },
+    {
+      "finding_id": "F2",
+      "claim": "User clicked a link to edevlet-burs-basvuru.com"
+    }
+  ],
+  "explanation": {
+    "verdict": "monitor",
+    "confidence": 0.7,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "1cf83dc33a92",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.4,
+        "rank": 1
+      },
+      {
+        "finding_id": "F2",
+        "claim": "User clicked a link to edevlet-burs-basvuru.com",
+        "attack": [
+          "T1204.001"
+        ],
+        "sql_ids": [
+          "82d86197585c",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.3,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "monitor",
+          "confidence_without": 0.65,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "monitor",
+          "confidence_without": 0.75,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 as unsupported would leave zero surviving signals and the policy would call this benign.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1",
+        "F2"
+      ],
+      "cited_ids": [
+        "F1",
+        "F2"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": 1,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "monitor",
+    "policy_decision": "monitor",
+    "model_decision": "monitor",
+    "confidence": 0.7,
+    "rationale": "Verified evidence confirms phishing delivery (F1, T1566.002) and a user click on the malicious domain (F2, T1204.001). This is a real, unexplained suspicious signal, but there is no confirmed credential submission, credential reuse, successful logon, MFA bypass, mail-forwarding rule, or other account-takeover activity to justify \"contain.\" The signals are consistent (no conflict/exposure), so \"escalate\" is not required, and the click is not explained away, so \"benign\" does not apply. Appropriate action: monitor the account for follow-on compromise indicators (anomalous logins, password resets, inbox rules, sent mail).",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_l1tqt916"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_nlmxsqxd"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_oswc772k"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvllzt3l_793d470b62",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvllzt3l_793d470b62/trace.jsonl",
+  "execution_time_seconds": 32.387
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlno83a_b7e6bfeb39",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.90. Confirmed account takeover of a privileged lab-admin account. All 8 sign-ins originate from a single non-university Cloudvault VPS IP (45.142.10.9, Frankfurt, DE) via the flagged vulnerable VPN appliance (vpn-edge-01), with empty device_id. MFA was approved once at 21:31, followed immediately by 7 more successes across portal/lms with zero MFA prompts, consistent with session/cookie reuse or appliance-based MFA bypass after initial compromise. The rapid, automated portal/lms alternation and foreign VPS geolocation are unexplained by legitimate use. No contradicting benign evidence (no mail events, no known travel/VPN context). Contain is warranted to reset credentials, revoke sessions, and isolate the appliance exposure.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q0ouj8bs"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlno83a_b7e6bfeb39",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlno83a_b7e6bfeb39/trace.jsonl",
+  "execution_time_seconds": 8.471
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm3ooq_3db777e32e",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for c.aydin@aegean.edu. The account's normal pattern is dual daily logins from Manisa, Turkey: campus laptop (AS-AEGEAN-EDU, dev-ca-laptop) midday and mobile phone (Turkcell, dev-ca-phone) evenings. On 2026-10-08, an unknown device (dev-unk-7f3a) from 192.0.2.61 (AS60068 Datacamp Limited, Frankfurt, DE) performed 6 portal authentication failures, then an MFA-approved portal login, followed by mail and SIS access from that same foreign device/IP. Minutes later, a mail flow rule was created forwarding mail to c.aydin.ogr@proton.me via OWA — classic ATO persistence/exfiltration. The legitimate user's normal Manisa logins also continued, consistent with concurrent attacker and legitimate user access. This meets the \"contain\" definition: confirmed account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_7juqlv2o"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm3ooq_3db777e32e",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm3ooq_3db777e32e/trace.jsonl",
+  "execution_time_seconds": 4.697
+}

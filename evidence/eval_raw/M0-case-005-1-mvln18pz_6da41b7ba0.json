@@ -1,0 +1,43 @@
+{
+  "run_id": "mvln18pz_6da41b7ba0",
+  "case_id": "case-005",
+  "verdict": "benign",
+  "confidence": 0.78,
+  "summary": "M0 model-only verdict: BENIGN @ 0.78. All eight sign-ins come from a single consistent IP (Turkcell, Manisa, TR), one device (LT-7701), one app (mail), same daily time — a stable, geographically coherent pattern consistent with aegean.edu's location in Turkey. MFA prompt count of 0 is explained by a remembered/trusted device rather than MFA bypass. The only mail event is an inbox forwarding rule to e.oz.archive@aegean.edu, an internal same-domain archive target via OWA — not external exfiltration. No impossible travel, new devices, external forwarding targets, or anomalous authentication signals. The forwarding rule is adequately explained as legitimate internal archive forwarding, so the suspicious signal is accounted for.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_oqsucr8f"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvln18pz_6da41b7ba0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvln18pz_6da41b7ba0/trace.jsonl",
+  "execution_time_seconds": 5.834
+}

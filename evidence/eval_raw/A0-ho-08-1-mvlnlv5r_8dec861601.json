@@ -1,0 +1,223 @@
+{
+  "run_id": "mvlnlv5r_8dec861601",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.75,
+  "summary": "F1 confirms a phishing email (subject: KYK burs ödemeniz beklemede) delivered from edevlet-burs-basvuru.com via T1566.002 to g.sen@aegean.edu. No follow-up signals survived; model step degraded. Escalate at confidence 0.75.",
+  "timeline": [
+    {
+      "ts": "2026-10-15 13:02:44.0",
+      "event": "F1 Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "sql_id": "1cf83dc33a92"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "1cf83dc33a92",
+        "0985c067c3ba"
+      ],
+      "row_refs": [
+        "1cf83dc33a92#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:g.sen@aegean.edu"
+      ],
+      "facts": {
+        "upn": "g.sen@aegean.edu",
+        "sender_domain": "edevlet-burs-basvuru.com",
+        "ts": "2026-10-15 13:02:44.0",
+        "subject": "KYK burs ödemeniz beklemede",
+        "detail": "subject=KYK burs ödemeniz beklemede",
+        "event_id": "d:msg-ho08-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Block sender domain edevlet-burs-basvuru.com and linked URLs at the email gateway.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Search delivery logs for the KYK burs subject and quarantine matching messages.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Alert g.sen@aegean.edu and initiate phishing user-report/awareness response.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Hunt for post-phish credential use or anomalous logins from the affected account.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "No surviving ASN, device, rule, fatigue, bulk-SIS, or token-replay signals; correlation is limited to the single confirmed email.",
+    "Model step degradation reduces confidence in broader campaign context.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "Token replay and bulk-SIS indicators were not verified because the model step was degraded.",
+    "Follow-up device/ASN changes were not observed in the clean window."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "5a3a5ad5dea2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 130,
+      "invalid": 0,
+      "scope": "account:g.sen@aegean.edu",
+      "sql_id": "8c2354c28414"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for edevlet-burs-basvuru.com",
+      "check_sql_id": "0985c067c3ba"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [
+    {
+      "finding_id": "F1",
+      "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)"
+    }
+  ],
+  "explanation": {
+    "verdict": "monitor",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from edevlet-burs-basvuru.com (subject=KYK burs ödemeniz beklemede)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "1cf83dc33a92",
+          "0985c067c3ba"
+        ],
+        "shapley": 0.75,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 as unsupported would leave zero surviving signals and the policy would call this benign.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "monitor",
+    "model_decision": "escalate",
+    "confidence": 0.75,
+    "rationale": "Verified finding F1 (CONFIRMED, 0.8) confirms a phishing-suspect email (T1566.002, spearphishing link) was delivered to g.sen@aegean.edu from edevlet-burs-basvuru.com. This constitutes exposure: a malicious message reached a university account. However, there is no verified evidence of user interaction (click, credential entry) or any subsequent account takeover chain, so the containment threshold (confirmed ATO chain) is not met. The signal is confirmed rather than weak (ruling out monitor) and is not explained away (ruling out benign). Because there is exposure with insufficient evidence to determine compromise, human review is needed to decide whether to contain or close.",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 9,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_zn7nhh7p"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2bzefgmc"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 2,
+  "model_steps_total": 3,
+  "trace_id": "mvlnlv5r_8dec861601",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnlv5r_8dec861601/trace.jsonl",
+  "execution_time_seconds": 77.065
+}

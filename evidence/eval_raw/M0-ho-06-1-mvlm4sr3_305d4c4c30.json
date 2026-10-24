@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm4sr3_305d4c4c30",
+  "case_id": "ho-06",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. All sign-in events are consistent, successful authentications from the same device (dev-fy-pc), same IP (193.140.10.21), same university ASN (AS-AEGEAN-EDU), same location (TR/Manisa), across mail and sis apps, with zero MFA prompts and no VPN appliance involvement. There are no failed logins, impossible travel, new devices, new geolocations, MFA fatigue, or mail events indicating compromise. The alert appears to be a false positive or noise with no unexplained suspicious signals.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ooh14tcj"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm4sr3_305d4c4c30",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm4sr3_305d4c4c30/trace.jsonl",
+  "execution_time_seconds": 4.087
+}

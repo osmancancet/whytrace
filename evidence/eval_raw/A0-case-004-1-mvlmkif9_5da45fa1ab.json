@@ -1,0 +1,414 @@
+{
+  "run_id": "mvlmkif9_5da45fa1ab",
+  "case_id": "case-004",
+  "verdict": "contain",
+  "confidence": 0.85,
+  "summary": "F3: IP 185.213.44.9 performed password spraying against 60 accounts before successfully signing in as m.aslan@aegean.edu. F2: Four sign-ins came from SprayNet AS (RU), outside the account baseline. F4: The same IP swept 60 unique UPNs across 10 time windows, including this account. F1: Most sign-ins originated from Russia across four events.",
+  "timeline": [
+    {
+      "ts": "2026-10-18 02:00:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: SprayNet AS (RU), 4 event(s)",
+      "sql_id": "03b8967eb2cb"
+    },
+    {
+      "ts": "2026-10-18 02:08:30.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: SprayNet AS (RU), 4 event(s)",
+      "sql_id": "03b8967eb2cb"
+    },
+    {
+      "ts": "2026-10-18 02:17:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: SprayNet AS (RU), 4 event(s)",
+      "sql_id": "03b8967eb2cb"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Most sign-ins come from RU (4 events)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "0c4b60319b65"
+      ],
+      "row_refs": [
+        "0c4b60319b65#0"
+      ],
+      "attack": [],
+      "confidence": 0.5,
+      "kind": "foreign_majority",
+      "entity_ids": [
+        "account:idp:m.aslan@aegean.edu"
+      ],
+      "facts": {
+        "upn": "m.aslan@aegean.edu",
+        "country": "RU"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: SprayNet AS (RU), 4 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "03b8967eb2cb",
+        "f5a5bc3a2e3e"
+      ],
+      "row_refs": [
+        "03b8967eb2cb#0",
+        "03b8967eb2cb#1",
+        "03b8967eb2cb#2",
+        "03b8967eb2cb#3"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:m.aslan@aegean.edu",
+        "ip:net:185.213.44.9"
+      ],
+      "facts": {
+        "upn": "m.aslan@aegean.edu",
+        "asn_org": "SprayNet AS",
+        "country": "RU",
+        "ip": "185.213.44.9",
+        "first_ts": "2026-10-18 02:00:00.0",
+        "via_vpn_appliance": null,
+        "events": 4
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "h1",
+      "claim": "Password spray then success: 185.213.44.9 failed against 60 accounts (140 failures) and later signed in as this user",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "0c5d5e595054",
+        "32521477432f"
+      ],
+      "row_refs": [
+        "0c5d5e595054#0"
+      ],
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "confidence": 0.85,
+      "kind": "password_spray",
+      "entity_ids": [
+        "account:idp:m.aslan@aegean.edu",
+        "ip:net:185.213.44.9"
+      ],
+      "facts": {
+        "upn": "m.aslan@aegean.edu",
+        "ip": "185.213.44.9",
+        "accounts": 60,
+        "failures": 140,
+        "first_ts": "2026-10-18 02:00:00.0",
+        "last_ts": "2026-10-18 02:19:41.5"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H-spray",
+      "claim": "Password-spray roster from 185.213.44.9 (Markovian sweep across 10 time window(s)): 60 unique UPNs failed; this account appears in the roster.",
+      "status": "LIKELY",
+      "sql_ids": [
+        "e7bb199d1b22",
+        "c4f7d96c0d01",
+        "06a1ffec62ba",
+        "afb734103a47",
+        "83811edd1a17",
+        "9cf22c39c169",
+        "e1aaa6e41d1b",
+        "59af5444ecc0",
+        "21c801c44c5a",
+        "13378cb8b4d8",
+        "8f120468c9b2"
+      ],
+      "row_refs": [],
+      "attack": [
+        "T1110.003"
+      ],
+      "confidence": 0.7,
+      "kind": "spray_roster",
+      "entity_ids": [
+        "account:idp:m.aslan@aegean.edu",
+        "ip:net:185.213.44.9"
+      ],
+      "facts": {
+        "ip": "185.213.44.9",
+        "victims": "bg0.spray@aegean.edu,bg1.spray@aegean.edu,bg10.spray@aegean.edu,bg11.spray@aegean.edu,bg12.spray@aegean.edu,bg13.spray@aegean.edu,bg14.spray@aegean.edu,bg15.spray@aegean.edu,bg16.spray@aegean.edu,bg17.spray@aegean.edu,bg18.spray@aegean.edu,bg19.spray@aegean.edu,bg2.spray@aegean.edu,bg20.spray@aegean.edu,bg21.spray@aegean.edu,bg22.spray@aegean.edu,bg23.spray@aegean.edu,bg24.spray@aegean.edu,bg25.spray@aegean.edu,bg26.spray@aegean.edu,bg27.spray@aegean.edu,bg28.spray@aegean.edu,bg29.spray@aegean.edu,bg3.spray@aegean.edu,bg30.spray@aegean.edu,bg31.spray@aegean.edu,bg32.spray@aegean.edu,bg33.spray@aegean.edu,bg34.spray@aegean.edu,bg35.spray@aegean.edu,bg36.spray@aegean.edu,bg37.spray@aegean.edu,bg38.spray@aegean.edu,bg39.spray@aegean.edu,bg4.spray@aegean.edu,bg40.spray@aegean.edu,bg41.spray@aegean.edu,bg42.spray@aegean.edu,bg43.spray@aegean.edu,bg44.spray@aegean.edu,bg45.spray@aegean.edu,bg46.spray@aegean.edu,bg47.spray@aegean.edu,bg48.spray@aegean.edu,bg49.spray@aegean.edu,bg5.spray@aegean.edu,bg50.spray@aegean.edu,bg51.spray@aegean.edu,bg52.spray@aegean.edu,bg53.spray@aegean.edu,bg54.spray@aegean.edu,bg55.spray@aegean.edu,bg56.spray@aegean.edu,bg57.spray@aegean.edu,bg58.spray@aegean.edu,bg6.spray@aegean.edu,bg7.spray@aegean.edu,bg8.spray@aegean.edu,bg9.spray@aegean.edu,m.aslan@aegean.edu",
+        "unique_victims": 60,
+        "windows": 10,
+        "token_label": "measured",
+        "measured_tokens_total": 5929,
+        "model_calls": 10
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Reset password and revoke all active sessions for m.aslan@aegean.edu; investigate sign-ins from 185.213.44.9 and SprayNet AS (RU).",
+      "attack": [
+        "T1110.003",
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block IP 185.213.44.9 at the perimeter and restrict authentication from non-baseline ASNs.",
+      "attack": [
+        "T1078.004",
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Enforce MFA and account lockout thresholds to prevent further password-spray success.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Scan the 60-UPN spray roster for additional compromised accounts.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Low-confidence F1 (0.5) adds limited evidentiary weight beyond confirmed findings F2 and F3. No rejected claims were supplied; additional alert sources may remain unreviewed."
+  ],
+  "not_checked": [
+    "Post-compromise activity (mailbox access, lateral movement) after the successful sign-in. Endpoint telemetry and MFA enrollment status for m.aslan@aegean.edu."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 4,
+      "invalid": 0,
+      "scope": "account:m.aslan@aegean.edu",
+      "sql_id": "1c7b8acc2dfb"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 4,
+      "invalid": 0,
+      "scope": "account:m.aslan@aegean.edu",
+      "sql_id": "d68db91f2b91"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "no independent check for this signal; kept as LIKELY"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "4 sign-in(s) from SprayNet AS; not via university VPN, no managed device",
+      "check_sql_id": "f5a5bc3a2e3e"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "185.213.44.9: failures against 60 accounts and 1 success as m.aslan@aegean.edu",
+      "check_sql_id": "32521477432f"
+    },
+    {
+      "finding_id": "F4",
+      "status": "approved",
+      "reason": "independent re-count confirms 60 victims from 185.213.44.9; alerting user not in roster",
+      "check_sql_id": "8f120468c9b2"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "contain",
+    "confidence": 0.85,
+    "mode": "exact",
+    "n_findings": 4,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F3",
+        "claim": "Password spray then success: 185.213.44.9 failed against 60 accounts (140 failures) and later signed in as this user",
+        "attack": [
+          "T1110.003",
+          "T1078"
+        ],
+        "sql_ids": [
+          "0c5d5e595054",
+          "32521477432f"
+        ],
+        "shapley": 0.85,
+        "rank": 1
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Most sign-ins come from RU (4 events)",
+        "attack": [],
+        "sql_ids": [
+          "0c4b60319b65"
+        ],
+        "shapley": 0,
+        "rank": 2
+      },
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: SprayNet AS (RU), 4 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "03b8967eb2cb",
+          "f5a5bc3a2e3e"
+        ],
+        "shapley": 0,
+        "rank": 3
+      },
+      {
+        "finding_id": "F4",
+        "claim": "Password-spray roster from 185.213.44.9 (Markovian sweep across 10 time window(s)): 60 unique UPNs failed; this account appears in the roster.",
+        "attack": [
+          "T1110.003"
+        ],
+        "sql_ids": [
+          "e7bb199d1b22",
+          "c4f7d96c0d01",
+          "06a1ffec62ba",
+          "afb734103a47",
+          "83811edd1a17",
+          "9cf22c39c169",
+          "e1aaa6e41d1b",
+          "59af5444ecc0",
+          "21c801c44c5a",
+          "13378cb8b4d8",
+          "8f120468c9b2"
+        ],
+        "shapley": 0,
+        "rank": 4
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "contain",
+          "confidence_without": 0.85,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "contain",
+          "confidence_without": 0.85,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F3",
+          "verdict_without": "escalate",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        },
+        {
+          "finding_id": "F4",
+          "verdict_without": "contain",
+          "confidence_without": 0.85,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F3"
+        ],
+        "verdict": "escalate",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "escalate",
+      "explanation": "Removing F3 would drop the chain below the \"≥2 confirmed abuse OR 1 abuse + 2 access\" threshold, so the policy would escalate for human review.",
+      "blocking_findings": [
+        "F3"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F3",
+        "F1",
+        "F2"
+      ],
+      "cited_ids": [
+        "F3",
+        "F2",
+        "F4",
+        "F1"
+      ],
+      "overlap": 3,
+      "score": 1,
+      "precision": 0.75,
+      "kendall_tau": 0.3333,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "model_decision": "contain",
+    "confidence": 0.85,
+    "rationale": "Confirmed account takeover chain: F3 (CONFIRMED 0.85) shows password spray from 185.213.44.9 failed against 60 accounts and later succeeded in signing in as m.aslan@aegean.edu (T1110.003/T1078). Corroborated by F2 (CONFIRMED 0.75) baseline-breaking sign-ins from SprayNet AS (RU) and F4 (LIKELY 0.7) placing this account in the spray roster. No data-quality conflicts or rejected claims. Decision threshold for contain is met by confirmed successful sign-in after spray.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 28,
+    "model_calls": 13
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q11kgpf5"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_oh4zy19e"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0bws2jls"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 13,
+  "model_steps_total": 13,
+  "trace_id": "mvlmkif9_5da45fa1ab",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlmkif9_5da45fa1ab/trace.jsonl",
+  "execution_time_seconds": 91.726
+}

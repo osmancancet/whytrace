@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlohxyk_a5ba827184",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover. Chain: phishing email delivered from lookalike domain aegean-edu.co (06:12), user clicked the verification link (06:15), then MFA fatigue attack from BulwarkHost Ltd Amsterdam IP 185.220.101.7 — seven MFA denials followed by an approval and a successful mail login (06:52–06:59) with no enrolled device, then rapid \"sis\" auth abuse from the same hosting IP. At 07:03 an inbox forwarding rule was created via API to exfiltrate mail to d.yilmaz.payroll@gmail.com. All of this deviates sharply from the user's normal Turkcell Manisa LT-2207 pattern (MFA prompt count 0). Credentials phished, MFA bypassed, mail accessed, exfiltration rule set = confirmed takeover requiring immediate containment (disable account, reset password, revoke sessions/MFA, remove forwarding rule).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6cg2lyxp"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlohxyk_a5ba827184",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlohxyk_a5ba827184/trace.jsonl",
+  "execution_time_seconds": 11.401
+}

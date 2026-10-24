@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlol4f7_7157d347ad",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for c.aydin@aegean.edu. The user's normal baseline is campus/Manisa (AS-AEGEAN-EDU, Turkcell) with known devices dev-ca-laptop/dev-ca-phone. On 2026-10-08 an unknown device (dev-unk-7f3a) from AS60068 Datacamp Limited in Frankfurt, Germany authenticated: repeated portal failures (22:41-22:44), then an MFA-approved portal login (22:46:12), followed by mail (22:47:30) and repeated SIS accesses (22:51-23:11). Immediately after, a mail forwarding rule was created forwarding to external c.aydin.ogr@proton.me via OWA (22:49:02). Foreign infrastructure, unknown device, MFA approval after failures, mail access, and exfiltration forwarding rule together confirm compromise; contain the account (reset credentials, revoke sessions/devices, remove forwarding rule).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_oxc2nh0g"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlol4f7_7157d347ad",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlol4f7_7157d347ad/trace.jsonl",
+  "execution_time_seconds": 19.216
+}

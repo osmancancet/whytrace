@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlntmh2_5b7876a3f0",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.75,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.75. Case ho-08 for g.sen@aegean.edu shows a phishing email (edevlet-burs-basvuru.com, subject \"KYK burs ödemeniz beklemede\") delivered at 13:02:44 on 2026-10-15 followed by a user click at 13:10:09. This represents a potential credential exposure. However, the subsequent sign-in activity shows no signs of account takeover: all logins originate from the same device (dev-gs-phone), same city (Manisa, TR), and only two expected networks (AS34984 Superonline off-campus with MFA, AS-AEGEAN-EDU on-campus without MFA). No new devices, impossible travel, MFA fatigue, or anomalous access patterns are observed. The phishing click is a concrete exposure event rather than a weak signal, but there is insufficient evidence to confirm compromise or to fully exonerate the account. A human reviewer should determine whether to force a password reset, inspect mail rules/forwarding, and assess whether credentials were harvested on the phishing site.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_jejnp2m9"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlntmh2_5b7876a3f0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlntmh2_5b7876a3f0/trace.jsonl",
+  "execution_time_seconds": 16.126
+}

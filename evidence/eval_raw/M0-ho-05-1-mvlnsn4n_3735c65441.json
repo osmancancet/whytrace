@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnsn4n_3735c65441",
+  "case_id": "ho-05",
+  "verdict": "contain",
+  "confidence": 0.88,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.88. Confirmed account takeover indicators: on 2026-10-13 the account authenticated five times from 192.0.2.200 (AS9009 M247 Europe, Bucharest, RO) on dev-tb-laptop, while the user's established pattern is İzmir/TR (198.51.100.120, Superonline) evenings and Manisa/TR (193.140.10.57, AS-AEGEAN-EDU) midday. Four of the five Bucharest authentications returned \"success\" with mfa_prompt_count=0 despite being from a new country/ASN/IP that would normally challenge MFA; one was mfa_approved. This is impossible travel concurrent with the user's normal İzmir evening window, and the absence of MFA challenge indicates session/token use or MFA bypass rather than legitimate travel. Normal İzmir activity resumes at 21:55:40. Mail events are empty, but the sign-in events themselves confirm unauthorized access, warranting containment (disable account, reset credentials, revoke sessions).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_l3pp5pvj"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnsn4n_3735c65441",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnsn4n_3735c65441/trace.jsonl",
+  "execution_time_seconds": 24.813
+}

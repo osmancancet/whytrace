@@ -1,0 +1,43 @@
+{
+  "run_id": "mvln0oc7_d2d6584a5b",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: MONITOR @ 1.00. The alert is for a travelling faculty member whose expected pattern is device + VPN from abroad. Ten of eleven sign-ins match this: consistent device LT-3104, via VPN appliance vpn-edge-02, from Lisbon/Portugal (MEO), all successful with no MFA prompts — consistent with legitimate travel access.\n\nOne event breaks the pattern: 2026-10-15 06:40 from 193.140.10.21 (Turkcell, Manisa, TR), no device_id, no VPN appliance, direct mail access. This is a single anomalous signal — different country/ASN, missing device identity, off-VPN — while the user is flagged as travelling abroad. It is chronologically the first event, so it could reflect access from Turkey before departure, but it is not fully explained by the available data.\n\nNo failed logins, no MFA fatigue/prompt anomalies, no mail events, and no other indicators of account takeover. Evidence is insufficient for contain (no confirmed takeover) or escalate (no exposure/active compromise). Benign is too strong given the unexplained pattern break. A weak unexplained signal warrants monitor.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_jj8kzk4t"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvln0oc7_d2d6584a5b",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvln0oc7_d2d6584a5b/trace.jsonl",
+  "execution_time_seconds": 14.745
+}

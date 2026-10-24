@@ -1,0 +1,43 @@
+{
+  "run_id": "mvloinw5_7cdfe13074",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover for s.demir@aegean.edu. A lab-admin account authenticated from 45.142.10.9 (Cloudvault VPS, Frankfurt, DE) via vpn-edge-01, flagged as a vulnerable appliance. MFA was approved once (21:31, mfa_prompt_count=1) and then seven consecutive portal/LMS sign-ins occurred with zero MFA prompts, indicating MFA bypass/session reuse after initial auth. Access pattern is automated (alternating portal/lms every ~5 minutes) from a foreign VPS, inconsistent with normal lab-admin use. No mail events to explain the signals. Containment is warranted: disable the account, reset credentials/revoke sessions, and investigate the vulnerable VPN appliance.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ffgc5ddj"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvloinw5_7cdfe13074",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvloinw5_7cdfe13074/trace.jsonl",
+  "execution_time_seconds": 52.036
+}

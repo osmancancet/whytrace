@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm0pv7_dc0b3ccce7",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.97,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.97. Confirmed account takeover. The user received and clicked a payroll phish from typosquat domain aegean-edu.co (\"Acil hesap doğrulaması\"). Shortly after, multiple successful logins appeared from 185.220.101.7 (BulwarkHost Ltd, NL/Amsterdam) with no registered device, including an MFA fatigue sequence on mail (mfa_denied counts 1→8 then mfa_approved) followed by a successful mail access at 06:59:30. A mail forwarding rule was then created via API sending mail to d.yilmaz.payroll@gmail.com, indicating persistence and payroll data exfiltration. This meets the contain threshold (confirmed ATO); the account should be disabled, password reset, sessions revoked, and the forwarding rule removed.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0tzskuk9"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm0pv7_dc0b3ccce7",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm0pv7_dc0b3ccce7/trace.jsonl",
+  "execution_time_seconds": 5.68
+}

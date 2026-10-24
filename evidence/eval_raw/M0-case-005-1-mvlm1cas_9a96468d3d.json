@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm1cas_9a96468d3d",
+  "case_id": "case-005",
+  "verdict": "escalate",
+  "confidence": 0.72,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.72. Multiple unexplained suspicious signals with actual exposure: 8 consecutive successful mail logins from 193.140.10.9 (Turkcell, Manisa, TR) on device LT-7701, all at exactly 08:10 daily with MFA prompt count 0, for an aegean.edu (Greek university) account — foreign-country access with no MFA challenge and identical timing. A new OWA inbox forwarding rule was created (target e.oz.archive@aegean.edu via=owa). The forwarding target is internal, which lowers certainty of exfiltration, but the rule itself is an exposure and the login pattern (foreign IP, zero MFA, clockwork timing) is not explained by the data. Evidence is insufficient to confirm account takeover (contain) and not adequately explained to mark benign (benign); it exceeds a purely weak signal (monitor) because a forwarding rule is active. A human analyst should verify whether the user is legitimately in Turkey, whether MFA should be enforced, whether LT-7701 is a known device, and whether the archive address is authorized.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6hmw0utv"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm1cas_9a96468d3d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm1cas_9a96468d3d/trace.jsonl",
+  "execution_time_seconds": 14.344
+}

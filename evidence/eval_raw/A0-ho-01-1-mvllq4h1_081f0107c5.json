@@ -1,0 +1,435 @@
+{
+  "run_id": "mvllq4h1_081f0107c5",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "F5 confirms phishing mail delivered from docusign-aegean-share.com with subject \"Satın alma sözleşmesi – imza bekliyor\". F2 and F3 confirm session-token replay via zero-MFA sign-ins from OVH SAS (AS16276) while the user was concurrently active on managed device dev-zk-01. F4 confirms a DigitalOcean Netherlands sign-in outside baseline. F1 confirms impossible travel Amsterdam to Gravelines in 15 minutes. Verdict: contain at 0.9 confidence.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 07:52:10.0",
+      "event": "F5 Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "sql_id": "b9a792b53327"
+    },
+    {
+      "ts": "2026-10-14 07:59:30.0",
+      "event": "F1 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 07:59:30.0",
+      "event": "F4 Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+      "sql_id": "b2981f4c8645"
+    },
+    {
+      "ts": "2026-10-14 08:14:02.0",
+      "event": "F1 Impossible travel: Amsterdam → Gravelines in 15 min",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 08:14:02.0",
+      "event": "F2 Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently act",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 08:31:15.0",
+      "event": "F2 Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently act",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 08:31:15.0",
+      "event": "F3 Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently act",
+      "sql_id": "92a083819d3a"
+    },
+    {
+      "ts": "2026-10-14 09:02:33.0",
+      "event": "F3 Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently act",
+      "sql_id": "92a083819d3a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "92a083819d3a",
+        "269f3b4c3eaf"
+      ],
+      "row_refs": [
+        "92a083819d3a#5",
+        "92a083819d3a#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "from_event": "evt_ho_002861",
+        "to_event": "evt_ho_002862",
+        "from_country": "NL",
+        "to_country": "FR",
+        "from_asn_org": "AS14061 DigitalOcean",
+        "to_asn_org": "AS16276 OVH SAS",
+        "from_device_id": null,
+        "to_device_id": null,
+        "minutes": 15
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b2981f4c8645",
+        "c3682760d2b8"
+      ],
+      "row_refs": [
+        "b2981f4c8645#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu",
+        "ip:net:203.0.113.77"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "asn_org": "AS14061 DigitalOcean",
+        "country": "NL",
+        "ip": "203.0.113.77",
+        "first_ts": "2026-10-14 07:59:30.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H1",
+      "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b9a792b53327",
+        "00f57257b433"
+      ],
+      "row_refs": [
+        "b9a792b53327#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:z.korkmaz@aegean.edu"
+      ],
+      "facts": {
+        "upn": "z.korkmaz@aegean.edu",
+        "sender_domain": "docusign-aegean-share.com",
+        "ts": "2026-10-14 07:52:10.0",
+        "subject": "Satın alma sözleşmesi – imza bekliyor",
+        "detail": "subject=Satın alma sözleşmesi – imza bekliyor",
+        "event_id": "d:msg-ho01-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.44 failed against 66 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    },
+    {
+      "claim": "Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01",
+      "reason": "validator: ATT&CK id T1550.004 not in allow-list"
+    },
+    {
+      "claim": "Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01",
+      "reason": "validator: ATT&CK id T1550.004 not in allow-list"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Revoke all active sessions and force password plus MFA reset for z.korkmaz@aegean.edu; invalidate sessions from OVH SAS and DigitalOcean.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block/quarantine docusign-aegean-share.com and search all mailboxes for identical phishing messages.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Require MFA and compliant device for sign-ins; add AS16276 (OVH) and AS14061 (DigitalOcean) to conditional access review/block list.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "DQ checks could not run; confidence not adjusted for data quality.",
+    "Token-replay confidence relies on concurrent-session correlation; logs do not confirm how the token was exfiltrated or replayed."
+  ],
+  "not_checked": [
+    "Whether the user clicked the phishing link or entered credentials; whether the OVH/DigitalOcean sessions accessed university resources beyond initial authentication."
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 1,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 15 min apart",
+      "check_sql_id": "269f3b4c3eaf"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "null-device zero-prompt sign-in on AS16276 OVH SAS while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01 (17 min apart)",
+      "check_sql_id": "16c85048d0d2"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "null-device zero-prompt sign-in on AS16276 OVH SAS while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01 (31 min apart)",
+      "check_sql_id": "72685bc50ae2"
+    },
+    {
+      "finding_id": "F4",
+      "status": "approved",
+      "reason": "1 sign-in(s) from AS14061 DigitalOcean; not via university VPN, no managed device",
+      "check_sql_id": "c3682760d2b8"
+    },
+    {
+      "finding_id": "F5",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for docusign-aegean-share.com",
+      "check_sql_id": "00f57257b433"
+    },
+    {
+      "finding_id": "F6",
+      "status": "rejected",
+      "reason": "193.140.10.44 looks like shared egress: 204 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "d7235c0a35d1"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "contain",
+    "confidence": 0.9,
+    "mode": "exact",
+    "n_findings": 5,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F2",
+        "claim": "Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01",
+        "attack": [
+          "T1550.004",
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "92a083819d3a",
+          "16c85048d0d2"
+        ],
+        "shapley": 0.3075,
+        "rank": 1
+      },
+      {
+        "finding_id": "F3",
+        "claim": "Session-token replay suspected: zero-MFA sign-in on AS16276 OVH SAS with no device while the user is concurrently active on AS-AEGEAN-EDU with managed device dev-zk-01",
+        "attack": [
+          "T1550.004",
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "92a083819d3a",
+          "72685bc50ae2"
+        ],
+        "shapley": 0.3075,
+        "rank": 2
+      },
+      {
+        "finding_id": "F5",
+        "claim": "Phishing-suspect mail delivered from docusign-aegean-share.com (subject=Satın alma sözleşmesi – imza bekliyor)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "b9a792b53327",
+          "00f57257b433"
+        ],
+        "shapley": 0.1033,
+        "rank": 3
+      },
+      {
+        "finding_id": "F4",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS14061 DigitalOcean (NL), 1 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "b2981f4c8645",
+          "c3682760d2b8"
+        ],
+        "shapley": 0.095,
+        "rank": 4
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Amsterdam → Gravelines in 15 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "92a083819d3a",
+          "269f3b4c3eaf"
+        ],
+        "shapley": 0.0867,
+        "rank": 5
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "contain",
+          "confidence_without": 0.88,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "contain",
+          "confidence_without": 0.84,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F3",
+          "verdict_without": "contain",
+          "confidence_without": 0.84,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F4",
+          "verdict_without": "contain",
+          "confidence_without": 0.87,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F5",
+          "verdict_without": "contain",
+          "confidence_without": 0.86,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F2",
+          "F3"
+        ],
+        "verdict": "escalate",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "escalate",
+      "explanation": "Removing F2, F3 would drop the chain below the \"≥2 confirmed abuse OR 1 abuse + 2 access\" threshold, so the policy would escalate for human review.",
+      "blocking_findings": [
+        "F2",
+        "F3"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F2",
+        "F3",
+        "F5"
+      ],
+      "cited_ids": [
+        "F5",
+        "F2",
+        "F3",
+        "F4",
+        "F1"
+      ],
+      "overlap": 3,
+      "score": 1,
+      "precision": 0.6,
+      "kendall_tau": -0.3333,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "model_decision": "contain",
+    "confidence": 0.9,
+    "rationale": "Verified findings show a phishing-suspect message delivered to the user (F5) followed by zero-MFA session-token/sign-in activity from OVH AS16276 with no managed device while the same account is concurrently active on the university-managed device (F2, F3). That is corroborated by impossible travel Amsterdam→Gravelines in 15 minutes (F1) and an additional suspicious DigitalOcean NL sign-in outside baseline (F4). Together these form a confirmed account-takeover chain rather than explainable noise; the rejected password-spray claim does not account for concurrent legitimate and external session reuse. Immediate containment is warranted.",
+    "escalate_reasons": []
+  },
+  "rounds": 3,
+  "budget": {
+    "sql_calls": 25,
+    "model_calls": 5
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_uyhybo90"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_fzhot3ke"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_3nsv2fmd"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_vrkf45s8"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_1iczlpga"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 5,
+  "model_steps_total": 5,
+  "trace_id": "mvllq4h1_081f0107c5",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvllq4h1_081f0107c5/trace.jsonl",
+  "execution_time_seconds": 65.215
+}

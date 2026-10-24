@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlok8nc_e58dbf6f3a",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 0.85,
+  "summary": "M0 model-only verdict: BENIGN @ 0.85. New device PH-9900 from IP 78.187.4.44 triggered the alert, but the sign-in was MFA-challenged and MFA-approved, indicating the legitimate account holder completed authentication. Geography is consistent with the established device LT-6002 (same ISP Turkcell, same country TR, same city Manisa), so there is no impossible travel or anomalous access pattern. No mail events show suspicious inbox activity. The new-device signal is explained by successful MFA from the user's usual location, consistent with a legitimate new device (e.g., new phone) rather than account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ff7s22qy"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlok8nc_e58dbf6f3a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlok8nc_e58dbf6f3a/trace.jsonl",
+  "execution_time_seconds": 8.198
+}

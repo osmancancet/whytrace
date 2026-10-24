@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlon2yi_17c0f6783d",
+  "case_id": "ho-06",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. All sign-ins for f.yildiz@aegean.edu come from a single consistent source: IP 193.140.10.21, ASN AS-AEGEAN-EDU (the user's own institution), Turkey/Manisa, device dev-fy-pc, across days Oct 11–20 2026, alternating mail/sis apps with 0 MFA prompts and no VPN appliance. There are no failed logins, no new devices, no impossible travel, no new locations/ASNs, and no mail events. The observed pattern is fully explained by normal on-campus usage; no indicators of account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_n250okqf"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlon2yi_17c0f6783d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlon2yi_17c0f6783d/trace.jsonl",
+  "execution_time_seconds": 5.484
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlomt98_95e1b455bb",
+  "case_id": "ho-05",
+  "verdict": "contain",
+  "confidence": 0.93,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.93. Confirmed account takeover for t.bulut@aegean.edu. The user's established pattern is daily logins from İzmir (home, AS34984 Superonline, dev-tb-laptop, evenings) and Manisa (university AS-AEGEAN-EDU, daytime). On 2026-10-13, multiple logins appeared from 192.0.2.200 (AS9009 M247 Europe, Bucharest, Romania) using the same device_id dev-tb-laptop: one mfa_approved at 20:31:07 followed by repeated no-MFA \"success\" logins (mfa_prompt_count 0) at 20:33–21:18. This represents impossible travel versus the İzmir login at 20:45, a datacenter/hosting AS rather than an ISP, MFA bypass followed by session persistence without re-challenge, and interleaving with legitimate İzmir authentication — all classic indicators of session hijacking / credential compromise. Evidence is sufficient to confirm takeover rather than merely monitor or escalate.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_umev383t"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlomt98_95e1b455bb",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlomt98_95e1b455bb/trace.jsonl",
+  "execution_time_seconds": 12.572
+}

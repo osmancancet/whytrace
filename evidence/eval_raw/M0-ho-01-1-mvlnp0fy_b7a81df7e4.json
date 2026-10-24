@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnp0fy_b7a81df7e4",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for z.korkmaz@aegean.edu. Chain: phishing email from typosquat domain docusign-aegean-share.com delivered 07:52, link clicked 07:58, then MFA-approved login from 203.0.113.77 (DigitalOcean, Amsterdam) at 07:59:30 — far outside the user's normal pattern (193.140.10.44 AS-AEGEAN-EDU, Manisa TR, device dev-zk-01). Followed by repeated successes from 192.0.2.150 (OVH, Gravelines FR) via mail with no MFA and no device_id, consistent with stolen session/credential use from cloud infrastructure. Attacker also created an inbox rule via API at 08:20:47 moving mail to RSS Feeds, a classic persistence/hiding technique. This matches confirmed ATO, not merely suspicious activity.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h63g3pcu"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnp0fy_b7a81df7e4",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnp0fy_b7a81df7e4/trace.jsonl",
+  "execution_time_seconds": 28.545
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvln0zpt_093b6fc96c",
+  "case_id": "case-003",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.90. Confirmed account takeover indicators: s.demir@aegean.edu (lab-admin) authenticated eight times from 45.142.10.9 (Cloudvault VPS, Frankfurt, DE) via the explicitly vulnerable vpn-edge-01 appliance. No device_id is recorded on any event. MFA was approved once at 21:31:00, followed by seven successes with mfa_prompt_count=0, indicating session/token reuse after a single MFA event. Access alternates between portal and lms every five minutes (21:32-22:02), consistent with automated or persistent access rather than normal interactive admin use. No mail events to explain the activity. Combined geography (foreign VPS), vulnerable appliance vector, missing device identity, MFA bypass/reuse, and repeated app access constitute a confirmed compromise requiring immediate containment (disable account, reset credentials, revoke sessions, investigate appliance).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_9oznlgzr"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvln0zpt_093b6fc96c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvln0zpt_093b6fc96c/trace.jsonl",
+  "execution_time_seconds": 7.674
+}

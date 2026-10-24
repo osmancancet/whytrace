@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnq30e_5552354bfe",
+  "case_id": "ho-03",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for c.aydin@aegean.edu. On 2026-10-08, an unknown device (dev-unk-7f3a) from a German datacenter IP (192.0.2.61, AS60068 Datacamp Limited, Frankfurt) performed repeated portal login failures (brute-force/password spray), then succeeded with mfa_approved, and accessed portal, mail, and SIS from that foreign IP/device — outside the user's normal Manisa/Turkcell phone/laptop pattern. Shortly after, a mail forwarding rule was created forwarding to an external ProtonMail address (c.aydin.ogr@proton.me via OWA), a classic exfiltration/persistence action. This is not explainable as benign user behavior and warrants immediate containment.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6mx85yho"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnq30e_5552354bfe",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnq30e_5552354bfe/trace.jsonl",
+  "execution_time_seconds": 12.268
+}

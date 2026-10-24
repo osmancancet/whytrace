@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnohmm_4579f51769",
+  "case_id": "case-005",
+  "verdict": "monitor",
+  "confidence": 0.68,
+  "summary": "M0 model-only verdict: MONITOR @ 0.68. The alert is a new OWA inbox forwarding rule, but the target is an internal archive address (e.oz.archive@aegean.edu) on the same domain—not external exfiltration. Sign-ins are highly consistent: one device (LT-7701), one IP (193.140.10.9 / Turkcell, Manisa, TR), same app/time daily for 8 days with 0 MFA prompts, which matches an enrolled/managed client rather than credential stuffing or an unknown actor. No failed logins, impossible travel, MFA fatigue, password reset, or external forwarding are present. However, the account is aegean.edu (Greece) authenticating from Turkey with no MFA prompt and no user/IT confirmation of travel or rule authorization, so the weak signals remain unexplained. Not confirmed takeover (no contain), not sufficiently explained to close as benign, and not an exposure requiring immediate human escalation. Continue monitoring.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_hen2vf59"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnohmm_4579f51769",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnohmm_4579f51769/trace.jsonl",
+  "execution_time_seconds": 11.675
+}

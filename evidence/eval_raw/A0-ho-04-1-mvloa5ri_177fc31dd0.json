@@ -1,0 +1,215 @@
+{
+  "run_id": "mvloa5ri_177fc31dd0",
+  "case_id": "ho-04",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "Escalate (confidence 0.7): phishing-suspect mail delivered to n.guler@aegean.edu from aegean-edu.com.tr, subject “Ekim maaş bordrosu düzeltmesi – IBAN güncelleme” (F1). Risk Gate notes a partial chain with zero abuse signals and one access signal; compromise signals exist without a confirmed abuse chain, but evidence policy requires escalation rather than monitoring.",
+  "timeline": [
+    {
+      "ts": "2026-10-16 06:12:40.0",
+      "event": "F1 Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+      "sql_id": "87aa8a8c7e11"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "87aa8a8c7e11",
+        "c84a1da608a3"
+      ],
+      "row_refs": [
+        "87aa8a8c7e11#0"
+      ],
+      "attack": [
+        "T1566.002"
+      ],
+      "confidence": 0.8,
+      "kind": "phish_delivery",
+      "entity_ids": [
+        "account:idp:n.guler@aegean.edu"
+      ],
+      "facts": {
+        "upn": "n.guler@aegean.edu",
+        "sender_domain": "aegean-edu.com.tr",
+        "ts": "2026-10-16 06:12:40.0",
+        "subject": "Ekim maaş bordrosu düzeltmesi – IBAN güncelleme",
+        "detail": "subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme",
+        "event_id": "d:msg-ho04-phish"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Advise recipient not to click links or reply; preserve original email headers and attachments for analysis.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block aegean-edu.com.tr at the mail gateway and search all mailboxes for identical sender/subject to identify additional recipients.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review n.guler@aegean.edu sign-in and mailbox audit logs for anomalous access following message delivery.",
+      "attack": [
+        "T1566.002"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "No confirmed abuse chain, payload execution, or credential compromise observed; assessment based on delivered email metadata only.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Attachment sandboxing and link URL reputation were not checked; mailbox audit logs beyond initial delivery were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 148,
+      "invalid": 0,
+      "scope": "account:n.guler@aegean.edu",
+      "sql_id": "fe6fdac725b8"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 148,
+      "invalid": 0,
+      "scope": "account:n.guler@aegean.edu",
+      "sql_id": "e3f7f785285f"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "gateway verdict phish_suspect confirmed for aegean-edu.com.tr",
+      "check_sql_id": "c84a1da608a3"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "monitor",
+    "confidence": 0.8,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Phishing-suspect mail delivered from aegean-edu.com.tr (subject=Ekim maaş bordrosu düzeltmesi – IBAN güncelleme)",
+        "attack": [
+          "T1566.002"
+        ],
+        "sql_ids": [
+          "87aa8a8c7e11",
+          "c84a1da608a3"
+        ],
+        "shapley": 0.8,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 as unsupported would leave zero surviving signals and the policy would call this benign.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "monitor",
+    "confidence": 0.7,
+    "rationale": "F1 confirms a spearphishing email (T1566.002) was delivered to n.guler@aegean.edu (salary-slip/IBAN-update lure). This is a real initial-access signal, but the verified evidence stops at email delivery — there is no confirmed credential submission, successful suspicious authentication, mailbox/rule modification, or other account-takeover activity. Therefore \"contain\" (confirmed account takeover chain) is not met, and \"benign\" is not met because nothing has been explained away. With no conflicting evidence, this is best classified as a confirmed but isolated signal: watch the account for follow-on compromise behavior rather than escalate or contain.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_f61jodse"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_nj380cpc"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2ucgb2wa"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvloa5ri_177fc31dd0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvloa5ri_177fc31dd0/trace.jsonl",
+  "execution_time_seconds": 45.012
+}

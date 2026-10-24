@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm50sa_bf6eb3b7bb",
+  "case_id": "ho-08",
+  "verdict": "escalate",
+  "confidence": 0.72,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.72. Phishing email (edevlet-burs-basvuru.com, \"KYK burs ödemeniz beklemede\") was delivered and clicked at 13:10 on 2026-10-15, followed ~20 minutes later by a successful login (mfa_prompt_count 0) from the university's own ASN AS-AEGEAN-EDU (193.140.10.62) on the usual device dev-gs-phone in Manisa, TR. Sign-in history is otherwise consistent with a single user: one device (dev-gs-phone), one city/country, two expected ASNs (campus AS-AEGEAN-EDU with no MFA; residential ISP Superonline with intermittent MFA), no impossible travel, no new device, no MFA fatigue/anomaly. That pattern is explained and not by itself an ATO. However, the credential-phish click immediately preceding a login creates exposure that cannot be ruled harmless and is not confirmed takeover; no evidence of attacker-controlled access (new location/device/mail rules) is present. Requires human investigation (password reset, session/mailbox-rule review, confirm whether credentials were entered on the phish page).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h5s3mtzl"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm50sa_bf6eb3b7bb",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm50sa_bf6eb3b7bb/trace.jsonl",
+  "execution_time_seconds": 13.595
+}

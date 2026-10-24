@@ -1,0 +1,329 @@
+{
+  "run_id": "mvlob4ir_3979f28f47",
+  "case_id": "ho-05",
+  "verdict": "escalate",
+  "confidence": 0.63,
+  "summary": "Escalate (confidence 0.63). Suspicious sign-ins from AS9009 M247 Europe (RO) were confirmed for t.bulut@aegean.edu in 5 events (F2). Impossible travel from Bucharest to İzmir in 12 minutes was confirmed (F1). Both findings map to valid account use via cloud accounts (T1078.004); no abuse chain is confirmed.",
+  "timeline": [
+    {
+      "ts": "2026-10-13 20:31:07.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    },
+    {
+      "ts": "2026-10-13 20:33:00.0",
+      "event": "F1 Impossible travel: Bucharest → İzmir in 12 min",
+      "sql_id": "e44af3ffcd34"
+    },
+    {
+      "ts": "2026-10-13 20:33:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    },
+    {
+      "ts": "2026-10-13 20:45:00.0",
+      "event": "F1 Impossible travel: Bucharest → İzmir in 12 min",
+      "sql_id": "e44af3ffcd34"
+    },
+    {
+      "ts": "2026-10-13 20:48:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Impossible travel: Bucharest → İzmir in 12 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "e44af3ffcd34",
+        "cac040dec413"
+      ],
+      "row_refs": [
+        "e44af3ffcd34#5",
+        "e44af3ffcd34#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:t.bulut@aegean.edu"
+      ],
+      "facts": {
+        "upn": "t.bulut@aegean.edu",
+        "from_event": "evt_ho_003372",
+        "to_event": "evt_ho_003325",
+        "from_country": "RO",
+        "to_country": "TR",
+        "from_asn_org": "AS9009 M247 Europe",
+        "to_asn_org": "AS34984 Superonline",
+        "from_device_id": "dev-tb-laptop",
+        "to_device_id": "dev-tb-laptop",
+        "minutes": 12
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "4787fdd83ab3",
+        "9f1740c1a0d6"
+      ],
+      "row_refs": [
+        "4787fdd83ab3#0",
+        "4787fdd83ab3#1",
+        "4787fdd83ab3#2",
+        "4787fdd83ab3#3",
+        "4787fdd83ab3#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:t.bulut@aegean.edu",
+        "ip:net:192.0.2.200"
+      ],
+      "facts": {
+        "upn": "t.bulut@aegean.edu",
+        "asn_org": "AS9009 M247 Europe",
+        "country": "RO",
+        "ip": "192.0.2.200",
+        "first_ts": "2026-10-13 20:31:07.0",
+        "via_vpn_appliance": null,
+        "events": 5
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "reason": "critic: vpn-edge-01 did not carry a sign-in for t.bulut@aegean.edu; its KEV status is not relevant to this account's exposure"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Reset credentials and revoke all active sessions for t.bulut@aegean.edu; require MFA re-enrollment.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Hunt for additional authentications from AS9009 or other non-baseline ASNs across the tenant.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Inspect for post-compromise account changes such as forwarding rules, delegations, or OAuth grants.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Only access signals are confirmed; no abuse, data access, or exfiltration is verified.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "VPN appliance CVE/KEV relevance to this account and lateral movement to other accounts were not checked."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 111,
+      "invalid": 0,
+      "scope": "account:t.bulut@aegean.edu",
+      "sql_id": "0c332cb7cc72"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 111,
+      "invalid": 0,
+      "scope": "account:t.bulut@aegean.edu",
+      "sql_id": "47d4a9fd8c95"
+    },
+    {
+      "table": "vpn_session",
+      "rule": "vpn_session_order",
+      "valid": 1,
+      "invalid": 12,
+      "scope": "appliance:vpn-edge-01",
+      "sql_id": "7663def5e66e"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 12 min apart",
+      "check_sql_id": "cac040dec413"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "5 sign-in(s) from AS9009 M247 Europe; not via university VPN, device dev-tb-laptop",
+      "check_sql_id": "9f1740c1a0d6"
+    },
+    {
+      "finding_id": "F3",
+      "status": "rejected",
+      "reason": "vpn-edge-01 did not carry a sign-in for t.bulut@aegean.edu; its KEV status is not relevant to this account's exposure",
+      "check_sql_id": "b35119b4ebe6"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.73,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "4787fdd83ab3",
+          "9f1740c1a0d6"
+        ],
+        "shapley": 0.39,
+        "rank": 1
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Bucharest → İzmir in 12 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "e44af3ffcd34",
+          "cac040dec413"
+        ],
+        "shapley": 0.34,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.75,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.7,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.8
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F2",
+        "F1"
+      ],
+      "cited_ids": [
+        "F2",
+        "F1"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": 1,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "contain",
+    "confidence": 0.63,
+    "rationale": "Two CONFIRMED findings form a coherent account takeover chain under T1078.004 (Valid Accounts: Cloud Accounts): suspicious sign-ins from a non-baseline ASN (AS9009 M247 Europe RO) across 5 events (F2, conf 0.75) plus impossible travel Bucharest→İzmir in 12 minutes (F1, conf 0.7). No data-quality conflicts exist. The VPN-edge-01 KEV claim was rejected as not carrying a sign-in for t.bulut@aegean.edu and therefore not relevant to this account's exposure. Verified evidence confirms an account takeover chain, so the account should be contained.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 2,
+  "budget": {
+    "sql_calls": 26,
+    "model_calls": 4
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h7xz2lli"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_paj0zfc2"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_7aw7qexy"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_d7wzdw57"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 4,
+  "model_steps_total": 4,
+  "trace_id": "mvlob4ir_3979f28f47",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlob4ir_3979f28f47/trace.jsonl",
+  "execution_time_seconds": 53.953
+}

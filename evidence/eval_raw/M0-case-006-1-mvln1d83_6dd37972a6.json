@@ -1,0 +1,43 @@
+{
+  "run_id": "mvln1d83_6dd37972a6",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. New device PH-9900 appears from the same ISP (Turkcell) and city (Manisa) as the user's established device LT-6002. MFA was prompted and approved, indicating the legitimate account holder completed second-factor authentication. No failed logins, impossible travel, or mail activity are present. The new-device alert is explained by a routine device addition.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ojj82mum"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvln1d83_6dd37972a6",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvln1d83_6dd37972a6/trace.jsonl",
+  "execution_time_seconds": 4.201
+}

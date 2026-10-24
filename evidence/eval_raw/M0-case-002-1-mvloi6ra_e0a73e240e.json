@@ -1,0 +1,43 @@
+{
+  "run_id": "mvloi6ra_e0a73e240e",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: MONITOR @ 1.00. prof.kaya@aegean.edu shows a consistent baseline: 10/11 successful logins from Portugal (Lisbon, MEO) via corporate VPN appliance vpn-edge-02 from known device LT-3104 across mail and LMS, matching the stated faculty-travelling-abroad + VPN context. The only outlier is a single successful mail login at 2026-10-15 06:40 from Manisa, Turkey (Turkcell mobile ASN) with no device_id, no VPN, and 0 MFA prompts — followed 32 minutes later by a Portugal VPN login, implying impossible travel and an unexplained auth. No mail events exist (no inbox/rule exposure). This is an isolated, weak, unexplained signal rather than confirmed takeover (no device takeover, no downstream mail activity, rest of session is consistent with the known device/VPN) and not fully benign (impossible travel/no device is not explained by travel alone). Evidence is sufficient to watch rather than escalate to a human immediately.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_ouh2cf6f"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvloi6ra_e0a73e240e",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvloi6ra_e0a73e240e/trace.jsonl",
+  "execution_time_seconds": 22.206
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnqch8_86c7354dbe",
+  "case_id": "ho-04",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. All signals are explained by a consistent, long-running remote-access pattern: the same device (dev-ng-01) in the same city (Manisa) authenticates from the university network (193.140.10.52 / AS-AEGEAN-EDU) during business hours with no MFA, and from a residential ISP (198.51.100.15 / AS9121 TTNET) in the evenings with MFA approved (mfa_prompt_count=1) every time. This has been stable since at least mid-September, so it is not new access, impossible travel, or a new device. The phish_suspect mail was only a delivery from a lookalike domain (aegean-edu.com.tr) with no evidence the user clicked or that credentials were entered, and the OWA inbox rule (move to Arşiv-2026) is a normal archiving action, not external forwarding or deletion. No confirmed account takeover indicators (no password reset, no new device/location, no MFA fatigue, no sent mail from the account). Suspicious signals are accounted for.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2yfrzl62"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnqch8_86c7354dbe",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnqch8_86c7354dbe/trace.jsonl",
+  "execution_time_seconds": 107.112
+}

@@ -1,0 +1,249 @@
+{
+  "run_id": "mvllw2sp_ecd6872109",
+  "case_id": "ho-05",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "Escalate (confidence 0.65). F2: Five confirmed suspicious sign-ins from AS9009 M247 Europe (RO) outside account baseline for t.bulut@aegean.edu (T1078.004). Rejected impossible-travel claim; 61/61 baseline sign-ins and device dev-tb-laptop geolocate to İzmir via carrier-geolocation artefact.",
+  "timeline": [
+    {
+      "ts": "2026-10-13 20:31:07.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    },
+    {
+      "ts": "2026-10-13 20:33:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    },
+    {
+      "ts": "2026-10-13 20:48:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "sql_id": "4787fdd83ab3"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F2",
+      "hypothesis_id": "h2",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "4787fdd83ab3",
+        "9f1740c1a0d6"
+      ],
+      "row_refs": [
+        "4787fdd83ab3#0",
+        "4787fdd83ab3#1",
+        "4787fdd83ab3#2",
+        "4787fdd83ab3#3",
+        "4787fdd83ab3#4"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:t.bulut@aegean.edu",
+        "ip:net:192.0.2.200"
+      ],
+      "facts": {
+        "upn": "t.bulut@aegean.edu",
+        "asn_org": "AS9009 M247 Europe",
+        "country": "RO",
+        "ip": "192.0.2.200",
+        "first_ts": "2026-10-13 20:31:07.0",
+        "via_vpn_appliance": null,
+        "events": 5
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Impossible travel: Bucharest → İzmir in 12 min",
+      "reason": "critic: premature impossible-travel claim: 61/61 baseline sign-ins on the same ASN AS34984 Superonline + device dev-tb-laptop already geolocate to İzmir (carrier-geolocation artefact ≥ 30 %)"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Reset account password and revoke all active sessions for t.bulut@aegean.edu; require MFA re-enrollment.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review authentication logs for additional AS9009 or non-baseline ASN sign-ins; correlate with device dev-tb-laptop and İzmir baseline.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Monitor account for further abuse; no containment per Risk Gate pending confirmed abuse chain.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Inspect mailbox forwarding rules and OAuth app consents for unauthorized persistence.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Only one access signal observed; no confirmed abuse chain to justify containment. Carrier-geolocation artefacts may be imprecise.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Mailbox forwarding rules and OAuth consents not yet reviewed. Endpoint telemetry for dev-tb-laptop not retrieved."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 111,
+      "invalid": 0,
+      "scope": "account:t.bulut@aegean.edu",
+      "sql_id": "0c332cb7cc72"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 111,
+      "invalid": 0,
+      "scope": "account:t.bulut@aegean.edu",
+      "sql_id": "47d4a9fd8c95"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "premature impossible-travel claim: 61/61 baseline sign-ins on the same ASN AS34984 Superonline + device dev-tb-laptop already geolocate to İzmir (carrier-geolocation artefact ≥ 30 %)",
+      "check_sql_id": "cac040dec413"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "5 sign-in(s) from AS9009 M247 Europe; not via university VPN, device dev-tb-laptop",
+      "check_sql_id": "9f1740c1a0d6"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9009 M247 Europe (RO), 5 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "4787fdd83ab3",
+          "9f1740c1a0d6"
+        ],
+        "shapley": 0.75,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F2",
+          "verdict_without": "benign",
+          "confidence_without": 0.8,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.8
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F2"
+      ],
+      "cited_ids": [
+        "F2"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "monitor",
+    "confidence": 0.65,
+    "rationale": "Only confirmed finding is F2: suspicious sign-ins from a baseline-external ASN (AS9009 M247 Europe/RO), 5 events, T1078.004. No confirmed account-takeover chain (no follow-on activity, MFA compromise, mailbox/credential changes). The impossible-travel claim (Bucharest→İzmir in 12 min) was rejected and explained away: 61/61 baseline sign-ins on AS34984 Superonline plus device dev-tb-laptop already geolocating to İzmir (carrier-geolocation artefact ≥30%). No data-quality conflicts. A single unexplained baseline-external sign-in cluster is a weak unexplained signal, insufficient for contain and not explained away enough for benign.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 16,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_zcmef1fy"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_p8y0hijd"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_w17pny0o"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvllw2sp_ecd6872109",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvllw2sp_ecd6872109/trace.jsonl",
+  "execution_time_seconds": 44.763
+}

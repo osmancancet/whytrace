@@ -1,0 +1,241 @@
+{
+  "run_id": "mvlofs14_11b4f0ab6a",
+  "case_id": "ho-07",
+  "verdict": "escalate",
+  "confidence": 0.5,
+  "summary": "F1: Known-baseline IP 203.0.113.45 accessed mail and SIS from k.erdem@aegean.edu on 2026-10-17, expanding beyond its 15-day portal-only baseline (T1078.004).",
+  "timeline": [
+    {
+      "ts": "2026-10-17 02:00:06.0",
+      "event": "F1 Known-baseline IP 203.0.113.45 broadens to new app class(es) on 2026-10-17: baseline served portal across 15 prior da",
+      "sql_id": "742f41c0484d"
+    },
+    {
+      "ts": "2026-10-17 02:47:19.0",
+      "event": "F1 Known-baseline IP 203.0.113.45 broadens to new app class(es) on 2026-10-17: baseline served portal across 15 prior da",
+      "sql_id": "742f41c0484d"
+    },
+    {
+      "ts": "2026-10-17 02:49:51.0",
+      "event": "F1 Known-baseline IP 203.0.113.45 broadens to new app class(es) on 2026-10-17: baseline served portal across 15 prior da",
+      "sql_id": "742f41c0484d"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Known-baseline IP 203.0.113.45 broadens to new app class(es) on 2026-10-17: baseline served portal across 15 prior day(s), today added mail,sis (high-value: mail,sis)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "742f41c0484d",
+        "a073ecb19ed4"
+      ],
+      "row_refs": [
+        "742f41c0484d#15",
+        "742f41c0484d#14",
+        "742f41c0484d#13",
+        "742f41c0484d#12"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.6,
+      "kind": "admin_baseline_break",
+      "entity_ids": [
+        "account:idp:k.erdem@aegean.edu",
+        "ip:net:203.0.113.45"
+      ],
+      "facts": {
+        "upn": "k.erdem@aegean.edu",
+        "ip": "203.0.113.45",
+        "baseline_days": 15,
+        "baseline_apps": "portal",
+        "new_apps": "mail,sis",
+        "high_value_new_apps": "mail,sis",
+        "day": "2026-10-17"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Verify the 203.0.113.45 sign-in for k.erdem@aegean.edu; reset password and require MFA re-enrollment if unauthorized (T1078.004)",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review mail and SIS audit logs for 2026-10-17 for unauthorized access, forwarding rules, or data changes (T1078.004)",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Alert or block 203.0.113.45 if it persists outside the established baseline (T1078.004)",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Confidence 0.5; no confirmed abuse chain, only an access signal.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Password spray claim rejected; 193.140.10.9 treated as shared egress background noise."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "b4a2d7aa8954"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "bf85c4b0f8ea"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "38-day baseline on 203.0.113.45 served portal; 2026-10-17 added high-value class(es) mail,sis on a role=admin mfa=none account",
+      "check_sql_id": "a073ecb19ed4"
+    },
+    {
+      "finding_id": "F2",
+      "status": "rejected",
+      "reason": "193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "15c724fb4627"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.6,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Known-baseline IP 203.0.113.45 broadens to new app class(es) on 2026-10-17: baseline served portal across 15 prior day(s), today added mail,sis (high-value: mail,sis)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "742f41c0484d",
+          "a073ecb19ed4"
+        ],
+        "shapley": 0.6,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.8,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.8
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "monitor",
+    "confidence": 0.5,
+    "rationale": "Single confirmed anomaly (F1, 0.6): the user's known-baseline IP 203.0.113.45, which served only the portal for 15 prior days, accessed high-value apps mail and sis for the first time on 2026-10-17 (T1078.004). It is not a confirmed account-takeover chain (no credential compromise, no impossible travel—it is the baseline IP), the password-spray claim is rejected as shared-egress background noise, and there are no data-quality conflicts. The signal is confirmed but unexplained and isolated, so it warrants monitoring rather than contain/benign/escalate.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 15,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_03z1sb2y"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_q7dbafct"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_p658bwag"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlofs14_11b4f0ab6a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlofs14_11b4f0ab6a/trace.jsonl",
+  "execution_time_seconds": 60.181
+}

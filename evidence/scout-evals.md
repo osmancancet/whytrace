@@ -1,6 +1,6 @@
 # Scout eval report (Meterless harness vs WhyTrace Scout)
 
-_Generated: 2026-10-23T23:42:44.446Z_
+_Generated: 2026-10-24T00:57:47.139Z_
 
 ## Runner
 
@@ -72,7 +72,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T23:42:43.766Z · corpus v1 · 32 examples_
+_Generated: 2026-10-24T00:57:46.496Z · corpus v1 · 32 examples_
 
 ## Verdict: ✅ PASS
 
@@ -128,7 +128,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T23:42:43.996Z · corpus v1 · 15 examples_
+_Generated: 2026-10-24T00:57:46.713Z · corpus v1 · 15 examples_
 
 ## Verdict: ✅ PASS
 
@@ -184,7 +184,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T23:42:44.214Z · corpus v1 · 10 examples_
+_Generated: 2026-10-24T00:57:46.924Z · corpus v1 · 10 examples_
 
 ## Verdict: ❌ FAIL
 
@@ -247,7 +247,7 @@ Report written: /Users/osmancancetlenbik/Projeler/whytrace/conformance/scout/eva
 
 # Scout eval report
 
-_Generated: 2026-10-23T23:42:44.437Z · corpus v1 · 3 examples_
+_Generated: 2026-10-24T00:57:47.132Z · corpus v1 · 3 examples_
 
 ## Verdict: ❌ FAIL
 

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlon76w_3cf68a7858",
+  "case_id": "ho-07",
+  "verdict": "contain",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.82. Account k.erdem@aegean.edu shows two concurrent access patterns. The legitimate user signs in from Manisa, Turkey (AS-AEGEAN-EDU, 193.140.10.9, device dev-ke-ws) during business hours across portal/mail/vpn. Separately, the same account is successfully accessed from 203.0.113.45 (DigitalOcean, Frankfurt, DE) every ~2 days at roughly 02:00 across portal, mail, and sis, with no device_id and mfa_prompt_count 0, persisting from October through 2026-11-07. This is impossible travel/concurrent sessions from a foreign cloud VPS with automated off-hours cadence and access to the sensitive SIS system, while the real user remains active — classic credential-based account takeover rather than a weak or explained signal. Evidence is sufficient to act (revoke sessions, force password reset, disable the anomalous access) rather than escalate for more evidence.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_53nwyq0y"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlon76w_3cf68a7858",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlon76w_3cf68a7858/trace.jsonl",
+  "execution_time_seconds": 76.473
+}

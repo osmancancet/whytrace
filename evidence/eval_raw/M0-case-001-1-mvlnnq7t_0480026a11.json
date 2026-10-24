@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnnq7t_0480026a11",
+  "case_id": "case-001",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for d.yilmaz@aegean.edu. Evidence chain: phishing email from typosquat domain aegean-edu.co delivered 06:12, user clicked verification link 06:15, then MFA fatigue attack from 185.220.101.7 (BulwarkHost Ltd, Amsterdam) with 7 mfa_denied prompts followed by mfa_approved and a successful mail login at 06:59:30 (mfa_prompt_count=8) — impossible travel vs. normal baseline on 193.140.10.44 (Turkcell, Manisa, device LT-2207). Attacker then created an inbox forwarding rule to external d.yilmaz.payroll@gmail.com at 07:03 and rapidly enumerated SIS (~40 logins in under a minute) from the same hostile hosting IP with no device_id. Credential phish + MFA bypass + foreign IP session + external forwarding rule + data access = confirmed compromise requiring immediate containment (disable account, force password reset, revoke all sessions, remove forwarding rule, inspect mail/SIS access).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_x23zk024"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnnq7t_0480026a11",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnnq7t_0480026a11/trace.jsonl",
+  "execution_time_seconds": 7.182
+}

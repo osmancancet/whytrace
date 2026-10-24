@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlokuc2_958a991e0d",
+  "case_id": "ho-02",
+  "verdict": "monitor",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: MONITOR @ 0.70. A new device (dev-lab-ce-07) authenticates repeatedly from the campus IP range (193.140.10.87, AS-AEGEAN-EDU, Manisa) without MFA, while the user's known device dev-ho-mbp shows normal campus/remote patterns with MFA for off-network access. No failed logins, impossible travel, or other takeover indicators are present. The new-device signal is weak and currently unexplained, warranting monitoring rather than containment or escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_x4642sja"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlokuc2_958a991e0d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlokuc2_958a991e0d/trace.jsonl",
+  "execution_time_seconds": 13.072
+}

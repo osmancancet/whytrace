@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnnvrc_2669faaf8b",
+  "case_id": "case-002",
+  "verdict": "monitor",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: MONITOR @ 0.70. Ten of eleven successful sign-ins match the stated faculty-travelling-abroad profile: same device LT-3104, same VPN appliance (vpn-edge-02), same IP/ASN/geo (MEO, Lisbon, PT), mfa_prompt_count 0, across mail and lms. The single outlier is a successful mail sign-in from 193.140.10.21 (Turkcell, Manisa, TR) with no device_id, not via VPN, and mfa_prompt_count 0 — a different country, ISP, device, and egress path than the established baseline. That is an unexplained anomalous signal, but it is isolated (one event, no mail events, no evidence of inbox manipulation, forwarding rules, or further access) and does not by itself confirm account takeover. It is therefore a weak unexplained signal best handled by watchful monitoring rather than containment or immediate escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_0gatwrn2"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnnvrc_2669faaf8b",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnnvrc_2669faaf8b/trace.jsonl",
+  "execution_time_seconds": 15.98
+}

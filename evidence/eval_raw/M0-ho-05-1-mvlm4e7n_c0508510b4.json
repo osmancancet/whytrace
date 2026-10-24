@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm4e7n_c0508510b4",
+  "case_id": "ho-05",
+  "verdict": "contain",
+  "confidence": 0.85,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.85. Confirmed account takeover indicators: on 2026-10-13 the same account authenticates from İzmir (TR, AS34984 Superonline, dev-tb-laptop) and Bucharest (RO, AS9009 M247 Europe, IP 192.0.2.200 TEST-NET-range) within minutes — impossible travel. The Bucharest burst (20:31–21:18) is 5 rapid LMS authentications under the known device_id dev-tb-laptop, mostly with mfa_prompt_count=0 (no MFA challenge), consistent with session/token reuse or MFA bypass after one MFA-approved entry, while the legitimate user continues logging in from Turkey. New country + new ASN + interleaved concurrent sessions + MFA bypass outweigh a benign travel explanation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6pqhgqau"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm4e7n_c0508510b4",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm4e7n_c0508510b4/trace.jsonl",
+  "execution_time_seconds": 18.842
+}

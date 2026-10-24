@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm4vwo_45bb3f9fc6",
+  "case_id": "ho-07",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Account k.erdem@aegean.edu shows a clear account-takeover pattern. The user's baseline is successful logins from 193.140.10.9 (AS-AEGEAN-EDU, Manisa, TR) on registered device dev-ke-ws during business hours across portal/mail/vpn. Interleaved with that are repeated successful logins from 203.0.113.45 (DigitalOcean, Frankfurt, DE) — a foreign cloud IP with no device_id, not via VPN, at ~02:00 local time roughly every 48 hours, accessing portal and also mail/sis, all with mfa_prompt_count=0. The anomalous geo/ASN, cloud provider, unattended device-less access, off-hours cadence, multi-app (mail/sis) reach, and absence of MFA challenge are not explained by the user's normal behavior and confirm unauthorized persistent access. Confirmed account takeover warrants immediate containment (disable session, force password reset, re-enroll MFA, review mail/sis for data access).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5vbqqysw"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm4vwo_45bb3f9fc6",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm4vwo_45bb3f9fc6/trace.jsonl",
+  "execution_time_seconds": 6.321
+}

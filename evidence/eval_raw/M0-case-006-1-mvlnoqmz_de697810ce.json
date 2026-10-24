@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlnoqmz_de697810ce",
+  "case_id": "case-006",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. New-device sign-in (PH-9900) from IP 78.187.4.44, but it remains in the same city (Manisa), country (TR), and ASN org (Turkcell) as the established device LT-6002 (193.140.10.17). MFA was prompted and approved (mfa_approved then success), indicating the legitimate account holder completed second-factor authentication. No mail events show suspicious inbox rules, forwarding, or anomalous sending. The new-device signal is explained by MPA success and consistent geography/ISP, consistent with a user logging in from a new phone rather than account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_79t4pp7r"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlnoqmz_de697810ce",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlnoqmz_de697810ce/trace.jsonl",
+  "execution_time_seconds": 5.321
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm24tr_446ca60754",
+  "case_id": "ho-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover. Kill chain is visible in the dump: (1) phish_suspect email delivered from docusign-aegean-share.com at 07:52:10 with Turkish purchase-contract lure; (2) user clicked the phishing link at 07:58:41; (3) MFA approved at 07:59:30 from 203.0.113.77 (DigitalOcean, Amsterdam) via portal — anomalous cloud IP immediately post-click; (4) mail accessed repeatedly from 192.0.2.150 (OVH SAS, Gravelines, FR) with no device_id and no MFA starting 08:14:02 and continuing through 2026-10-15 — foreign hosting infrastructure inconsistent with the user's normal pattern (193.140.10.44 / AS-AEGEAN-EDU / Manisa / device dev-zk-01); (5) inbox rule created at 08:20:47 moving mail to RSS Feeds via API — classic ATO trail-hiding. The session chain (phish click -> MFA bypass/approval -> cloud IP mail access -> inbox rule) matches confirmed compromise. Contain the account immediately.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_lz4ngbet"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm24tr_446ca60754",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm24tr_446ca60754/trace.jsonl",
+  "execution_time_seconds": 58.775
+}

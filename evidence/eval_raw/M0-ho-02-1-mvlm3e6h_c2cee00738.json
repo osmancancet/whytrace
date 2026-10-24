@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlm3e6h_c2cee00738",
+  "case_id": "ho-02",
+  "verdict": "benign",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: BENIGN @ 0.82. All signals are consistently explained by normal remote work. The user signs in from the Aegean University network (193.140.x.x, AS-AEGEAN-EDU) in Manisa during business hours on dev-ho-mbp (mail/sis/lms, no MFA), and from a TTNET residential ISP IP (198.51.100.40) in the same city (Manisa, TR) in the evenings via VPN on the same device dev-ho-mbp with MFA prompted and approved each time. This daily on-campus / evening-from-home pattern is stable across September and October. The lab device dev-lab-ce-07 appears only from the campus IP. No impossible travel, no failed logins, no MFA fatigue/bypass, no new countries/devices for external access, no mail events, and no concurrent conflicting sessions. Suspicious-looking signals (external ISP IP, MFA prompts, VPN appliance, lab device) are fully accounted for, so this is not an account takeover and needs no containment or human escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_4qru42ca"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlm3e6h_c2cee00738",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlm3e6h_c2cee00738/trace.jsonl",
+  "execution_time_seconds": 13.615
+}

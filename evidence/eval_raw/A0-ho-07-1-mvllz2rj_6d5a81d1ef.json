@@ -1,0 +1,128 @@
+{
+  "run_id": "mvllz2rj_6d5a81d1ef",
+  "case_id": "ho-07",
+  "verdict": "benign",
+  "confidence": 0.8,
+  "summary": "The Risk Gate verdict for ho-07 (k.erdem@aegean.edu) is benign (confidence 0.8). The only claim—password spray followed by successful sign-in from 193.140.10.9—was rejected because that IP is shared egress with 188 distinct accounts completing MFA in 30 days, and 71 failures across 68 accounts are background noise. No compromise signal survived.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [
+    {
+      "claim": "Password spray then success: 193.140.10.9 failed against 68 accounts (71 failures) and later signed in as this user",
+      "reason": "critic: 193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Monitor 193.140.10.9 and similar shared egress IPs for repeated authentication failures followed by successes across multiple accounts.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Confirm MFA enrollment and device compliance for k.erdem@aegean.edu to rule out account takeover despite the benign verdict.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Tune password-spray detection thresholds to exclude shared egress IPs with high legitimate MFA volume.",
+      "attack": [
+        "T1110.003"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Verdict relies on IP reputation and MFA volume heuristics; individual account compromise cannot be fully excluded without endpoint telemetry."
+  ],
+  "not_checked": [
+    "Endpoint logs, email access, and downstream application activity for k.erdem@aegean.edu were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "b4a2d7aa8954"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 453,
+      "invalid": 0,
+      "scope": "account:k.erdem@aegean.edu",
+      "sql_id": "bf85c4b0f8ea"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "rejected",
+      "reason": "193.140.10.9 looks like shared egress: 188 distinct accounts completed MFA from this IP in the last 30 days (threshold 10); failures across many accounts are expected background noise, not a coordinated spray",
+      "check_sql_id": "15c724fb4627"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.8,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.8,
+    "rationale": "No verified findings survive for ho-07 (k.erdem@aegean.edu). The sole signal — password spray then successful sign-in from 193.140.10.9 — was rejected: that IP is shared egress with 188 distinct accounts completing MFA in the last 30 days (threshold 10), so 71 failures across 68 accounts are consistent with background noise rather than a coordinated spray. No data-quality conflicts exist. The suspicious signal is explained away, so there is no confirmed account takeover chain and nothing requiring escalation.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 14,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_c4dsi5r0"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_sfdyjjc6"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_sipqkvap"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvllz2rj_6d5a81d1ef",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvllz2rj_6d5a81d1ef/trace.jsonl",
+  "execution_time_seconds": 34.093
+}
