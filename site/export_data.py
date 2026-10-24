@@ -20,7 +20,10 @@ Inputs (all committed, under the repo root):
   evidence/traps.md             (optional — present after the DAY8 false-premise run)
   output_examples/case-*.json   (per-case recorded live reports)
   samples/<case>/zetaris/<sql_id>.json  (per-sql recorded Zetaris result)
-  logs/<run_id>/queries.jsonl   (per-run recorded SQL)
+  site/recorded/<run_id>/queries.jsonl        (scrubbed, tracked SQL text)
+  site/recorded/<run_id>/model_calls.jsonl    (scrubbed, tracked model-call receipts)
+  logs/<run_id>/queries.jsonl   (local-only fallback for the SQL text)
+  logs/<run_id>/trace.jsonl     (local-only fallback for model calls)
 """
 import json, re, os, sys, hashlib
 
@@ -87,31 +90,62 @@ def sample_meta(case_id, sql_id):
     }
 
 def queries_for_run(run_id):
-    path = os.path.join(ROOT, 'logs', run_id, 'queries.jsonl')
+    """Return {sql_id: {sql, rows, ms, ts, status}} for a run.
+
+    Prefers site/recorded/<run_id>/queries.jsonl (tracked, scrubbed) and
+    falls back to logs/<run_id>/queries.jsonl (local only, gitignored).
+    Returns an empty dict if neither source exists; callers decide whether
+    a missing SQL text for a cited sql_id is fatal."""
     out = {}
-    if not os.path.exists(path):
-        return out
-    with open(path, encoding='utf-8') as f:
-        for line in f:
-            try:
-                r = json.loads(line)
-            except Exception:
-                continue
-            sid = r.get('sql_id')
-            if not sid:
-                continue
-            out.setdefault(sid, {
-                'sql': r.get('sql'),
-                'rows': r.get('rows'),
-                'ms': r.get('ms'),
-                'ts': r.get('ts'),
-                'status': r.get('status'),
-            })
+    for path in (
+        os.path.join(ROOT, 'site', 'recorded', run_id, 'queries.jsonl'),
+        os.path.join(ROOT, 'logs', run_id, 'queries.jsonl'),
+    ):
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                try:
+                    r = json.loads(line)
+                except Exception:
+                    continue
+                sid = r.get('sql_id')
+                if not sid:
+                    continue
+                out.setdefault(sid, {
+                    'sql': r.get('sql'),
+                    'rows': r.get('rows'),
+                    'ms': r.get('ms'),
+                    'ts': r.get('ts'),
+                    'status': r.get('status'),
+                })
     return out
 
 def model_calls_for_run(run_id):
-    """Pull per-call model telemetry from trace.jsonl so the site's "How this
-    answer was made" panel can mirror the console."""
+    """Return per-call model telemetry so the site's "How this answer was
+    made" panel can mirror the console.
+
+    Prefers site/recorded/<run_id>/model_calls.jsonl (tracked, scrubbed, only
+    agent/routed_model/receipt_id/ms/completion_tokens/cache_hit) and falls
+    back to extracting chat_nightshift lines from logs/<run_id>/trace.jsonl."""
+    recorded = os.path.join(ROOT, 'site', 'recorded', run_id, 'model_calls.jsonl')
+    if os.path.exists(recorded):
+        out = []
+        with open(recorded, encoding='utf-8') as f:
+            for line in f:
+                try:
+                    e = json.loads(line)
+                except Exception:
+                    continue
+                out.append({
+                    'agent': e.get('agent'),
+                    'routed_model': e.get('routed_model'),
+                    'receipt_id': e.get('receipt_id'),
+                    'ms': e.get('ms'),
+                    'completion_tokens': e.get('completion_tokens'),
+                    'cache_hit': e.get('cache_hit'),
+                })
+        return out
     path = os.path.join(ROOT, 'logs', run_id, 'trace.jsonl')
     if not os.path.exists(path):
         return []
@@ -125,11 +159,12 @@ def model_calls_for_run(run_id):
             if not str(e.get('action', '')).startswith('chat_nightshift'):
                 continue
             out.append({
-                'ts': e.get('ts'), 'agent': e.get('agent'), 'action': e.get('action'),
-                'routed_model': e.get('routed_model'), 'receipt_id': e.get('receipt_id'),
-                'ms': e.get('ms'), 'completion_tokens': e.get('completion_tokens'),
-                'cache_hit': e.get('cache_hit'), 'max_tokens': e.get('max_tokens'),
-                'retry_count': e.get('retry_count'),
+                'agent': e.get('agent'),
+                'routed_model': e.get('routed_model'),
+                'receipt_id': e.get('receipt_id'),
+                'ms': e.get('ms'),
+                'completion_tokens': e.get('completion_tokens'),
+                'cache_hit': e.get('cache_hit'),
             })
     return out
 
@@ -229,12 +264,15 @@ for cid, path, title, who in CASES:
     q = queries_for_run(r['run_id'])
     model_calls = model_calls_for_run(r['run_id'])
     sqls = {}
+    missing_sql = []
     for f in r['findings'] + r.get('rejected_claims', []):
         for s in f.get('sql_ids', []) or ([f['sql_id']] if f.get('sql_id') else []):
             if s in sqls:
                 continue
             meta = sample_meta(cid, s)
             qrec = q.get(s) or {}
+            if not qrec.get('sql'):
+                missing_sql.append(s)
             sqls[s] = {
                 'sql': qrec.get('sql'),
                 'rows_total': (meta or {}).get('total', qrec.get('rows')),
@@ -244,6 +282,13 @@ for cid, path, title, who in CASES:
                 'sha256': (meta or {}).get('sha256'),
                 'sample': {'headers': meta['headers'], 'data': meta['data'], 'total': meta['total']} if meta else None,
             }
+    if missing_sql:
+        print(f'ERROR: {cid} ({r["run_id"]}) is missing SQL text for cited sql_ids '
+              f'in site/recorded/ and logs/: {", ".join(missing_sql)}',
+              file=sys.stderr)
+        print('  Run `python3 site/record_runs.py` locally to refresh '
+              'site/recorded/, then commit the result.', file=sys.stderr)
+        sys.exit(1)
     cases.append({
         'id': cid, 'title': title, 'who': who,
         'verdict': r['verdict'], 'confidence': r['confidence'],

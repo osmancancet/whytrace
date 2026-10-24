@@ -1,0 +1,5 @@
+{"agent": "warmup", "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b", "receipt_id": "rcpt_req_ocsrjah9", "ms": 32, "completion_tokens": 13, "cache_hit": true}
+{"agent": "planner", "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b", "receipt_id": "rcpt_req_dzq8yhqu", "ms": 14668, "completion_tokens": 1463, "cache_hit": false}
+{"agent": "planner", "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b", "receipt_id": "rcpt_req_yly5njq7", "ms": 11377, "completion_tokens": 986, "cache_hit": false}
+{"agent": "risk_gate", "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b", "receipt_id": "rcpt_req_0pleet90", "ms": 22982, "completion_tokens": 849, "cache_hit": false}
+{"agent": "reporter", "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b", "receipt_id": "rcpt_req_k93cyi01", "ms": 37181, "completion_tokens": 1655, "cache_hit": false}
