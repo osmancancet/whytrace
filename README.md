@@ -199,6 +199,8 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 
 **How it helps in this kind of work.** Account-compromise triage at a university needs identity, mail, VPN, device and vulnerability context that lives in separate systems, and privacy rules (KVKK/GDPR) often forbid copying raw personal data into one central store. Querying in place through one semantic layer with data-quality rules lets the investigation cross those systems while every fact stays a query with an id.
 
+**Zetaris evidence pack for a judge.** The full RUN DQ output, the exact USL DDL and a longer builder-oriented list of Zetaris lessons live under [`evidence/zetaris/`](evidence/zetaris/) — regenerate the DQ run with `npx tsx evidence/zetaris/run-dq.ts` against the local install.
+
 **How Zetaris could improve (issues we hit on the local install):**
 1. Custom DQ rules: `REGISTER DQ` did not work for us and `SHOW DQ RULES` is not supported, so our extra checks live in application code next to `RUN DQ`. First-class custom rules and a rule listing would close this gap.
 2. Idempotent DDL: `CREATE SCHEMASTORE CONTAINER` has no `IF NOT EXISTS` and several `DROP` forms are not supported, so bootstrap scripts need error-string handling.
