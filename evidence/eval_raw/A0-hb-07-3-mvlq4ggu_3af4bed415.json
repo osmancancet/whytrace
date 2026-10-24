@@ -1,0 +1,109 @@
+{
+  "run_id": "mvlq4ggu_3af4bed415",
+  "case_id": "hb-07",
+  "verdict": "escalate",
+  "confidence": 0.75,
+  "summary": "Case hb-07 (u.kilic@aegean.edu) escalated at confidence 0.75 per Risk Gate. No verified findings survived Critic; no compromise signal remains. No rejected claims were recorded. A model step was degraded, reducing evidentiary confidence.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Review u.kilic@aegean.edu sign-in and mailbox audit logs for anomalies",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Re-run affected detection model step once restored and reassess signal",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document low-signal escalation and retain account on watchlist for 30 days",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Planner model degraded; investigation proceeded with coverage queries only.",
+    "No surviving findings or ATT&CK mappings are available; degraded model step limits evidentiary confidence.",
+    "Escalation reason: a model step was degraded"
+  ],
+  "not_checked": [
+    "Endpoint telemetry and identity provider logs were not reviewed due to absence of surviving signal."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:u.kilic@aegean.edu",
+      "sql_id": "326afd08421d"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 77,
+      "invalid": 0,
+      "scope": "account:u.kilic@aegean.edu",
+      "sql_id": "4e62608b8cae"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 2
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.75,
+    "rationale": "No surviving verified findings exist for case hb-07 (u.kilic@aegean.edu). With zero confirmed findings, there is insufficient verified evidence to confirm an account takeover chain (contain), to explain away suspicious signals as benign, or to justify monitoring a specific weak unexplained signal. Insufficient evidence requires human review per the escalate criterion.",
+    "escalate_reasons": [
+      "a model step was degraded"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 8,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_kwz570dp"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_i5wd66tm"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 2,
+  "model_steps_total": 3,
+  "trace_id": "mvlq4ggu_3af4bed415",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq4ggu_3af4bed415/trace.jsonl",
+  "execution_time_seconds": 59.243
+}

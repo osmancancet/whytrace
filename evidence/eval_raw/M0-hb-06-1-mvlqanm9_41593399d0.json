@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqanm9_41593399d0",
+  "case_id": "hb-06",
+  "verdict": "escalate",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: ESCALATE @ 1.00. The account l.duman@aegean.edu shows an established baseline of daily logins from Manisa, Turkey (university AS and TTNET AS) using devices DEV-H06-L and DEV-H06-P. Beginning 2026-10-10 through 2026-10-12, there are eight successful authentications from Athens, Greece (AS3329 Vodafone-panafon) using known devices DEV-H06-P and DEV-H06-T across mail and LMS apps, including several MFA-approved sessions and some success events with zero MFA prompts. This represents a new country, geographic impossibility versus the Manisa baseline, and MFA involvement. However, mail events are empty (no evidence of mail rule changes, data access, or exfiltration), and there is no travel/context information to confirm whether this is a legitimate trip or account takeover. Evidence is insufficient to confirm account takeover (contain) or to explain away as benign; the signal is too strong for monitor. Human review is needed to verify travel status, contact the user, validate MFA device possession, and decide on containment.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2s2soe3e"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqanm9_41593399d0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqanm9_41593399d0/trace.jsonl",
+  "execution_time_seconds": 24.86
+}

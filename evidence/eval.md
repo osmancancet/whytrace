@@ -1,5 +1,27 @@
 # WhyTrace evaluation — 2026-10-23T07:53:47.318Z
 
+> **DAY7 three-column snapshot** (see
+> `evidence/day7-regression.md` for the full v2 dev + ho run and
+> `evidence/heldout-b-eval.md` for the blind hb-* run):
+>
+> | variant | dev (7) | seen ho (8) | blind hb (24, 3 runs) |
+> |---|---|---|---|
+> | A0 v2 full | **7/7** · FC 0 · FB 0 | **7/8** · FC 0 · FB 0 | **15/24** · FC 0 · FB 0 |
+> | B0 rules-only | 3/7 · FC 1 · FB 1 | 5/8 · FC 1 · FB 2 | 18/24 · FC 6 · FB 0 |
+> | M0 model-only | 4/7 · FC 2 · FB 1 | 3/8 · FC 2 · FB 2 | 17/24 · FC 2 · FB 2 |
+>
+> B0 beats A0 v2 on the fresh blind set, but A0 v2 has zero false
+> contains across all three sets (never silently locks a real user)
+> and zero false benigns (never silently clears a real attack). See
+> `evidence/heldout-b.md` for the full honest write-up and
+> `notes/HOLDOUT_B_LESSONS.md` for the three new reasoning shapes
+> the hb-* run surfaced.
+
+The 21-run DAY3D sweep below remains the official dev-set snapshot for
+model-contribution and provider-failure disclosure; the DAY7 one-run
+regression in `evidence/day7-regression.md` is 15 cases (dev + ho) with
+L1-L6 enabled.
+
 Live runs against the local Zetaris USL and Meterless Nightshift (Nemotron lanes). Raw reports: `evidence/eval_raw/`.
 
 Health gate: online (probe routed_model=nvidia/nemotron-3.5-super-vl-120b-a12b, receipt=rcpt_req_0ireefgv).

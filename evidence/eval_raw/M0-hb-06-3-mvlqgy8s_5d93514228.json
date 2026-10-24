@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqgy8s_5d93514228",
+  "case_id": "hb-06",
+  "verdict": "benign",
+  "confidence": 0.85,
+  "summary": "M0 model-only verdict: BENIGN @ 0.85. The sign-in history shows a consistent dual-location pattern for l.duman@aegean.edu: weekday morning logins from the university network (193.140.10.42, AS-AEGEAN-EDU, Manisa) on device DEV-H06-L without MFA, and evening logins from TTNET home broadband (198.51.100.150, Manisa) on device DEV-H06-P with a single successful MFA prompt. The Oct 10–12 Athens, Greece logins (AS3329 Vodafone) reuse the same devices (DEV-H06-P/T) at the same cadence with successful MFA, consistent with the user traveling with their devices rather than an unknown actor. All authentications succeeded, MFA prompt counts are always 0 or 1 (no fatigue/brute-force), no failed logins, no new devices, and no mail events indicating compromise. The foreign-country and MFA signals are explained by legitimate travel.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5qetulgw"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqgy8s_5d93514228",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqgy8s_5d93514228/trace.jsonl",
+  "execution_time_seconds": 7.355
+}

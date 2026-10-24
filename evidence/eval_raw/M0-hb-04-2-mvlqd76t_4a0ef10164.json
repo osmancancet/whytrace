@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqd76t_4a0ef10164",
+  "case_id": "hb-04",
+  "verdict": "monitor",
+  "confidence": 0.6,
+  "summary": "M0 model-only verdict: MONITOR @ 0.60. Baseline for p.gunes@aegean.edu is highly regular: twice-daily (09:00 mail, 13:00 hr) successes from DEV-H04-L / 193.140.10.77 (AS-AEGEAN-EDU, Manisa, TR) with mfa_prompt_count 0. The only deviation is on 2026-10-16 around 10:22: a successful HR login from device DEV-H04-X sourced from 198.51.100.200 (AS16276 OVH SAS, Roubaix, FR) concurrent with the user's normal Manisa login, plus several DEV-H04-X events with empty IP/geo fields. There are zero mail events, no password/MFA/device-change events, no repeated anomalous auth, and no post-auth malicious activity. The foreign IP also sits in TEST-NET-2 (198.51.100.0/24, RFC 5737 documentation range), which weakens it as a routable attacker indicator. This is an unexplained but isolated signal — not confirmed account takeover (no evidence of mail compromise or repeated access), not explained (OVH France login / new device is unaccounted for), and not a confirmed exposure requiring immediate containment. Monitor the account, verify device DEV-H04-X with the user, and escalate/contain only if the anomaly recurs or mail/device events show compromise.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_305sgfvd"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqd76t_4a0ef10164",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqd76t_4a0ef10164/trace.jsonl",
+  "execution_time_seconds": 40.22
+}

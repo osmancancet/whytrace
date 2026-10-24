@@ -1,0 +1,115 @@
+{
+  "run_id": "mvlpz0bc_cca4f62eac",
+  "case_id": "hb-03",
+  "verdict": "benign",
+  "confidence": 0.75,
+  "summary": "Case hb-03 (it.karaca@aegean.edu): Risk Gate verdict is benign (confidence 0.75). No verified findings or surviving indicators remain after Critic review; no compromise signal was detected. No finding citations (F1…) apply.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Review user mailbox for anomalous inbox rules or forwarding despite absence of current indicators.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Confirm MFA enrollment and recent authentication events for it.karaca@aegean.edu.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Re-run detection on this account after 24h to capture delayed signals.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document closure as benign and retain case hb-03 logs for 90 days.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Verdict relies on absence of surviving signals rather than affirmative evidence of benign behavior."
+  ],
+  "not_checked": [
+    "Endpoint and full mailbox audit logs outside Critic scope were not examined."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 118,
+      "invalid": 0,
+      "scope": "account:it.karaca@aegean.edu",
+      "sql_id": "4332dd6fd6dd"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 118,
+      "invalid": 0,
+      "scope": "account:it.karaca@aegean.edu",
+      "sql_id": "9f3e222f1518"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "benign",
+    "confidence": 0.75,
+    "rationale": "Case hb-03 (it.karaca@aegean.edu) has no surviving verified findings, no rejected claims, and no data-quality conflicts. Without any confirmed finding, there is no confirmed account takeover chain (so contain is not supported), no exposure, and no conflicting/insufficient evidence requiring a human (so escalate is not supported). With nothing residual to investigate, there is also no weak unexplained signal to monitor (so monitor is not supported). The verified record shows no malicious activity, so the case is assessed as benign.",
+    "escalate_reasons": []
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 10,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5pk7i6yz"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_mony9qhu"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_k87cubmi"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlpz0bc_cca4f62eac",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlpz0bc_cca4f62eac/trace.jsonl",
+  "execution_time_seconds": 34.465
+}

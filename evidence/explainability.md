@@ -18,6 +18,58 @@ Each case takes its latest model-backed report (preferring `decided_by=model+pol
 
 _Mean faithfulness@3 across 6/7 scored case(s): **1.00**_ (cases with zero findings are omitted — faithfulness is undefined there).
 
+### DAY7 — qualifying the perfect faithfulness@3
+
+The DAY5 faithfulness number above is recall@k: the share of the top-3
+Shapley findings that appear by their F<n> id in the Reporter's
+narration. It is 1.00 across the six scored cases, but that is in part
+because the Reporter is already instructed to cite the F ids that
+support its summary and, when it does, it tends to cite most of them.
+A **1.00 recall with scattered citations** (every F id mentioned,
+including low-Shapley ones) would read as the same perfect score as a
+reporter that cited exactly the top-3 in order.
+
+DAY7 adds two honesty companions to `faithfulness` (see
+`packages/agents/src/explain.ts` — the shape change is in `schema.ts`
+and the orchestrator plumbs `precision_before_revision` +
+`kendall_tau_before_revision` alongside the pre-DAY5
+`score_before_revision`):
+
+- **precision@k** — share of cited findings that *are* in the top-k
+  Shapley set. recall@k = 1.00 with precision@k ≪ 1 means the Reporter
+  cites many findings, including low-Shapley ones; recall@k = 1.00
+  with precision@k = 1 means the Reporter cites exactly the top-k.
+- **Kendall-τ between citation order and Shapley rank** — on the
+  intersection, how well does the order in which the Reporter mentions
+  findings match the Shapley rank. +1 = perfect emphasis (top-Shapley
+  cited first), 0 = independent, −1 = inverted. `null` when the
+  intersection has fewer than two shared items.
+
+The orchestrator carries pre-revision values of all three metrics on
+every run (not just the recall one), so a judge can see the
+Reporter's state before any faithfulness-driven revision and after.
+Both values are present in the Report JSON under
+`explanation.faithfulness`:
+
+```json
+{
+  "score": 1.0,
+  "precision": 0.75,
+  "kendall_tau": 0.33,
+  "revised": false,
+  "score_before_revision": null,
+  "precision_before_revision": null,
+  "kendall_tau_before_revision": null
+}
+```
+
+The three metrics are reported together; we **do not drop the 1.00
+recall** — a perfect recall is still a positive signal that the
+Reporter saw the top-3 Shapley findings. Reporting precision + τ
+alongside it means a judge can distinguish a Reporter that cites
+exactly the right findings in the right order from one that cites
+everything and hopes.
+
 ## case-001 — contain @ 0.94
 
 _Source report: `output_examples/case-001-live-day3e.json` · decided_by=model+policy · 8 finding(s) · mode=exact_

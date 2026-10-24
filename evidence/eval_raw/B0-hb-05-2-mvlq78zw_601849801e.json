@@ -1,0 +1,36 @@
+{
+  "run_id": "mvlq78zw_601849801e",
+  "case_id": "hb-05",
+  "verdict": "contain",
+  "confidence": 0.8,
+  "summary": "B0 rules-only baseline: CONTAIN. sign-in from new ASN(s): AS24940 Hetzner Online, AS14061 DigitalOcean; external email forwarding rule detected: target=folder:Deleted Items via=api",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "Rules-only baseline: no DQ, no USL cross-source joins, no KEV lookup, no memory."
+  ],
+  "not_checked": [
+    "device inventory",
+    "VPN appliance firmware vs KEV",
+    "cross-case memory"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 0
+  },
+  "models": [],
+  "decided_by": "rules_only",
+  "model_steps_ok": 0,
+  "model_steps_total": 0,
+  "trace_id": "mvlq78zw_601849801e",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq78zw_601849801e/trace.jsonl",
+  "execution_time_seconds": 0.986
+}

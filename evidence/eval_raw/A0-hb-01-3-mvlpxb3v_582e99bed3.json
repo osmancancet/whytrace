@@ -1,0 +1,497 @@
+{
+  "run_id": "mvlpxb3v_582e99bed3",
+  "case_id": "hb-01",
+  "verdict": "contain",
+  "confidence": 0.85,
+  "summary": "F1: Twelve SIS events from 203.0.113.58 within 60 minutes indicate bulk student-information-system access [T1213]. F5: An inbox forwarding rule to l1b-archive@protonmail.com was created via API, indicating post-auth email exfiltration [T1114.003]. F2: One suspicious sign-in from AS-AEGEAN-EDU (TR) outside baseline [T1078.004]. F3: Fifteen suspicious sign-ins from Contabo GmbH (DE) outside baseline [T1078.004].",
+  "timeline": [
+    {
+      "ts": "2026-06-27 08:12:00.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS-AEGEAN-EDU (TR), 1 event(s)",
+      "sql_id": "3764dbbc9034"
+    },
+    {
+      "ts": "2026-10-12 02:14:07.0",
+      "event": "F3 Suspicious sign-ins from an ASN outside the account's baseline: AS51167 Contabo GmbH (DE), 15 event(s)",
+      "sql_id": "3764dbbc9034"
+    },
+    {
+      "ts": "2026-10-12 02:16:40.0",
+      "event": "F5 Inbox forwarding rule to l1b-archive@protonmail.com (created via api)",
+      "sql_id": "ce796df83ba6"
+    },
+    {
+      "ts": "2026-10-12 02:21:05.0",
+      "event": "F3 Suspicious sign-ins from an ASN outside the account's baseline: AS51167 Contabo GmbH (DE), 15 event(s)",
+      "sql_id": "3764dbbc9034"
+    },
+    {
+      "ts": "2026-10-12 02:23:30.0",
+      "event": "F3 Suspicious sign-ins from an ASN outside the account's baseline: AS51167 Contabo GmbH (DE), 15 event(s)",
+      "sql_id": "3764dbbc9034"
+    },
+    {
+      "ts": "2026-10-12 02:53:30.0",
+      "event": "F1 Bulk student-information-system access: 12 successful SIS events within 60 min from 203.0.113.58",
+      "sql_id": "b40ba03f73e8"
+    },
+    {
+      "ts": "2026-10-12 02:56:00.0",
+      "event": "F1 Bulk student-information-system access: 12 successful SIS events within 60 min from 203.0.113.58",
+      "sql_id": "b40ba03f73e8"
+    },
+    {
+      "ts": "2026-10-12 02:58:30.0",
+      "event": "F1 Bulk student-information-system access: 12 successful SIS events within 60 min from 203.0.113.58",
+      "sql_id": "b40ba03f73e8"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "H1",
+      "claim": "Bulk student-information-system access: 12 successful SIS events within 60 min from 203.0.113.58",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b40ba03f73e8",
+        "73499ff70632"
+      ],
+      "row_refs": [
+        "b40ba03f73e8#0",
+        "b40ba03f73e8#1",
+        "b40ba03f73e8#2",
+        "b40ba03f73e8#3",
+        "b40ba03f73e8#4"
+      ],
+      "attack": [
+        "T1213"
+      ],
+      "confidence": 0.85,
+      "kind": "bulk_sis",
+      "entity_ids": [
+        "account:idp:i.tekin@aegean.edu",
+        "ip:net:203.0.113.58"
+      ],
+      "facts": {
+        "upn": "i.tekin@aegean.edu",
+        "ip": "203.0.113.58",
+        "events": 12
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "H1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS-AEGEAN-EDU (TR), 1 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "3764dbbc9034",
+        "8fff0e19b62c"
+      ],
+      "row_refs": [
+        "3764dbbc9034#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:i.tekin@aegean.edu",
+        "ip:net:193.140.10.61"
+      ],
+      "facts": {
+        "upn": "i.tekin@aegean.edu",
+        "asn_org": "AS-AEGEAN-EDU",
+        "country": "TR",
+        "ip": "193.140.10.61",
+        "first_ts": "2026-06-27 08:12:00.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F3",
+      "hypothesis_id": "H1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS51167 Contabo GmbH (DE), 15 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "3764dbbc9034",
+        "8e0a6cee35cd"
+      ],
+      "row_refs": [
+        "3764dbbc9034#1",
+        "3764dbbc9034#2",
+        "3764dbbc9034#3",
+        "3764dbbc9034#4",
+        "3764dbbc9034#5"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:i.tekin@aegean.edu",
+        "ip:net:203.0.113.58"
+      ],
+      "facts": {
+        "upn": "i.tekin@aegean.edu",
+        "asn_org": "AS51167 Contabo GmbH",
+        "country": "DE",
+        "ip": "203.0.113.58",
+        "first_ts": "2026-10-12 02:14:07.0",
+        "via_vpn_appliance": null,
+        "events": 15
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F4",
+      "hypothesis_id": "H2",
+      "claim": "Most sign-ins come from DE (15 events)",
+      "status": "LIKELY",
+      "sql_ids": [
+        "9b74f6398184"
+      ],
+      "row_refs": [
+        "9b74f6398184#0"
+      ],
+      "attack": [],
+      "confidence": 0.5,
+      "kind": "foreign_majority",
+      "entity_ids": [
+        "account:idp:i.tekin@aegean.edu"
+      ],
+      "facts": {
+        "upn": "i.tekin@aegean.edu",
+        "country": "DE"
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F5",
+      "hypothesis_id": "H1",
+      "claim": "Inbox forwarding rule to l1b-archive@protonmail.com (created via api)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "ce796df83ba6",
+        "cc551f55e920"
+      ],
+      "row_refs": [
+        "ce796df83ba6#0"
+      ],
+      "attack": [
+        "T1114.003"
+      ],
+      "confidence": 0.8,
+      "kind": "forward_rule",
+      "entity_ids": [
+        "account:idp:i.tekin@aegean.edu"
+      ],
+      "facts": {
+        "upn": "i.tekin@aegean.edu",
+        "target": "l1b-archive@protonmail.com",
+        "via": "api",
+        "name": null,
+        "detail": "target=l1b-archive@protonmail.com via=api",
+        "event_id": "r:ME-H01-01",
+        "ts": "2026-10-12 02:16:40.0"
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [
+    {
+      "claim": "VPN appliance vpn-edge-01 (firmware 22.7R2.3) runs a product listed in CISA KEV (CVE-2026-104935, CVE-2025-22457, CVE-2025-0282, …)",
+      "reason": "critic: vpn-edge-01 did not carry a sign-in for i.tekin@aegean.edu; its KEV status is not relevant to this account's exposure"
+    }
+  ],
+  "actions": [
+    {
+      "action": "Disable credentials for i.tekin@aegean.edu, revoke all active sessions, and force password reset; investigate the external SIS access from 203.0.113.58.",
+      "attack": [
+        "T1213",
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Delete the forwarding rule to l1b-archive@protonmail.com and audit all mailbox forwarding rules across the tenant.",
+      "attack": [
+        "T1114.003"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Block or restrict sign-ins from Contabo GmbH (DE) and AS-AEGEAN-EDU (TR) unless verified; enforce MFA and conditional access for the account.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "F4 is low confidence (0.5) with no ATT&CK mapping; country attribution alone is not conclusive evidence of compromise. The rejected VPN KEV claim means network appliance exposure was not assessed for this account."
+  ],
+  "not_checked": [
+    "Endpoint or device compromise for i.tekin@aegean.edu was not checked. Whether SIS records were viewed, exported, or modified beyond the 12 access events was not checked."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 16,
+      "invalid": 0,
+      "scope": "account:i.tekin@aegean.edu",
+      "sql_id": "be74f59afde2"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 16,
+      "invalid": 0,
+      "scope": "account:i.tekin@aegean.edu",
+      "sql_id": "35c8e852642d"
+    },
+    {
+      "table": "vpn_session",
+      "rule": "vpn_session_order",
+      "valid": 1,
+      "invalid": 12,
+      "scope": "appliance:vpn-edge-01",
+      "sql_id": "7663def5e66e"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "12 SIS successes from 203.0.113.58 (claim: 12, within +/- 10 % tolerance)",
+      "check_sql_id": "73499ff70632"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "1 sign-in(s) from AS-AEGEAN-EDU; not via university VPN, device DEV-H01-D",
+      "check_sql_id": "8fff0e19b62c"
+    },
+    {
+      "finding_id": "F3",
+      "status": "approved",
+      "reason": "15 sign-in(s) from AS51167 Contabo GmbH; not via university VPN, no managed device",
+      "check_sql_id": "8e0a6cee35cd"
+    },
+    {
+      "finding_id": "F4",
+      "status": "approved",
+      "reason": "no independent check for this signal; kept as LIKELY"
+    },
+    {
+      "finding_id": "F5",
+      "status": "approved",
+      "reason": "forwards outside the university to l1b-archive@protonmail.com (created via api)",
+      "check_sql_id": "cc551f55e920"
+    },
+    {
+      "finding_id": "F6",
+      "status": "rejected",
+      "reason": "vpn-edge-01 did not carry a sign-in for i.tekin@aegean.edu; its KEV status is not relevant to this account's exposure",
+      "check_sql_id": "f022448cd570"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "contain",
+    "confidence": 0.85,
+    "mode": "exact",
+    "n_findings": 5,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Bulk student-information-system access: 12 successful SIS events within 60 min from 203.0.113.58",
+        "attack": [
+          "T1213"
+        ],
+        "sql_ids": [
+          "b40ba03f73e8",
+          "73499ff70632"
+        ],
+        "shapley": 0.2875,
+        "rank": 1
+      },
+      {
+        "finding_id": "F5",
+        "claim": "Inbox forwarding rule to l1b-archive@protonmail.com (created via api)",
+        "attack": [
+          "T1114.003"
+        ],
+        "sql_ids": [
+          "ce796df83ba6",
+          "cc551f55e920"
+        ],
+        "shapley": 0.2842,
+        "rank": 2
+      },
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS-AEGEAN-EDU (TR), 1 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "3764dbbc9034",
+          "8fff0e19b62c"
+        ],
+        "shapley": 0.1392,
+        "rank": 3
+      },
+      {
+        "finding_id": "F3",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS51167 Contabo GmbH (DE), 15 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "3764dbbc9034",
+          "8e0a6cee35cd"
+        ],
+        "shapley": 0.1392,
+        "rank": 4
+      },
+      {
+        "finding_id": "F4",
+        "claim": "Most sign-ins come from DE (15 events)",
+        "attack": [],
+        "sql_ids": [
+          "9b74f6398184"
+        ],
+        "shapley": 0,
+        "rank": 5
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "contain",
+          "confidence_without": 0.8,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "contain",
+          "confidence_without": 0.83,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F3",
+          "verdict_without": "contain",
+          "confidence_without": 0.83,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F4",
+          "verdict_without": "contain",
+          "confidence_without": 0.85,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F5",
+          "verdict_without": "contain",
+          "confidence_without": 0.81,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "escalate",
+        "confidence": 0.78
+      }
+    },
+    "contrastive": {
+      "runner_up": "escalate",
+      "explanation": "Removing F1, F2 would drop the chain below the \"≥2 confirmed abuse OR 1 abuse + 2 access\" threshold, so the policy would escalate for human review.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1",
+        "F5",
+        "F2"
+      ],
+      "cited_ids": [
+        "F1",
+        "F5",
+        "F2",
+        "F3"
+      ],
+      "overlap": 3,
+      "score": 1,
+      "precision": 0.75,
+      "kendall_tau": 1,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "contain",
+    "policy_decision": "contain",
+    "model_decision": "contain",
+    "confidence": 0.85,
+    "rationale": "Confirmed account takeover chain: anomalous sign-ins from non-baseline ASNs (F2: AS-AEGEAN-EDU TR; F3: AS51167 Contabo DE, 15 events), followed by bulk SIS access (12 events in 60 min from 203.0.113.58, F1), and persistence via an API-created inbox forwarding rule to an external ProtonMail address (F5). All four supporting findings are CONFIRMED. The rejected VPN KEV claim is irrelevant to this account per the case notes. No data-quality conflicts. This meets the contain criteria (confirmed ATO chain), not merely monitor/benign, and does not require escalation since evidence is consistent and sufficient.",
+    "escalate_reasons": []
+  },
+  "rounds": 2,
+  "budget": {
+    "sql_calls": 26,
+    "model_calls": 4
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_994itxlz"
+    },
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_v50wp845"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_7w2o0pkg"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_d531qnnq"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 4,
+  "model_steps_total": 4,
+  "trace_id": "mvlpxb3v_582e99bed3",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlpxb3v_582e99bed3/trace.jsonl",
+  "execution_time_seconds": 43.038
+}

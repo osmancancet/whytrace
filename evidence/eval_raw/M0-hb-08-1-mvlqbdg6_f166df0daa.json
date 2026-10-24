@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqbdg6_f166df0daa",
+  "case_id": "hb-08",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.70. All sign-ins for r.yavuz@aegean.edu are successful and come from a single consistent source: IP 198.51.100.44 (AS9121 TTNET, TR/Manisa), device DEV-H08-L, app=sis, mfa_prompt_count=0, no VPN. There is no impossible travel, new ASN, new device, or failed-auth anomaly — the authentication pattern looks like normal use from the user's expected region (Aegean University is in Izmir, TR; Manisa is nearby). The only anomalous signal is one mail event: an OWA inbox rule forwarding mail to an external personal address (r.yavuz.ozel@gmail.com). That forwarding rule is a known account-takeover persistence/exfiltration technique and represents potential data exposure, but by itself it is not confirmation of takeover — the sign-ins do not show an attacker, and we have no evidence the rule is unauthorized (a user may forward mail to a personal account). Because there is a non-trivial suspicious signal plus potential exposure, but insufficient evidence to confirm confirmed account takeover, this needs human review (verify with the user, check for additional rules/sent-mail access, confirm exposure scope). It is not benign (signal unexplained), not monitor ",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_17f6n6p2"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqbdg6_f166df0daa",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqbdg6_f166df0daa/trace.jsonl",
+  "execution_time_seconds": 34.317
+}

@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-03",
+  "upn": "it.karaca@aegean.edu",
+  "source": "mail-admin tool",
+  "raised_at": "2026-10-13T08:00:00Z",
+  "symptom": "IT admin pushed 42 API-created mail rules on behalf of staff accounts within 36 minutes, filing noreply@sis mail into a folder. Documented precedent push on 2026-09-15."
+}

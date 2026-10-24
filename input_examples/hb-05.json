@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-05",
+  "upn": "o.polat@aegean.edu",
+  "source": "IdP + mailbox rules",
+  "raised_at": "2026-10-11T02:00:00Z",
+  "symptom": "IMAP sign-ins from DigitalOcean NL and Hetzner DE on a TOTP user who has never used IMAP; null device and zero prompts, syncing for hours; a new API rule moves security/password mail to Deleted Items."
+}

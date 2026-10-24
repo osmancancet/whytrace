@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqh3x6_c684b26747",
+  "case_id": "hb-07",
+  "verdict": "monitor",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: MONITOR @ 0.82. The alert shows a sustained brute-force / credential-stuffing pattern: 14 failed portal logins from cloud hosting IPs (Contabo, OVH, Linode, Datacamp, M247, Hetzner) across Nuremberg, Gravelines, Newark, Frankfurt, Bucharest, Helsinki, all with mfa_prompt_count 0 and no device_id. However, every one of these attempts failed — there is no successful sign-in from any suspicious IP, no new device, and no MFA bypass. Meanwhile the account's established pattern continues uninterrupted: daily mfa_approved logins from 198.51.100.77 (Turkcell, Istanbul, Turkey) on device DEV-H07-P, alternating lms/mail at 10:00 with MFA prompt count 1, consistent with the legitimate user (u.kilic@aegean.edu, Aegean University is in Izmir, Turkey). No mail events are present. This is not confirmed account takeover (no successful anomalous auth), not benign (the brute-force attempts are unexplained and suspicious), and not escalate (sufficient evidence exists to judge: attack noise only, no compromise). Verdict: monitor — watch for successful logins from these IPs, MFA fatigue prompts, account lockouts, or mail rule changes; recommend notifying the user and enforcing pa",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_yq94iu0c"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqh3x6_c684b26747",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqh3x6_c684b26747/trace.jsonl",
+  "execution_time_seconds": 8.688
+}

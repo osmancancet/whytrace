@@ -29,7 +29,7 @@ CREATE TABLE signin_events (
     city              text,
     device_id         text,
     user_agent        text,
-    app               text NOT NULL CHECK (app IN ('mail', 'lms', 'sis', 'vpn', 'portal')),
+    app               text NOT NULL CHECK (app IN ('mail', 'lms', 'sis', 'vpn', 'portal', 'hr', 'imap')),
     mfa_prompt_count  int DEFAULT 0,
     risk_flag         text,
     via_vpn_appliance text

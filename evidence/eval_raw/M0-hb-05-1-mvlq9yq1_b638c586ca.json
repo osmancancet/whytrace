@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlq9yq1_b638c586ca",
+  "case_id": "hb-05",
+  "verdict": "contain",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: CONTAIN @ 1.00. Confirmed account takeover for o.polat@aegean.edu. Baseline behavior is daily MFA-approved logins from the university network (193.140.10.37, AS-AEGEAN-EDU, Manisa TR) on known devices DEV-H05-L/P via mail/lms. The alert shows a clear break: a failed IMAP login from 203.0.113.17 (DigitalOcean NL Amsterdam) on 2026-10-09 23:40 followed by ~20 successful IMAP logins from that same cloud IP with no device_id and mfa_prompt_count=0, then ~10 more successful IMAP logins from a second cloud IP, 192.0.2.66 (Hetzner DE Falkenstein), again no device/MFA. IMAP authentic",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_3w59czms"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlq9yq1_b638c586ca",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq9yq1_b638c586ca/trace.jsonl",
+  "execution_time_seconds": 32.261
+}

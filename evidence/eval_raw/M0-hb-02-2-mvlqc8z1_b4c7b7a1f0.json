@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqc8z1_b4c7b7a1f0",
+  "case_id": "hb-02",
+  "verdict": "monitor",
+  "confidence": 0.72,
+  "summary": "M0 model-only verdict: MONITOR @ 0.72. Baseline is highly consistent: repeated successful logins for lab.kiosk-b@aegean.edu from AS-AEGEAN-EDU, TR/Manisa, across kiosk devices KIOSK-B01..B04 (LMS/portal), mfa_prompt_count 0. One isolated anomaly stands out: 2026-10-14 19:47:12 success from 198.51.100.141 (AS9121 TTNET, TR/Manisa) via portal with blank device_id; 198.51.0.0/16 TEST-NET space is not a normal production client IP. No failed logins, no MFA fatigue, no new country/ASN beyond same-city TTNET, and zero mail events. Not confirmed takeover (contain), not clearly explained (benign), and no exposure requiring immediate human escalation. Treat as a single weak unexplained signal to keep watching and verify with the account owner if it recurs.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5j8fthrn"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqc8z1_b4c7b7a1f0",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqc8z1_b4c7b7a1f0/trace.jsonl",
+  "execution_time_seconds": 38.728
+}

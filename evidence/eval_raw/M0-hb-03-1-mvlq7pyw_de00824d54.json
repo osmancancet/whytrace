@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlq7pyw_de00824d54",
+  "case_id": "hb-03",
+  "verdict": "benign",
+  "confidence": 0.87,
+  "summary": "M0 model-only verdict: BENIGN @ 0.87. All sign-ins for it.karaca@aegean.edu come from a single university-managed source: IP 193.140.10.15 (AS-AEGEAN-EDU), Manisa/TR, device DEV-H03-W, during regular business hours (08:00/11:00/14:00), alternating mail/portal, all successful, mfa_prompt_count 0, no via_vpn_appliance. There are zero mail events and no failed authentications, impossible travel, new device/location/carrier, MFA fatigue, or MFA bypass. The uniform, single-source pattern is consistent with legitimate daily use from an on-campus/managed device, so the alert is not corroborated by any account-takeover indicator.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xs0kp52d"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlq7pyw_de00824d54",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq7pyw_de00824d54/trace.jsonl",
+  "execution_time_seconds": 47.353
+}

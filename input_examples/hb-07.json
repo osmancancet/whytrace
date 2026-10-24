@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-07",
+  "upn": "u.kilic@aegean.edu",
+  "source": "IdP",
+  "raised_at": "2026-10-13T04:00:00Z",
+  "symptom": "17 failed sign-in attempts over six days from six rotating hosting ASNs (M247/Datacamp/Linode/OVH/Contabo/Hetzner), all portal, zero prompts. No success from attacker infrastructure; user's own normal activity continues from home ISP."
+}

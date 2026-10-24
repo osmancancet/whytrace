@@ -1,0 +1,217 @@
+{
+  "run_id": "mvlprh77_319251e35b",
+  "case_id": "hb-02",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "F1: A single sign-in from AS9121 TTNET (TR) deviates from the lab.kiosk-b@aegean.edu baseline and matches Valid Accounts: Cloud Accounts (T1078.004). No confirmed abuse events follow this access signal.",
+  "timeline": [
+    {
+      "ts": "2026-10-14 19:47:12.0",
+      "event": "F1 Suspicious sign-ins from an ASN outside the account's baseline: AS9121 TTNET (TR), 1 event(s)",
+      "sql_id": "ea50e7b15447"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9121 TTNET (TR), 1 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "ea50e7b15447",
+        "ca85da0bc3be"
+      ],
+      "row_refs": [
+        "ea50e7b15447#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:lab.kiosk-b@aegean.edu",
+        "ip:net:198.51.100.141"
+      ],
+      "facts": {
+        "upn": "lab.kiosk-b@aegean.edu",
+        "asn_org": "AS9121 TTNET",
+        "country": "TR",
+        "ip": "198.51.100.141",
+        "first_ts": "2026-10-14 19:47:12.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Reset the account password and revoke all active sessions for lab.kiosk-b@aegean.edu.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Apply conditional access or block sign-ins from AS9121 TTNET outside the account's expected baseline.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Monitor the account for further authentication anomalies or post-compromise activity.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Only one access signal observed; no confirmed abuse chain or downstream activity to correlate. Verdict is policy-driven escalation at moderate confidence (0.65).",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed monitor, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Whether the kiosk device is compromised or shared with other users; whether other accounts authenticate from AS9121 TTNET."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 441,
+      "invalid": 0,
+      "scope": "account:lab.kiosk-b@aegean.edu",
+      "sql_id": "bfcd09a42978"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 441,
+      "invalid": 0,
+      "scope": "account:lab.kiosk-b@aegean.edu",
+      "sql_id": "6160141b7be2"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "1 sign-in(s) from AS9121 TTNET; not via university VPN, no managed device",
+      "check_sql_id": "ca85da0bc3be"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 1,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F1",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS9121 TTNET (TR), 1 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "ea50e7b15447",
+          "ca85da0bc3be"
+        ],
+        "shapley": 0.75,
+        "rank": 1
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "benign",
+          "confidence_without": 0.75,
+          "changes_verdict": true
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F1"
+      ],
+      "cited_ids": [
+        "F1"
+      ],
+      "overlap": 1,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": null,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "monitor",
+    "confidence": 0.65,
+    "rationale": "F1 is a single CONFIRMED anomalous sign-in from AS9121 TTNET (TR), outside the account baseline, mapped to T1078.004 (Valid Accounts: Cloud Accounts). There are no rejected claims explaining it away and no data-quality conflicts, so it is not benign. However, one isolated authentication event does not by itself constitute a confirmed account takeover chain (no persistence, lateral movement, or further compromise indicators), so contain is not supported. The signal is confirmed-but-unexplained and weak in isolation, fitting monitor rather than escalate (no exposure evidence or conflicting/insufficient data requiring a human).",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed monitor, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 12,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_qn8xe6pm"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_h7hnlfo2"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_49vadr8w"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlprh77_319251e35b",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlprh77_319251e35b/trace.jsonl",
+  "execution_time_seconds": 34.928
+}

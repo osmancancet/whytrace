@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-04",
+  "upn": "p.gunes@aegean.edu",
+  "source": "IdP (SIEM dedupe alert)",
+  "raised_at": "2026-10-16T13:00:00Z",
+  "symptom": "An HR sign-in is logged twice with contradictory source data (campus laptop vs OVH FR + unregistered device); 14 subsequent HR rows have null network fields and use the unregistered device."
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqhamk_14a3f973f2",
+  "case_id": "hb-08",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.70. Not confirmed account takeover: all sign-ins are successful from the same device, IP/ASN, country/city, and app, with no failed logins, new devices, impossible travel, or MFA anomaly. However, the OWA mail rule forwarding mail to an external gmail address is a potential data-exfiltration/persistence exposure and cannot be verified as authorized from the dump. Evidence is insufficient to classify as benign, so human review is needed.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_15ckzikx"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqhamk_14a3f973f2",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqhamk_14a3f973f2/trace.jsonl",
+  "execution_time_seconds": 27.061
+}

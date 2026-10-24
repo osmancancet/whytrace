@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqf2nr_ba57b32596",
+  "case_id": "hb-08",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.65. All 200 sign-ins are success events from a single consistent source: IP 198.51.100.44, device DEV-H08-L, app SIS, Manisa/TR (TTNET), 0 MFA prompts, across one evening session with a gap. That authentication pattern shows no obvious anomalous access (no new device, no impossible travel, no MFA fatigue, no credential-stuffing failures), so the auth events alone do not confirm account takeover. However, the single mail event shows an inbox forward rule to an external personal address (r.yavuz.ozel@gmail.com via OWA), which is a recognized post-compromise data-exfiltration technique and represents actual exposure of university email. There is insufficient evidence to determine whether the forwarding rule was set by the legitimate user (benign) or by an attacker (contain-worthy), and no user confirmation is present in the dump. Because there is exposure plus insufficient evidence to classify, this needs human verification (contact the account owner to confirm/deny the forwarding rule) rather than immediate containment or dismissal.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_gijlxibw"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqf2nr_ba57b32596",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqf2nr_ba57b32596/trace.jsonl",
+  "execution_time_seconds": 12.508
+}

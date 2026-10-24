@@ -1,0 +1,291 @@
+{
+  "run_id": "mvlpmn84_5effa81569",
+  "case_id": "hb-04",
+  "verdict": "escalate",
+  "confidence": 0.63,
+  "summary": "F1 confirms impossible travel: Manisa to Roubaix in zero minutes for p.gunes@aegean.edu. F2 confirms one sign-in from OVH SAS AS16276 (FR), outside the account baseline. Both findings map to T1078.004 (Valid Accounts: Cloud Accounts). No abuse chain confirmed; per Risk Gate policy, escalate rather than contain.",
+  "timeline": [
+    {
+      "ts": "2026-10-16 10:22:31.0",
+      "event": "F1 Impossible travel: Manisa → Roubaix in 0 min",
+      "sql_id": "030248525895"
+    },
+    {
+      "ts": "2026-10-16 10:22:31.0",
+      "event": "F1 Impossible travel: Manisa → Roubaix in 0 min",
+      "sql_id": "030248525895"
+    },
+    {
+      "ts": "2026-10-16 10:22:31.0",
+      "event": "F2 Suspicious sign-ins from an ASN outside the account's baseline: AS16276 OVH SAS (FR), 1 event(s)",
+      "sql_id": "b4718323f233"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "hypothesis_id": "h1",
+      "claim": "Impossible travel: Manisa → Roubaix in 0 min",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "030248525895",
+        "4c1206f23b71"
+      ],
+      "row_refs": [
+        "030248525895#15",
+        "030248525895#16"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.7,
+      "kind": "impossible_travel",
+      "entity_ids": [
+        "account:idp:p.gunes@aegean.edu"
+      ],
+      "facts": {
+        "upn": "p.gunes@aegean.edu",
+        "from_event": "SE-H04-0731",
+        "to_event": "SE-H04-0731-dup",
+        "from_country": "TR",
+        "to_country": "FR",
+        "from_asn_org": "AS-AEGEAN-EDU",
+        "to_asn_org": "AS16276 OVH SAS",
+        "from_device_id": "DEV-H04-L",
+        "to_device_id": "DEV-H04-X",
+        "minutes": 0
+      },
+      "dq_flags": []
+    },
+    {
+      "id": "F2",
+      "hypothesis_id": "h1",
+      "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS16276 OVH SAS (FR), 1 event(s)",
+      "status": "CONFIRMED",
+      "sql_ids": [
+        "b4718323f233",
+        "1d3418b0b027"
+      ],
+      "row_refs": [
+        "b4718323f233#0"
+      ],
+      "attack": [
+        "T1078.004"
+      ],
+      "confidence": 0.75,
+      "kind": "new_asn",
+      "entity_ids": [
+        "account:idp:p.gunes@aegean.edu",
+        "ip:net:198.51.100.200"
+      ],
+      "facts": {
+        "upn": "p.gunes@aegean.edu",
+        "asn_org": "AS16276 OVH SAS",
+        "country": "FR",
+        "ip": "198.51.100.200",
+        "first_ts": "2026-10-16 10:22:31.0",
+        "via_vpn_appliance": null,
+        "events": 1
+      },
+      "dq_flags": []
+    }
+  ],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Reset the account password and revoke all active sessions for p.gunes@aegean.edu.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Enforce MFA and review conditional access policies to block sign-ins from anomalous ASNs and geolocations.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Audit cloud mailbox and file access logs for unauthorized forwarding, rules, or data access since the first suspicious sign-in.",
+      "attack": [
+        "T1078.004"
+      ],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "Evidence is limited to access signals; no confirmed abuse chain or data compromise observed.",
+    "Escalation reason: signals of compromise without a confirmed abuse chain",
+    "Escalation reason: model proposed contain, evidence policy says escalate"
+  ],
+  "not_checked": [
+    "Endpoint compromise and email hygiene for the user were not verified; downstream abuse chain not investigated."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 95,
+      "invalid": 0,
+      "scope": "account:p.gunes@aegean.edu",
+      "sql_id": "da555367d7d0"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 95,
+      "invalid": 0,
+      "scope": "account:p.gunes@aegean.edu",
+      "sql_id": "2ae56553c7a0"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 3,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [
+    {
+      "finding_id": "F1",
+      "status": "approved",
+      "reason": "both events are interactive and 0 min apart",
+      "check_sql_id": "4c1206f23b71"
+    },
+    {
+      "finding_id": "F2",
+      "status": "approved",
+      "reason": "1 sign-in(s) from AS16276 OVH SAS; not via university VPN, device DEV-H04-X",
+      "check_sql_id": "1d3418b0b027"
+    }
+  ],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "escalate",
+    "confidence": 0.73,
+    "mode": "exact",
+    "n_findings": 2,
+    "samples_used": 0,
+    "attribution": [
+      {
+        "finding_id": "F2",
+        "claim": "Suspicious sign-ins from an ASN outside the account's baseline: AS16276 OVH SAS (FR), 1 event(s)",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "b4718323f233",
+          "1d3418b0b027"
+        ],
+        "shapley": 0.39,
+        "rank": 1
+      },
+      {
+        "finding_id": "F1",
+        "claim": "Impossible travel: Manisa → Roubaix in 0 min",
+        "attack": [
+          "T1078.004"
+        ],
+        "sql_ids": [
+          "030248525895",
+          "4c1206f23b71"
+        ],
+        "shapley": 0.34,
+        "rank": 2
+      }
+    ],
+    "counterfactuals": {
+      "leave_one_out": [
+        {
+          "finding_id": "F1",
+          "verdict_without": "escalate",
+          "confidence_without": 0.75,
+          "changes_verdict": false
+        },
+        {
+          "finding_id": "F2",
+          "verdict_without": "escalate",
+          "confidence_without": 0.7,
+          "changes_verdict": false
+        }
+      ],
+      "minimal_set": {
+        "finding_ids": [
+          "F1",
+          "F2"
+        ],
+        "verdict": "benign",
+        "confidence": 0.75
+      }
+    },
+    "contrastive": {
+      "runner_up": "benign",
+      "explanation": "Rejecting F1, F2 would leave no surviving signal and the policy would land on benign — the opposite of the human-review path we chose.",
+      "blocking_findings": [
+        "F1",
+        "F2"
+      ],
+      "missing_evidence": []
+    },
+    "faithfulness": {
+      "top_k": 3,
+      "top_shapley_ids": [
+        "F2",
+        "F1"
+      ],
+      "cited_ids": [
+        "F1",
+        "F2"
+      ],
+      "overlap": 2,
+      "score": 1,
+      "precision": 1,
+      "kendall_tau": -1,
+      "revised": false,
+      "score_before_revision": null,
+      "precision_before_revision": null,
+      "kendall_tau_before_revision": null
+    }
+  },
+  "risk": {
+    "decision": "escalate",
+    "policy_decision": "escalate",
+    "model_decision": "contain",
+    "confidence": 0.63,
+    "rationale": "Two CONFIRMED findings point to unauthorized use of p.gunes@aegean.edu: impossible travel (Manina → Roubaix in 0 min, F1) and a sign-in from a non-baseline ASN (OVH SAS FR, AS16276, F2), both mapped to T1078.004. No rejected claims or data-quality conflicts exist to explain these away. This matches the contain criteria: a confirmed account takeover chain requiring immediate action.",
+    "escalate_reasons": [
+      "signals of compromise without a confirmed abuse chain",
+      "model proposed contain, evidence policy says escalate"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 14,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_2rq0iog1"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_u0l9unzk"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_qoqs94i9"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlpmn84_5effa81569",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlpmn84_5effa81569/trace.jsonl",
+  "execution_time_seconds": 44.106
+}

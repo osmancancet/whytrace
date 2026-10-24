@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-01",
+  "upn": "i.tekin@aegean.edu",
+  "source": "IdP + mailbox rules",
+  "raised_at": "2026-10-12T02:40:00Z",
+  "symptom": "Dormant Library account resurrects at 02:14Z from a Contabo VPS; API-created rule forwards all mail to a protonmail address; HR and 12 SIS hits follow in 45 minutes. Account has no MFA."
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqepax_160e286d6d",
+  "case_id": "hb-07",
+  "verdict": "benign",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: BENIGN @ 0.92. The account u.kilic@aegean.edu shows a stable, legitimate access pattern: daily MFA-approved logins at 10:00 from 198.51.100.77 (AS16135 Turkcell, Istanbul, TR) on known device DEV-H07-P across LMS/mail with mfa_prompt_count=1. Separately, from Oct 07-13 there are repeated portal sign-in failures from rotating cloud-provider IPs (Contabo, OVH, Linode, Datacamp, M247, Hetzner) across European cities, all with mfa_prompt_count=0, no device_id, and every one resulting in failure. There is no successful sign-in from any anomalous IP, no MFA bypass or approval from those locations, and no mail events indicating post-compromise activity. The anomalous signals are fully explained as failed credential-stuffing/brute-force noise with no confirmed account takeover.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_bo2za0ex"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqepax_160e286d6d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqepax_160e286d6d/trace.jsonl",
+  "execution_time_seconds": 17.309
+}

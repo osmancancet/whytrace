@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlq7idv_7a93910406",
+  "case_id": "hb-02",
+  "verdict": "monitor",
+  "confidence": 0.6,
+  "summary": "M0 model-only verdict: MONITOR @ 0.60. Baseline for lab.kiosk-b@aegean.edu is repeated successful sign-ins from AS-AEGEAN-EDU (TR, Manisa) across kiosk devices KIOSK-B01..B04 via lms/portal, MFA prompt count 0, consistent with a shared lab/kiosk account. The only deviation is a single success on 2026-10-14 19:47 from 198.51.100.141 (AS9121 TTNET, TR Manisa) via portal with no device_id. Same city/country, no failed auth, no impossible travel, no mail events, and only one occurrence — not confirmed account takeover. The TEST-NET-2-looking IP / missing device_id is a weak unexplained anomaly worth watching rather than an exposure requiring immediate containment or human escalation.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_5wf1ou4a"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlq7idv_7a93910406",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq7idv_7a93910406/trace.jsonl",
+  "execution_time_seconds": 9.827
+}

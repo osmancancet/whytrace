@@ -38,3 +38,17 @@ dev-fy-pc,f.yildiz@aegean.edu,si-fy-pc.aegean.edu,Windows,11 23H2,true,2026-10-1
 dev-fy-phone,f.yildiz@aegean.edu,si-fy-phone,iOS,18.6,true,2026-10-19T18:00:00Z,phone,n/a,Manisa / Student Affairs
 dev-ke-ws,k.erdem@aegean.edu,it-ke-ws.aegean.edu,Windows,11 23H2,true,2026-10-17T18:00:00Z,desktop,n/a,Manisa / IT
 dev-gs-phone,g.sen@aegean.edu,bp-gs-phone,Android,15,false,2026-10-19T18:00:00Z,phone,n/a,Manisa
+DEV-H01-D,i.tekin@aegean.edu,lib-tekin-d.aegean.edu,Windows,10 22H2,true,2026-06-27T08:40:00Z,desktop,n/a,Manisa / Library
+KIOSK-B01,lab.kiosk-b@aegean.edu,lab-b-01.aegean.edu,Windows,11 23H2,true,2026-10-19T17:00:00Z,desktop,n/a,Manisa / Computer Lab B
+KIOSK-B02,lab.kiosk-b@aegean.edu,lab-b-02.aegean.edu,Windows,11 23H2,true,2026-10-19T17:00:00Z,desktop,n/a,Manisa / Computer Lab B
+KIOSK-B03,lab.kiosk-b@aegean.edu,lab-b-03.aegean.edu,Windows,11 23H2,true,2026-10-19T17:00:00Z,desktop,n/a,Manisa / Computer Lab B
+KIOSK-B04,lab.kiosk-b@aegean.edu,lab-b-04.aegean.edu,Windows,11 23H2,true,2026-10-19T17:00:00Z,desktop,n/a,Manisa / Computer Lab B
+DEV-H03-W,it.karaca@aegean.edu,it-karaca-w.aegean.edu,Windows,11 23H2,true,2026-10-19T18:00:00Z,desktop,n/a,Manisa / IT
+DEV-H04-L,p.gunes@aegean.edu,fin-gunes-l.aegean.edu,Windows,11 23H2,true,2026-10-19T18:00:00Z,laptop,n/a,Manisa / Finance
+DEV-H05-L,o.polat@aegean.edu,me-polat-l.aegean.edu,macOS,15.6,true,2026-10-19T18:00:00Z,laptop,n/a,Manisa / ME
+DEV-H05-P,o.polat@aegean.edu,me-polat-p.aegean.edu,iOS,18.6,false,2026-10-19T18:00:00Z,phone,n/a,Manisa / ME
+DEV-H06-L,l.duman@aegean.edu,phy-duman-l.aegean.edu,Windows,11 23H2,true,2026-10-19T18:00:00Z,laptop,n/a,Manisa / Physics
+DEV-H06-P,l.duman@aegean.edu,phy-duman-p.aegean.edu,iOS,18.6,true,2026-10-19T18:00:00Z,phone,n/a,Manisa / Physics
+DEV-H06-T,l.duman@aegean.edu,phy-duman-t.aegean.edu,iPadOS,18.6,false,2026-10-19T18:00:00Z,tablet,n/a,Manisa / Physics
+DEV-H07-P,u.kilic@aegean.edu,ce-kilic-p.aegean.edu,Android,15,false,2026-10-19T18:00:00Z,phone,n/a,Manisa
+DEV-H08-L,r.yavuz@aegean.edu,ba-yavuz-l.aegean.edu,macOS,15.6,true,2026-10-19T18:00:00Z,laptop,n/a,Manisa / BA

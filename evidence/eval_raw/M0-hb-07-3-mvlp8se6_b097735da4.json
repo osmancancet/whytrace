@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlp8se6_b097735da4",
+  "case_id": "hb-07",
+  "verdict": "escalate",
+  "confidence": 0.7,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.70. Case hb-07 alert fired, but both the sign-in and mail event tables are empty (0 events). There is no evidence to confirm account takeover (contain), no suspicious signal to explain away (benign), and no weak signal to keep watching (monitor). With zero underlying events, there is insufficient evidence to reach a verdict from the raw dump alone; the alert's basis cannot be verified, so it needs human review.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xizt75zg"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlp8se6_b097735da4",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlp8se6_b097735da4/trace.jsonl",
+  "execution_time_seconds": 4.568
+}

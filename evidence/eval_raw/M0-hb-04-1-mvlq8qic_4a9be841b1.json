@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlq8qic_4a9be841b1",
+  "case_id": "hb-04",
+  "verdict": "contain",
+  "confidence": 0.82,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.82. Account p.gunes@aegean.edu normally authenticates only from 193.140.10.77 (AS-AEGEAN-EDU, Manisa/TR) on device DEV-H04-L, at regular 09:00/13:00 intervals, across hr and mail apps, with 0 MFA prompts. On 2026-10-16 a previously unseen device DEV-H04-X appears, and at the identical timestamp 10:22:31 there are two concurrent successful logins: one from the usual Manisa/university egress on DEV-H04-L, and another from 198.51.100.200 (AS16276 OVH SAS, Roubaix/FR) on DEV-H04-X. DEV-H04-X then fires rapid repeated hr logins every ~2 minutes (10:30–10:50) with no IP populated. Concurrent same-account sessions from two different countries/ASNs (university TR vs hosting FR), a new device, and rapid-fire authentications with no MFA challenge indicate an active, confirmed account takeover rather than explained suspicious noise. Contain the account (disable/reset, revoke sessions, force MFA re-enrollment).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_iuvppym6"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlq8qic_4a9be841b1",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq8qic_4a9be841b1/trace.jsonl",
+  "execution_time_seconds": 57.298
+}

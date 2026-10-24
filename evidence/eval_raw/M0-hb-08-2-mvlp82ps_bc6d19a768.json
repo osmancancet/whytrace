@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlp82ps_bc6d19a768",
+  "case_id": "hb-08",
+  "verdict": "escalate",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: ESCALATE @ 1.00. Case hb-08 alert fired but the raw dump contains zero sign-in events and zero mail events. With no telemetry to confirm account takeover, explain suspicious activity, or even identify a weak signal, there is insufficient evidence to contain, mark benign, or monitor. This meets the escalate criterion: insufficient evidence needing a human.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_gh22n0s1"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlp82ps_bc6d19a768",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlp82ps_bc6d19a768/trace.jsonl",
+  "execution_time_seconds": 3.466
+}

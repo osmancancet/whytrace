@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-02",
+  "upn": "lab.kiosk-b@aegean.edu",
+  "source": "IdP",
+  "raised_at": "2026-10-14T20:00:00Z",
+  "symptom": "Shared Computer Lab B kiosk credential (campus-only in 60 d of baseline) authenticates once from a home ISP in Manisa in the evening; no follow-up, no sensitive apps, no mailbox activity."
+}

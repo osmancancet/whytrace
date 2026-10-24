@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqb6sw_b2670df005",
+  "case_id": "hb-07",
+  "verdict": "benign",
+  "confidence": 1,
+  "summary": "M0 model-only verdict: BENIGN @ 1.00. The account shows a long-established, consistent legitimate pattern: daily sign-ins from 198.51.100.77 (AS16135 Turkcell, Istanbul, TR) on device DEV-H07-P alternating between lms and mail, each with exactly one MFA prompt and an approved result. The numerous sign-in failures from cloud providers (Contabo, OVH, Linode, Datacamp, M247, Hetzner) across Nuremberg/Frankfurt/Gravelines/Newark/Bucharest/Helsinki all returned \"failure\" with mfa_prompt_count 0, meaning they never reached/satisfied MFA and did not authenticate. There is no successful sign-in from an anomalous location/device, no MFA bypass, and no evidence the actor gained access. The suspicious signal is therefore explained as unsuccessful password-spray/brute-force noise against an MFA-protected account that remains under the legitimate user's control. No account takeover is confirmed.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_p7xlq7rv"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqb6sw_b2670df005",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqb6sw_b2670df005/trace.jsonl",
+  "execution_time_seconds": 8.613
+}

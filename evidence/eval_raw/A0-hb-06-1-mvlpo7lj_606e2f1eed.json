@@ -1,0 +1,114 @@
+{
+  "run_id": "mvlpo7lj_606e2f1eed",
+  "case_id": "hb-06",
+  "verdict": "benign",
+  "confidence": 0.7,
+  "summary": "Case hb-06 (l.duman@aegean.edu) assessed benign (confidence 0.7) by Risk Gate. No verified findings survived Critic review; no compromise signal confirmed. Model dissent was not grounded in confirmed evidence and did not override the benign policy determination.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Continue routine monitoring of the user account; no confirmed ATT&CK technique.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Validate email sender and message headers if similar reports recur; no confirmed ATT&CK technique.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Document closure as benign and retain logs for 90 days; no confirmed ATT&CK technique.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "model dissent carried no finding citations; policy verdict kept and confidence lowered by 0.05",
+    "No surviving findings or verified evidence available for technique attribution.",
+    "Escalation reason: model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+  ],
+  "not_checked": [
+    "User mailbox full history and endpoint telemetry not reviewed due to absence of confirmed indicators."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "57e24fbcd001"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "d2f91fe0ec8d"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "Case hb-06 (l.duman@aegean.edu) has no surviving verified findings, no rejected claims, and no data-quality conflicts. With zero confirmed findings, there is no confirmed account takeover chain (contain), no suspicious signal explained away (benign), and no weak unexplained signal (monitor). The record constitutes insufficient evidence, which per gate policy requires human escalation. No confirmed finding exists on the list to override this call.",
+    "escalate_reasons": [
+      "model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 9,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_cd2q9x69"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_l4axn64o"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_4ohtr6uu"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlpo7lj_606e2f1eed",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlpo7lj_606e2f1eed/trace.jsonl",
+  "execution_time_seconds": 29.327
+}

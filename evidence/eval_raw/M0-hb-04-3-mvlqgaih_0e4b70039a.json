@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqgaih_0e4b70039a",
+  "case_id": "hb-04",
+  "verdict": "contain",
+  "confidence": 0.8,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.80. Baseline for p.gunes@aegean.edu is stable for months: device DEV-H04-L, university ASN (AS-AEGEAN-EDU), Manisa/TR, twice-daily mail+hr logins, mfa_prompt_count=0. On 2026-10-16 a new device DEV-H04-X authenticates successfully to hr from 198.51.100.200 (AS16276 OVH SAS, Roubaix, FR) at 10:22:31 with mfa_prompt_count=0, followed by repeated successful DEV-H04-X logins through 13:05. New device + foreign cloud ASN + absent MFA challenge + sustained anomalous access deviating from a strict baseline indicates confirmed account takeover; contain (disable account, reset credentials, revoke sessions). No mail events exist, but the auth pattern alone is sufficient to confirm.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_48j1t44f"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqgaih_0e4b70039a",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqgaih_0e4b70039a/trace.jsonl",
+  "execution_time_seconds": 15.713
+}

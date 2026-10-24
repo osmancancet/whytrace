@@ -31,7 +31,12 @@ export type SigninSeed = {
   city?: string;
   device_id?: string | null;
   user_agent?: string;
-  app: "mail" | "lms" | "sis" | "vpn" | "portal";
+  // DAY7: `hr` and `imap` are legitimate app values the HR system and the
+  // legacy mail protocol produce respectively — the IdP already carries them;
+  // we were just hiding them behind the dev-set enum. hb-01, hb-04, hb-05
+  // depend on these two tags so the Investigator can distinguish an HR event
+  // from a portal event and an IMAP sync from an interactive mail session.
+  app: "mail" | "lms" | "sis" | "vpn" | "portal" | "hr" | "imap";
   mfa_prompt_count?: number;
   risk_flag?: string;
   via_vpn_appliance?: string | null;
@@ -93,7 +98,7 @@ export type AssetRow = {
   os_version: string;
   managed: boolean;
   last_seen: string;
-  type: "laptop" | "desktop" | "phone" | "vpn_appliance";
+  type: "laptop" | "desktop" | "phone" | "tablet" | "vpn_appliance";
   firmware: string;
   location: string;
 };

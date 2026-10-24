@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { seededRng } from "./rng.ts";
 import type { AssetRow, IdentitySeed, MailClick, MailDelivery, MailRule, SigninSeed, VpnSeed } from "./scenarios.ts";
 import { appendHoldout } from "./holdout.ts";
+import { appendHoldoutB } from "./holdout_b.ts";
 
 const SEED = 20261022;
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -323,7 +324,7 @@ function writeMailSnapshots(suite: Suite) {
  *  Exported so the seed-stability test can lock the byte-level output. Resets
  *  the RNG stream so repeated calls in-process return identical data.
  */
-export function buildSuite(opts: { withCaseSeven?: boolean; withHoldout?: boolean } = {}): { suite: Suite; identities: IdentitySeed[] } {
+export function buildSuite(opts: { withCaseSeven?: boolean; withHoldout?: boolean; withHoldoutB?: boolean } = {}): { suite: Suite; identities: IdentitySeed[] } {
   resetRng(SEED);
   const suite: Suite = { signins: [], vpnSessions: [], deliveries: [], clicks: [], rules: [], assets: [] };
   const signinSeq = { n: 1 };
@@ -348,6 +349,12 @@ export function buildSuite(opts: { withCaseSeven?: boolean; withHoldout?: boolea
     const holdoutIdents = appendHoldout(suite, signinSeq);
     idents.push(...holdoutIdents);
   }
+  // DAY7 blind held-out set hb-01 … hb-08 — appended STRICTLY after
+  // ho-01..ho-08 so the dev + ho hashes continue to pass.
+  if (opts.withHoldoutB === true) {
+    const holdoutBIdents = appendHoldoutB(suite, signinSeq);
+    idents.push(...holdoutBIdents);
+  }
   // The bg identities depend on the RNG stream that noise consumes, so they
   // belong after addNoise in the output order. case-007's identity is appended
   // last so it does not shift any earlier row.
@@ -355,7 +362,7 @@ export function buildSuite(opts: { withCaseSeven?: boolean; withHoldout?: boolea
 }
 
 async function main() {
-  const { suite, identities: allIdents } = buildSuite({ withHoldout: true });
+  const { suite, identities: allIdents } = buildSuite({ withHoldout: true, withHoldoutB: true });
   writeAssetsCsv(suite.assets);
   writeMailSnapshots(suite);
 

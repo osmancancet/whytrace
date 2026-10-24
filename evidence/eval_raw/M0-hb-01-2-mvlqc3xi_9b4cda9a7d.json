@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqc3xi_9b4cda9a7d",
+  "case_id": "hb-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for i.tekin@aegean.edu. The account's historical sign-in (2026-06-27) was from AS-AEGEAN-EDU in Manisa, TR on known device DEV-H01-D. On 2026-10-12, 15 successful logins originated from 203.0.113.58 (Contabo GmbH, Nuremberg, DE) — a hosting/VPS network, not the university — across mail, portal, and SIS apps, with no device_id, no MFA prompts, and no VPN appliance, indicating impossible travel and a new unmanaged device. Within two minutes of the first German SIS/login activity, a mail forwarding rule was created via API sending mail to l1b-archive@protonmail.com, an external provider consistent with persistence/exfiltration. Combined signals (anomalous geo/IP, empty device, MFA bypass, multi-app access, external mail forwarding) meet the threshold for confirmed account takeover. Contain the account immediately.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_evhtxpll"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqc3xi_9b4cda9a7d",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqc3xi_9b4cda9a7d/trace.jsonl",
+  "execution_time_seconds": 6.534
+}

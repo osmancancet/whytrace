@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqfcbe_ce48571b6c",
+  "case_id": "hb-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Account i.tekin@aegean.edu shows confirmed account takeover. Normal baseline: successful portal login from AS-AEGEAN-EDU (TR/Manisa) on known device DEV-H01-D. On 2026-10-12, a rapid succession of successful logins originated from 203.0.113.58 (Contabo GmbH, DE/Nuremberg — a hosting provider, not the university network) with no device_id, no VPN, and zero MFA prompts across mail, portal, and sis apps (impossible travel from Turkey to Germany within minutes). At 02:16:40, shortly after the first German mail login (02:14:07), an inbox rule was created forwarding mail to external address l1b-archive@protonmail.com via API — a classic persistence/data-exfiltration action. Together (anomalous hosting IP, impossible travel, missing device/MFA, multi-app access, external forwarding rule) this is confirmed compromise, not a weak or explained signal. Immediate containment is required: disable the account, reset credentials, revoke all sessions, and remove the forwarding rule.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_cqpppi46"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqfcbe_ce48571b6c",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqfcbe_ce48571b6c/trace.jsonl",
+  "execution_time_seconds": 9.401
+}

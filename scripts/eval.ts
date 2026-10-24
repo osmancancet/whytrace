@@ -18,6 +18,7 @@ import { join, resolve as resolvePath } from "node:path";
 import { Nightshift, RunTrace, Zetaris } from "../packages/adapters/src/index.ts";
 import { CaseMemory, evaluateModelOnly, evaluateRulesOnly, investigate, listDemoCases, type Report } from "../packages/agents/src/index.ts";
 import { HOLDOUT_CASES } from "../services/postgres-seed/src/holdout.ts";
+import { HOLDOUT_B_CASES } from "../services/postgres-seed/src/holdout_b.ts";
 
 // DAY6: held-out cases are seeded as data but not registered inside the frozen
 // product code (DEMO_CASES in packages/agents/src/orchestrator.ts). The eval
@@ -29,10 +30,12 @@ function resolveCase(caseId: string): CaseInfo | undefined {
   if (dev) return { id: dev.id, upn: dev.upn, expected: dev.expected ?? "?", description: dev.description };
   const ho = (HOLDOUT_CASES as Record<string, { upn: string; expected: string }>)[caseId];
   if (ho) return { id: caseId, upn: ho.upn, expected: ho.expected, description: `Held-out case ${caseId} (blind label)` };
+  const hb = (HOLDOUT_B_CASES as Record<string, { upn: string; expected: string }>)[caseId];
+  if (hb) return { id: caseId, upn: hb.upn, expected: hb.expected, description: `Held-out blind-B case ${caseId}` };
   return undefined;
 }
 function allCaseIds(): string[] {
-  return [...listDemoCases().map((c) => c.id), ...Object.keys(HOLDOUT_CASES)];
+  return [...listDemoCases().map((c) => c.id), ...Object.keys(HOLDOUT_CASES), ...Object.keys(HOLDOUT_B_CASES)];
 }
 
 function loadDotenv() {

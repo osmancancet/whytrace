@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqd2ux_d7c460e944",
+  "case_id": "hb-03",
+  "verdict": "benign",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: BENIGN @ 0.92. All 118 sign-in events are successful, from a single consistent source: IP 193.140.10.15 (AS-AEGEAN-EDU), TR/Manisa, device DEV-H03-W, apps mail/portal on a regular weekday pattern, MFA prompt count 0 throughout, no VPN appliance, no failures, no impossible travel, no new devices/locations, and no mail events. The observed signals are fully explained by normal on-campus user activity; nothing indicates account takeover or an exposure requiring human intervention.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_bg6kwfzg"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqd2ux_d7c460e944",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqd2ux_d7c460e944/trace.jsonl",
+  "execution_time_seconds": 5.609
+}

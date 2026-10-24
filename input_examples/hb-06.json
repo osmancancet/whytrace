@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-06",
+  "upn": "l.duman@aegean.edu",
+  "source": "IdP",
+  "raised_at": "2026-10-10T15:00:00Z",
+  "symptom": "Faculty sign-in from Athens on a new unmanaged iPad; her long-enrolled managed iPhone registered the same Greek ASN 7 minutes earlier. Normal push MFA, normal app mix."
+}

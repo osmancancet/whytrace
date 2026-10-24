@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqee0d_5cffe4d8e8",
+  "case_id": "hb-06",
+  "verdict": "escalate",
+  "confidence": 0.65,
+  "summary": "M0 model-only verdict: ESCALATE @ 0.65. l.duman@aegean.edu shows a stable months-long baseline of twice-daily logins from Manisa, Turkey (university AS-AEGEAN-EDU in the mornings on DEV-H06-L; TTNET AS9121 evenings on DEV-H06-P with MFA). Starting 2026-10-10, authentications suddenly appear from Athens, Greece (Vodafone-panafon AS3329) on new devices DEV-H06-P/DEV-H06-T, including MFA-approved events and several \"success\" logins with mfa_prompt_count=0 from the new country/devices. There are zero mail events to check for inbox rules, forwarding, or other post-compromise activity, and no data to confirm whether the travel is legitimate. This is not confirmed account takeover (MFA was passed, no malicious mail activity observed), not benign (geography/device change unexplained), and stronger than a weak signal given repeated successful remote-country authentications involving MFA. Insufficient evidence and potential exposure warrant human review (verify travel, inspect device registration, review full mail/audit logs before containing).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_epdybgb9"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqee0d_5cffe4d8e8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqee0d_5cffe4d8e8/trace.jsonl",
+  "execution_time_seconds": 14.633
+}

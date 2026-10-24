@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqe283_0f1dd44d4f",
+  "case_id": "hb-05",
+  "verdict": "contain",
+  "confidence": 0.9,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.90. Baseline for o.polat@aegean.edu is twice-daily MFA-approved logins from Turkey (Manisa) on known devices DEV-H05-L / DEV-H05-P via the university ASN. The alert shows a sharp deviation: repeated successful IMAP authentications with no MFA prompt and no device_id from unrelated cloud infrastructure — DigitalOcean (NL/Amsterdam) on 2026-10-10 and Hetzner Online (DE/Falkenstein) on 2026-10-11 — indicating use of valid credentials outside the normal MFA-protected session. A prior IMAP failure from the DigitalOcean IP is consistent with credential access attempts. Corroborating malicious activity: a mail rule event at 2026-10-11 01:20:30 deleting items into Deleted Items via API, consistent with an actor covering tracks after mailbox access. Multiple successful logins from two different cloud providers in two countries, absent MFA/device context, plus destructive mail-rule manipulation, confirms account takeover rather than a benign anomaly or weak signal.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_4i98szha"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqe283_0f1dd44d4f",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqe283_0f1dd44d4f/trace.jsonl",
+  "execution_time_seconds": 15.272
+}

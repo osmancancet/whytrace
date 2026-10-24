@@ -1,0 +1,121 @@
+{
+  "run_id": "mvlq2k5l_99d7ef2125",
+  "case_id": "hb-06",
+  "verdict": "benign",
+  "confidence": 0.7,
+  "summary": "Case hb-06 (l.duman@aegean.edu) is assessed as benign with 0.7 confidence. No verified findings or rejected claims survived Risk Gate review; no compromise signal was confirmed. Model dissent was not grounded in confirmed evidence under policy.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Close the case as benign and document the Risk Gate rationale in the ticket.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Advise the user to report suspicious emails and avoid clicking unverified links.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Confirm MFA is enrolled for l.duman@aegean.edu as a baseline account hardening step.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Retain associated logs for 90 days and monitor for recurrence without escalation.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "model dissent carried no finding citations; policy verdict kept and confidence lowered by 0.05",
+    "No confirmed findings available to map specific ATT&CK techniques or build an attack timeline.",
+    "Escalation reason: model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+  ],
+  "not_checked": [
+    "Mailbox content search, endpoint telemetry, and external threat-intel correlation were not performed given the benign disposition."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "57e24fbcd001"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "d2f91fe0ec8d"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "Case hb-06 (l.duman@aegean.edu) has zero surviving verified findings, zero rejected claims, and zero data-quality conflicts. There is no confirmed account takeover chain (contain), no suspicious signals explained away (benign), and no weak unexplained signal (monitor). The evidentiary record is empty, which constitutes insufficient evidence to render a contain/monitor/benign determination; a human reviewer must determine why the case was opened and whether additional data exists outside this record. No finding IDs are available to cite because no findings survived verification.",
+    "escalate_reasons": [
+      "model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 11,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_37in15ji"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_8zpbfifn"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_tuv05ucv"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvlq2k5l_99d7ef2125",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq2k5l_99d7ef2125/trace.jsonl",
+  "execution_time_seconds": 88.5
+}

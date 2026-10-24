@@ -87,6 +87,670 @@
       "action": "move",
       "target": "Arşiv-2026",
       "created_via": "owa"
+    },
+    {
+      "rule_id": "ME-H01-01",
+      "ts": "2026-10-12T02:16:40.000Z",
+      "upn": "i.tekin@aegean.edu",
+      "action": "forward",
+      "target": "l1b-archive@protonmail.com",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-001",
+      "ts": "2026-09-15T07:30:00.000Z",
+      "upn": "stf001@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-002",
+      "ts": "2026-09-15T07:30:35.000Z",
+      "upn": "stf002@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-003",
+      "ts": "2026-09-15T07:31:10.000Z",
+      "upn": "stf003@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-004",
+      "ts": "2026-09-15T07:31:45.000Z",
+      "upn": "stf004@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-005",
+      "ts": "2026-09-15T07:32:20.000Z",
+      "upn": "stf005@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-006",
+      "ts": "2026-09-15T07:32:55.000Z",
+      "upn": "stf006@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-007",
+      "ts": "2026-09-15T07:33:30.000Z",
+      "upn": "stf007@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-008",
+      "ts": "2026-09-15T07:34:05.000Z",
+      "upn": "stf008@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-009",
+      "ts": "2026-09-15T07:34:40.000Z",
+      "upn": "stf009@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-010",
+      "ts": "2026-09-15T07:35:15.000Z",
+      "upn": "stf010@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-011",
+      "ts": "2026-09-15T07:35:50.000Z",
+      "upn": "stf011@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-012",
+      "ts": "2026-09-15T07:36:25.000Z",
+      "upn": "stf012@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-013",
+      "ts": "2026-09-15T07:37:00.000Z",
+      "upn": "stf013@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-014",
+      "ts": "2026-09-15T07:37:35.000Z",
+      "upn": "stf014@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-015",
+      "ts": "2026-09-15T07:38:10.000Z",
+      "upn": "stf015@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-016",
+      "ts": "2026-09-15T07:38:45.000Z",
+      "upn": "stf016@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-017",
+      "ts": "2026-09-15T07:39:20.000Z",
+      "upn": "stf017@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-018",
+      "ts": "2026-09-15T07:39:55.000Z",
+      "upn": "stf018@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-019",
+      "ts": "2026-09-15T07:40:30.000Z",
+      "upn": "stf019@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-020",
+      "ts": "2026-09-15T07:41:05.000Z",
+      "upn": "stf020@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-021",
+      "ts": "2026-09-15T07:41:40.000Z",
+      "upn": "stf021@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-022",
+      "ts": "2026-09-15T07:42:15.000Z",
+      "upn": "stf022@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-023",
+      "ts": "2026-09-15T07:42:50.000Z",
+      "upn": "stf023@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-024",
+      "ts": "2026-09-15T07:43:25.000Z",
+      "upn": "stf024@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-025",
+      "ts": "2026-09-15T07:44:00.000Z",
+      "upn": "stf025@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-026",
+      "ts": "2026-09-15T07:44:35.000Z",
+      "upn": "stf026@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-027",
+      "ts": "2026-09-15T07:45:10.000Z",
+      "upn": "stf027@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-028",
+      "ts": "2026-09-15T07:45:45.000Z",
+      "upn": "stf028@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-029",
+      "ts": "2026-09-15T07:46:20.000Z",
+      "upn": "stf029@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-030",
+      "ts": "2026-09-15T07:46:55.000Z",
+      "upn": "stf030@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-031",
+      "ts": "2026-09-15T07:47:30.000Z",
+      "upn": "stf031@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-032",
+      "ts": "2026-09-15T07:48:05.000Z",
+      "upn": "stf032@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-033",
+      "ts": "2026-09-15T07:48:40.000Z",
+      "upn": "stf033@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-034",
+      "ts": "2026-09-15T07:49:15.000Z",
+      "upn": "stf034@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-035",
+      "ts": "2026-09-15T07:49:50.000Z",
+      "upn": "stf035@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-036",
+      "ts": "2026-09-15T07:50:25.000Z",
+      "upn": "stf036@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-037",
+      "ts": "2026-09-15T07:51:00.000Z",
+      "upn": "stf037@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-prec-038",
+      "ts": "2026-09-15T07:51:35.000Z",
+      "upn": "stf038@aegean.edu",
+      "action": "move",
+      "target": "folder:LMS Bildirimleri",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-001",
+      "ts": "2026-10-13T07:05:00.000Z",
+      "upn": "stf001@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-002",
+      "ts": "2026-10-13T07:05:51.000Z",
+      "upn": "stf002@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-003",
+      "ts": "2026-10-13T07:06:42.000Z",
+      "upn": "stf003@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-004",
+      "ts": "2026-10-13T07:07:33.000Z",
+      "upn": "stf004@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-005",
+      "ts": "2026-10-13T07:08:24.000Z",
+      "upn": "stf005@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-006",
+      "ts": "2026-10-13T07:09:15.000Z",
+      "upn": "stf006@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-007",
+      "ts": "2026-10-13T07:10:06.000Z",
+      "upn": "stf007@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-008",
+      "ts": "2026-10-13T07:10:57.000Z",
+      "upn": "stf008@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-009",
+      "ts": "2026-10-13T07:11:48.000Z",
+      "upn": "stf009@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-010",
+      "ts": "2026-10-13T07:12:39.000Z",
+      "upn": "stf010@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-011",
+      "ts": "2026-10-13T07:13:30.000Z",
+      "upn": "stf011@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-012",
+      "ts": "2026-10-13T07:14:21.000Z",
+      "upn": "stf012@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-013",
+      "ts": "2026-10-13T07:15:12.000Z",
+      "upn": "stf013@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-014",
+      "ts": "2026-10-13T07:16:03.000Z",
+      "upn": "stf014@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-015",
+      "ts": "2026-10-13T07:16:54.000Z",
+      "upn": "stf015@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-016",
+      "ts": "2026-10-13T07:17:45.000Z",
+      "upn": "stf016@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-017",
+      "ts": "2026-10-13T07:18:36.000Z",
+      "upn": "stf017@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-018",
+      "ts": "2026-10-13T07:19:27.000Z",
+      "upn": "stf018@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-019",
+      "ts": "2026-10-13T07:20:18.000Z",
+      "upn": "stf019@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-020",
+      "ts": "2026-10-13T07:21:09.000Z",
+      "upn": "stf020@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-021",
+      "ts": "2026-10-13T07:22:00.000Z",
+      "upn": "stf021@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-022",
+      "ts": "2026-10-13T07:22:51.000Z",
+      "upn": "stf022@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-023",
+      "ts": "2026-10-13T07:23:42.000Z",
+      "upn": "stf023@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-024",
+      "ts": "2026-10-13T07:24:33.000Z",
+      "upn": "stf024@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-025",
+      "ts": "2026-10-13T07:25:24.000Z",
+      "upn": "stf025@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-026",
+      "ts": "2026-10-13T07:26:15.000Z",
+      "upn": "stf026@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-027",
+      "ts": "2026-10-13T07:27:06.000Z",
+      "upn": "stf027@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-028",
+      "ts": "2026-10-13T07:27:57.000Z",
+      "upn": "stf028@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-029",
+      "ts": "2026-10-13T07:28:48.000Z",
+      "upn": "stf029@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-030",
+      "ts": "2026-10-13T07:29:39.000Z",
+      "upn": "stf030@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-031",
+      "ts": "2026-10-13T07:30:30.000Z",
+      "upn": "stf031@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-032",
+      "ts": "2026-10-13T07:31:21.000Z",
+      "upn": "stf032@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-033",
+      "ts": "2026-10-13T07:32:12.000Z",
+      "upn": "stf033@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-034",
+      "ts": "2026-10-13T07:33:03.000Z",
+      "upn": "stf034@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-035",
+      "ts": "2026-10-13T07:33:54.000Z",
+      "upn": "stf035@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-036",
+      "ts": "2026-10-13T07:34:45.000Z",
+      "upn": "stf036@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-037",
+      "ts": "2026-10-13T07:35:36.000Z",
+      "upn": "stf037@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-038",
+      "ts": "2026-10-13T07:36:27.000Z",
+      "upn": "stf038@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-039",
+      "ts": "2026-10-13T07:37:18.000Z",
+      "upn": "stf039@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-040",
+      "ts": "2026-10-13T07:38:09.000Z",
+      "upn": "stf040@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-041",
+      "ts": "2026-10-13T07:39:00.000Z",
+      "upn": "stf041@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H03-042",
+      "ts": "2026-10-13T07:39:51.000Z",
+      "upn": "stf042@aegean.edu",
+      "action": "move",
+      "target": "folder:SIS Duyurulari",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H05-01",
+      "ts": "2026-10-11T01:20:30.000Z",
+      "upn": "o.polat@aegean.edu",
+      "action": "delete",
+      "target": "folder:Deleted Items",
+      "created_via": "api"
+    },
+    {
+      "rule_id": "ME-H08-01",
+      "ts": "2026-10-15T20:58:12.000Z",
+      "upn": "r.yavuz@aegean.edu",
+      "action": "forward",
+      "target": "r.yavuz.ozel@gmail.com",
+      "created_via": "owa"
     }
   ]
 }

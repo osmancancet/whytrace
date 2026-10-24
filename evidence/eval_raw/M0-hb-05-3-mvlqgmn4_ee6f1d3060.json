@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqgmn4_ee6f1d3060",
+  "case_id": "hb-05",
+  "verdict": "contain",
+  "confidence": 0.92,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.92. Confirmed account takeover for o.polat@aegean.edu. The user's normal baseline is twice-daily logins from Manisa, Turkey — 09:00 on the university network (AS-AEGEAN-EDU, device DEV-H05-L, mail/lms, no MFA) and 21:00 on home ISP Superonline (device DEV-H05-P, mail, MFA-approved). On 2026-10-09 23:40 there is an IMAP failure from 203.0.113.17 (DigitalOcean, Amsterdam), immediately followed by repeated IMAP successes from that same cloud IP with no device_id and no MFA prompt. Then on 2026-10-11 there are repeated IMAP successes from a second cloud host, 192.0.2.66 (Hetzner, Falkenstein, DE), again with no device and no MFA. IMAP auth from cloud IPs without MFA or a known device is inconsistent with the legitimate user's pattern and indicates use of stolen credentials/app-password to bypass MFA. Corroborating the compromise, a mail event at 2026-10-11 01:20:30 shows an inbox rule deleting items into the Deleted Items folder via API — consistent with an attacker covering tracks. This meets the contain threshold (confirmed account takeover), not merely monitor/benign.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_fu0o0nzm"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqgmn4_ee6f1d3060",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqgmn4_ee6f1d3060/trace.jsonl",
+  "execution_time_seconds": 15.031
+}

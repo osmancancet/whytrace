@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlq7edu_c5505d9ba8",
+  "case_id": "hb-01",
+  "verdict": "contain",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: CONTAIN @ 0.95. Confirmed account takeover for i.tekin@aegean.edu. The account's only prior sign-in was from the university network (AS-AEGEAN-EDU, Manisa, TR, device DEV-H01-D). On 2026-10-12, 15 rapid successful sign-ins (~every 2.5 min) originated from 203.0.113.58 (Contabo GmbH hosting, Nuremberg, DE) across portal/mail/sis apps with empty device_id and zero MFA prompts — impossible travel, unfamiliar cloud ASN, automated pattern, and MFA bypass/absence. Immediately after (02:16:40), a mail forwarding rule was created via API forwarding to external l1b-archive@protonmail.com, a classic exfiltration action. Combined indicators (new geo/ASN, rapid auth bursts, missing device, no MFA, external forwarding rule) confirm compromise; contain the account (disable, password reset, revoke sessions, remove forwarding rule).",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_u9aem734"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlq7edu_c5505d9ba8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlq7edu_c5505d9ba8/trace.jsonl",
+  "execution_time_seconds": 5.183
+}

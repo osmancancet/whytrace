@@ -1,0 +1,7 @@
+{
+  "case_id": "hb-08",
+  "upn": "r.yavuz@aegean.edu",
+  "source": "IdP + mailbox rules + SIS auditor",
+  "raised_at": "2026-10-16T23:50:00Z",
+  "symptom": "Known device + home IP + TOTP throughout; however an OWA rule forwards 'öğrenci listesi'/'transkript' mail to a personal Gmail address, and SIS usage explodes to 115 off-hours sessions over two nights versus a 0–2/week baseline."
+}

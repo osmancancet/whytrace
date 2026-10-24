@@ -1,0 +1,43 @@
+{
+  "run_id": "mvlqfwmc_2fe782e589",
+  "case_id": "hb-03",
+  "verdict": "benign",
+  "confidence": 0.95,
+  "summary": "M0 model-only verdict: BENIGN @ 0.95. All 118 sign-in events for it.karaca@aegean.edu are successful logins from a single institutional source: IP 193.140.10.15 (AS-AEGEAN-EDU, TR/Manisa), device DEV-H03-W, alternating mail/portal apps, 0 MFA prompts, no VPN. The pattern is consistent with a regular campus user (daily 08:00/11:00/14:00 logins over weeks). No failed authentications, impossible travel, new devices, MFA fatigue, anonymous proxy/VPN, or mail events (0 mail events). No suspicious signals are present; the alert is explained by normal institutional activity.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [],
+  "limitations": [
+    "M0 ablation: Nemotron alone, no tools, no Critic, no Risk Gate, no DQ. Not a product configuration."
+  ],
+  "not_checked": [
+    "device inventory",
+    "KEV / CVE lookup",
+    "cross-case memory",
+    "data-quality rules"
+  ],
+  "dq": [],
+  "memory_used": [],
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "rounds": 0,
+  "budget": {
+    "sql_calls": 2,
+    "model_calls": 1
+  },
+  "models": [
+    {
+      "agent": "model_only",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_atnvlh5i"
+    }
+  ],
+  "decided_by": "model_only",
+  "model_steps_ok": 1,
+  "model_steps_total": 1,
+  "trace_id": "mvlqfwmc_2fe782e589",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvlqfwmc_2fe782e589/trace.jsonl",
+  "execution_time_seconds": 18.002
+}
