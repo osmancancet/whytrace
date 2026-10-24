@@ -364,6 +364,23 @@ Sample mode replays a *previously recorded* investigation without touching Zetar
 - **How to replay.** `SAMPLE_MODE=true npm run investigate -- <case-id>` or `./run <case-id> --sample`. The adapter reads the recorded responses from disk and the full orchestrator pipeline (planner, investigator, critic, risk gate, reporter) runs on them. The CLI banner clearly labels the run as "Replay recorded run".
 - **Guard-rail test.** `scripts/samples.test.ts` is part of the regular test suite and fails if any file in `samples/` contains a Bearer token, an `rt-*` runtime token, a `/Users/*` path or a `/home/*` path.
 
+## Pre-existing components (declaration)
+
+The following components in this repository existed before the build window opened and are reused unchanged under their original licences. The hackathon rules require this disclosure.
+
+- **Meterless conformance runners** — `conformance/world-model/runner.ts`, `conformance/hmem/runner.ts`, `conformance/hmem/vectors/vectors.json`, `conformance/markovian/runner.ts`, `conformance/scout/evals/**`, `conformance/LICENSE`, `conformance/scout/LICENSE`. Vendored verbatim from the Meterless/Meterless repository at commit `1742dec56a66e58eef9dda2d2b865823758ca8cd` (dated 2026-10-19); Apache-2.0. Our in-house engines under `packages/engines/{world-model,hmem,markovian,scout-intent}/` are clean-room TypeScript implementations written against the upstream `AGENTS.md` specifications; the vendored runners load them via `WORLD_MODEL_IMPL` / `HMEM_IMPL` / `MARKOVIAN_IMPL` / `SCOUT_IMPL` env vars (`scripts/run_conformance.mjs`). Provenance is captured in `conformance/PROVENANCE.md`.
+- **Zetaris getting-started vendored material** — the Zetaris REST contract notes, SQL dialect references and screenshots we quote in `.cursor/rules/zetaris-data.mdc` and the README come from the Zetaris documentation site. We never copied Zetaris code.
+- **Turkish phishing corpus (Kaggle)** — `data/phishing_corpus_tr/`. Published by this project's author on Kaggle before the hackathon, licensed CC BY-NC-SA 4.0; reused unchanged. The 2026-10-14 corpus snapshot in the repo is the version Zetaris's `FILES.phish_corpus` loads from.
+- **CISA KEV catalogue** — fetched live by `scripts/zetaris_bootstrap.ts` and cached via `CACHE TABLE`. Public domain.
+
+All other code in this repository was written inside the Open Agent Hackathon 2026 build window (22-27 Oct 2026) by the builder.
+
+## Data
+
+- Every identity, IP address, device, mail event, VPN session and sign-in in this repo is **synthetic**. UPNs end in `@aegean.edu` (a fictional "Aegean State University" in Manisa, Turkey — not a real institution); IP ranges are mostly `193.140.10.x` documentation-style with hosting-ASN attacker IPs that resolve to publicly-advertised Autonomous Systems but belong to nobody in particular. No real university PII, mailbox content or credentials are included.
+- The CISA KEV catalogue is **real public data** fetched from `https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json` and cached into Zetaris via `CACHE TABLE` — the CVEs an escalate verdict cites (`CVE-2026-104935`, `CVE-2025-22457`, …) are therefore real; the vulnerable VPN appliances in the data are not.
+- Service containers (`whytrace-postgres`, `whytrace-mailgw`, `zetaris-*`) run locally in Docker. The one-command bootstrap `npm run services:up && npm run bootstrap:zetaris` builds the whole dataset deterministically from `services/postgres-seed/` with `seed=20261022`.
+
 ## Data & licences
 
 - Synthetic data generator in `services/postgres-seed/` + `data/`. The Turkish phishing corpus is from the builder's Kaggle dataset (CC BY-NC-SA 4.0).
