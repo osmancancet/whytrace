@@ -10,7 +10,7 @@ Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Expla
 - **Problem:** phishing → account takeover is the most common incident; a wrong *benign* leaks student records, a wrong *contain* locks a lecturer out mid-exam.
 - **Verdicts:** `contain | monitor | benign | escalate` — each with a confidence number, timeline, and a defensible rationale.
 - **Evidence chain:** every finding links to a `sql_id` the Critic re-queried independently; nothing is "the model said so".
-- **Sponsor stack:** [Zetaris](https://zetaris.com) (Unified Semantic Layer over four sources), [Meterless](https://meterless.ai) (World Model, H-MEM, Markovian engines + Nightshift provider), [NVIDIA Nemotron](https://developer.nvidia.com/blog/accelerate-ai-development-with-the-nvidia-nemotron-open-models/) (Super VL 120B + Lightning 30B lanes), Cursor IDE + Claude (development tools).
+- **Sponsor stack:** [Zetaris](https://zetaris.com) (Unified Semantic Layer over four sources), [Meterless](https://meterless.ai) (World Model, H-MEM, Markovian engines + Nightshift provider), [NVIDIA Nemotron](https://developer.nvidia.com/blog/accelerate-ai-development-with-the-nvidia-nemotron-open-models/) (every successful call routed to Nemotron 3.5 Super VL 120B — [model per agent](#nemotron-models-by-agent)), Cursor IDE + Claude (development tools).
 
 ## Head-to-head: WhyTrace vs rules-only vs Nemotron alone
 
@@ -115,6 +115,20 @@ docker run -p 8000:8000 whytrace     # → http://localhost:8000/healthz
 
 **Shell wrapper for the CLI.** `./run <case-id> [--sample]` is a thin wrapper around `npm run investigate`; `--sample` sets `SAMPLE_MODE=true` so the adapters replay from `samples/<case>/` instead of hitting Zetaris or Nightshift. Samples are only present for cases we have deliberately recorded (see [Sample mode](#sample-mode)); a case without a `samples/<case>/` directory in a clean clone cannot replay yet.
 
+### Dependencies
+
+| layer | dependency | needed for |
+|---|---|---|
+| Runtime | Node.js ≥ 22, npm | everything |
+| Data | Docker; Zetaris local install; `postgres:16-alpine` and the `whytrace/mailgw` mail-gateway mock (`services/docker-compose.data.yml`) | live mode |
+| Models | [Meterless Nightshift](https://meterless.ai) running locally, serving NVIDIA Nemotron | live mode |
+| API | `fastify` 5, `zod` | `apps/api` |
+| Console | `react` 18, `react-dom` 18, Vite | `apps/web` |
+| Engines | Meterless World Model, H-MEM, Markovian, Scout Intent (in-repo packages under `packages/`; conformance runners vendored under `conformance/`) | agents |
+| Dev | TypeScript 5, `tsx`, Vitest, `concurrently`, `yaml` | build and tests |
+
+Sample mode and the Docker image need only Docker (or Node 22): no Zetaris, no Nightshift, no keys.
+
 ## How a verdict is earned
 
 ```
@@ -178,8 +192,26 @@ The four sources are joined in one Unified Semantic Layer: `lightning.metastore.
 | Zetaris | USL across 4 sources + 5 DQ rules | `scripts/zetaris_bootstrap.ts` registers sources; `packages/agents/src/sql-catalogue.ts` is the only entry point for SQL; traces log every `sql_id`. |
 | Meterless engines | World Model, H-MEM, Markovian, Scout Intent | `packages/engines/*` + conformance in `conformance/*` (29/29 passing on the three deterministic engines; `npm run conformance` also runs the vendored Scout eval harness against the 32-example v1 corpus — see `evidence/scout-evals.md`. **Lead metrics (adversarial injection corpus, 10 examples):** injection precision 1.00, injection recall 1.00. The other published metrics also pass: tool precision 1.00, clarification rate 0.156 ≤ 0.25, override frequency 0.00. Intent top-1 and top-3 recall also come out at 1.00, but note honestly that the harness feeds its own `fixtures/intents.json` as the registry Scout is initialised with — so those intent numbers measure registry-based retrieval against the harness's own examples, not a generalising classifier. Our Scout class accepts the harness-shaped `{ intentRegistry, policyPack }` constructor; registry mode uses the vendored CRM corpus, scanFields keeps our own six block-tier log-field rules for the WhyTrace quarantine path. Scout Intent also has 14 local unit tests. Audit JSONL per run in `logs/<run_id>/`.) |
 | Meterless Nightshift | Provider for all model calls | `packages/adapters/src/nightshift.ts` — `/no_think`, max_tokens 4000 default (6000 for Planner — Super VL's hidden reasoning tokens push completion spend to 2.5–2.9 k on real planning prompts; 2000 truncated the tool call), warmup/probe ≥ 2000 (Runtime 1.4 floor), 180 s timeout, 2/4/8 s retries, route fallback deep→fast, proxy-token fallback on 401. Every call writes `receipt_id`, `routed_model`, `completion_tokens` and `finish_reason` to the trace. Per-run cache-bust nonce is appended to the LAST USER TURN (the local engine's exact-cache key ignores system turn and model id, verified 23 Oct). |
-| NVIDIA Nemotron (via Nightshift) | Super VL 120B (deep) + Lightning 30B (fast) | `routed_model` from each response's `meterless` receipt is surfaced in the UI (model chip) and recorded in `evidence/eval.md`. |
+| NVIDIA Nemotron (via Nightshift) | Nemotron 3.5 Super VL 120B for every call that returned a receipt (Planner, Risk Gate, Reporter, Markovian sweep). A Lightning 30B fast lane is configured, but on this install it never returned a successful call. | `routed_model` from each response's `meterless` receipt is surfaced in the UI (model chip) and counted per agent in [`evidence/model-routing.md`](evidence/model-routing.md). |
 | Cursor + Claude | Development tools (Cursor is optional since the 22 Oct rule update) | Cursor IDE as the editor, Claude as the AI coding assistant; commits authored by the builder during the build window. Project rules for the coding agent live in `.cursor/rules/*.mdc`. |
+
+## Nemotron models by agent
+
+Model names below are the `routed_model` field of Nightshift receipts, counted with `python3 scripts/model_routing.py` over 623 local runs (full table: [`evidence/model-routing.md`](evidence/model-routing.md)).
+
+| agent | what it does | Nemotron model (`routed_model`) | successful calls |
+|---|---|---|---|
+| Planner | opens competing hypotheses, picks the first queries | `nvidia/nemotron-3.5-super-vl-120b-a12b` | 479 |
+| Investigator | runs named, read-only Zetaris queries | — (no model call) | — |
+| Critic | re-checks each claim with its own different query | — (no model call) | — |
+| Scout Intent | quarantines instructions hidden in attacker-controlled text | — (no model call, deterministic) | — |
+| Risk Gate | model opinion checked against the deterministic policy | `nvidia/nemotron-3.5-super-vl-120b-a12b` | 336 |
+| Reporter | writes the cited report | `nvidia/nemotron-3.5-super-vl-120b-a12b` | 350 |
+| Markovian sweep | bounded password-spray scan over long logs | `nvidia/nemotron-3.5-super-vl-120b-a12b` | 443 |
+
+The Lightning 30B fast lane (`nvidia/nemotron-3.5-lightning-30b-a3b`) is configured as a fallback, but all 279 attempts on it ended degraded with no receipt, so no verdict depends on it.
+
+**Receipt logs.** Scrubbed receipts (agent, `routed_model`, `receipt_id`, latency, completion tokens, cache hit) for the four runs replayed on the project page are committed under [`site/recorded/`](site/recorded/), for example [`site/recorded/mvkpcv7i_5b2ce0bc39/model_calls.jsonl`](site/recorded/mvkpcv7i_5b2ce0bc39/model_calls.jsonl) (case-001). Every evaluation run's raw report in [`evidence/eval_raw/`](evidence/eval_raw/) carries the receipt ids of its model calls.
 
 ## Zetaris USL: build and reflection
 
@@ -410,7 +442,7 @@ All other code in this repository was written inside the Open Agent Hackathon 20
 
 ## AI disclosure
 
-Runtime models are **NVIDIA Nemotron** (`nemotron-3.5-super-vl-120b-a12b` for deep lanes, `nemotron-3.5-lightning-30b-a3b` for fast lanes), served exclusively through **Meterless Nightshift**. If a Nemotron Ultra lane becomes available on this install, `METERLESS_REPORTER_MODEL=<id>` routes the Reporter narration there while the Investigator stays on Super VL — `scripts/probe_ultra.ts` records the probe state at submission time. The deck narration voice is synthetic. Development was done in the **Cursor** IDE with **Claude** as the AI coding assistant.
+Runtime models are **NVIDIA Nemotron** (`nemotron-3.5-super-vl-120b-a12b`, the `routed_model` on every successful receipt; a `nemotron-3.5-lightning-30b-a3b` fast lane is configured but returned no successful call on this install), served exclusively through **Meterless Nightshift**. If a Nemotron Ultra lane becomes available on this install, `METERLESS_REPORTER_MODEL=<id>` routes the Reporter narration there while the Investigator stays on Super VL — `scripts/probe_ultra.ts` records the probe state at submission time. The deck narration voice is synthetic. Development was done in the **Cursor** IDE with **Claude** as the AI coding assistant.
 
 ## Entry points
 
