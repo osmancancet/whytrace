@@ -70,6 +70,10 @@ Lower is better; a confident wrong answer costs the most. From [`evidence/calibr
 
 WhyTrace is the best-calibrated system on every set and keeps a visible correct-vs-wrong confidence gap. The two baselines keep mean confidence on wrong rows above 0.69 everywhere; Nemotron alone's wrong-row confidence stays at 0.80+ (confident even when wrong) — the symptom the agent architecture is built to cushion.
 
+## Review it in 2 minutes (no install)
+
+A judge who does not want to clone, build or boot anything can open the project page at **https://osmancancet.github.io/whytrace/** and replay the recorded runs: the animated evidence board shows the Critic rejecting unsupported claims live, each sql_id in the drawer carries its row count, run timestamp and SHA-256, and the "How this answer was made" panel lists every Nemotron receipt that drove the verdict. Nothing on the page calls a model — it is a static replay of committed runs, rebuilt from `evidence/` on every push by [`.github/workflows/pages.yml`](.github/workflows/pages.yml). The GitHub Pages workflow refuses to publish when a required number is missing from the evidence (see `site/export_data.py`), so the page cannot silently drift from the committed numbers. For judges who do want to install locally, follow the Quick start below.
+
 ## The problem
 
 Universities run on disconnected systems: identity in Entra, mail in a gateway, assets in a CMDB spreadsheet, vulnerabilities in CISA KEV. Analysts triage account-compromise tickets by context-switching between five consoles for an hour per case. KVKK/GDPR often forbid centralising the raw PII into a SIEM, so "query in place" is a hard constraint, not a nice-to-have. WhyTrace answers each ticket with a defensible verdict in minutes and keeps every row where it was.

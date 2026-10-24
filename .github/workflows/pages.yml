@@ -1,0 +1,57 @@
+name: GitHub Pages
+
+# Builds site/data.js from committed evidence and deploys site/ to GitHub Pages.
+# No secrets required — the only inputs are files already tracked in the repo.
+# The export script refuses to write when a required number is missing, so a
+# half-filled page can never be published.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'evidence/**'
+      - 'output_examples/**'
+      - 'samples/**'
+      - 'logs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Export site data from committed evidence
+        run: python3 site/export_data.py
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

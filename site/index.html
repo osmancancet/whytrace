@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhyTrace — evidence-backed account-compromise investigation</title>
+<meta name="description" content="WhyTrace investigates whether a university account was compromised and links every sentence of its verdict to the SQL query and rows that support it. Open Agent Hackathon 2026, Track 02.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <a class="brand" href="#top" aria-label="WhyTrace home"><span class="brand-mark" aria-hidden="true"></span>WhyTrace</a>
+  <nav aria-label="Sections">
+    <a href="#replay">Replay</a>
+    <a href="#how">How it works</a>
+    <a href="#why">Why this verdict</a>
+    <a href="#made">Provenance</a>
+    <a href="#numbers">Measured</a>
+    <a href="#stack">Built on</a>
+  </nav>
+  <a class="repo" href="https://github.com/osmancancet/whytrace">GitHub</a>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <h1>Every verdict comes with the rows that prove it.</h1>
+    <p class="lede">WhyTrace investigates a flagged university account across sign-ins, MFA, VPN, mail and the CISA known-exploited list, then decides: <b class="v-contain">contain</b>, <b class="v-monitor">monitor</b>, <b class="v-benign">benign</b> or <b class="v-escalate">escalate</b> to a human. A Critic re-runs its own queries before any claim survives.</p>
+    <p class="replay-note">Below is a replay of a recorded live run — real Zetaris queries, real Nemotron receipts. Nothing on this page calls a model.</p>
+  </div>
+
+  <div class="board" id="replay" aria-label="Investigation replay">
+    <div class="board-bar">
+      <div class="case-tabs" role="tablist" aria-label="Choose a case"></div>
+      <div class="board-ctl">
+        <button class="ctl" id="replay-btn" type="button">Replay</button>
+        <button class="ctl" id="skip-btn" type="button">Show all</button>
+      </div>
+    </div>
+    <div class="board-grid">
+      <article class="ticket" aria-live="polite">
+        <div class="ticket-hole" aria-hidden="true"></div>
+        <p class="ticket-kind">Alert</p>
+        <h2 class="ticket-title"></h2>
+        <p class="ticket-who"></p>
+        <dl class="ticket-meta"></dl>
+      </article>
+      <div class="cards" aria-live="polite"></div>
+      <div class="verdict-slot">
+        <div class="stamp" aria-live="polite"></div>
+        <p class="verdict-sub"></p>
+      </div>
+    </div>
+    <svg class="threads" aria-hidden="true"></svg>
+  </div>
+</section>
+
+<section class="drawer-wrap" aria-label="Evidence for the selected claim">
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer-head">
+      <p class="drawer-claim"></p>
+      <button class="ctl" id="drawer-close" type="button">Close</button>
+    </div>
+    <pre class="sql"></pre>
+    <div class="rows"></div>
+    <p class="drawer-foot"></p>
+  </div>
+</section>
+
+<section class="sources" id="how">
+  <div class="sec-head">
+    <h2>Six tables, read in place.</h2>
+    <p>Identity, sign-ins, VPN sessions, mail events, devices and CISA KEV live in different systems. Zetaris joins them as one semantic layer with data-quality rules. Nothing is copied into WhyTrace; every fact an agent uses is a query with an id.</p>
+  </div>
+  <svg class="usl" viewBox="0 0 900 300" role="img" aria-label="Six sources flow into one Zetaris semantic layer, which the agents query">
+    <g class="src-nodes"></g>
+    <g class="usl-core">
+      <rect x="560" y="105" width="290" height="90" rx="6"></rect>
+      <text x="705" y="145" text-anchor="middle" class="usl-t1">Zetaris semantic layer</text>
+      <text x="705" y="170" text-anchor="middle" class="usl-t2">RUN DQ rules flag bad rows, not guesses</text>
+    </g>
+  </svg>
+
+  <div class="pipeline">
+    <h3>How one investigation runs</h3>
+    <ol class="steps"></ol>
+    <div class="step-detail" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="why" id="why">
+  <div class="sec-head">
+    <h2>How much each piece of evidence mattered.</h2>
+    <p>The verdict comes from a deterministic policy, so we can measure it exactly. Shapley values split the decision among the findings; switch a finding off to see whether the verdict would change.</p>
+  </div>
+  <div class="why-grid">
+    <div class="attr" aria-live="polite"></div>
+    <aside class="cf">
+      <h3>What would change the verdict</h3>
+      <p class="cf-now"></p>
+      <p class="cf-min"></p>
+      <p class="cf-whynot"></p>
+      <p class="cf-faith"></p>
+    </aside>
+  </div>
+</section>
+
+<section class="how-made" id="made" aria-label="How this answer was made">
+  <div class="sec-head">
+    <h2>How this answer was made.</h2>
+    <p>Every finding on the active case carries a sql_id; every sql_id carries row count, run timestamp and SHA-256 of the canonical JSON of the rows Zetaris returned. Every model call carries its Nemotron lane, receipt, latency and completion tokens — the same provenance the console drawer shows.</p>
+  </div>
+  <div class="made-grid">
+    <article class="made-sqls">
+      <h3>Zetaris queries this verdict cites</h3>
+      <table class="made-table"><thead><tr><th>sql_id</th><th>rows</th><th>ts (UTC)</th><th>sha256</th></tr></thead><tbody class="made-sql-body"></tbody></table>
+    </article>
+    <article class="made-models">
+      <h3>Model calls</h3>
+      <table class="made-table"><thead><tr><th>#</th><th>agent</th><th>action</th><th>routed_model</th><th>receipt</th><th>ms</th><th>tokens</th><th>cache</th></tr></thead><tbody class="made-models-body"></tbody></table>
+      <p class="made-caption"></p>
+    </article>
+  </div>
+</section>
+
+<section class="numbers" id="numbers">
+  <div class="sec-head">
+    <h2>Measured against the two obvious alternatives.</h2>
+    <p>Same cases, three systems: a rules engine like the ones SIEMs ship, Nemotron on its own with the raw events, and WhyTrace. Then we did the uncomfortable part — cases written by someone who never saw our code.</p>
+  </div>
+  <div class="set-tabs" role="tablist" aria-label="Choose a test set"></div>
+  <div class="chart" aria-live="polite"></div>
+  <p class="set-note"></p>
+  <div class="facts"></div>
+</section>
+
+<section class="story" aria-label="How the evaluation changed what we built">
+  <h2>What the blind test taught us.</h2>
+  <ol class="timeline">
+    <li><b>Dev set: 19 of 21.</b> Seven cases we wrote ourselves, three independent runs each. It looked great — and that was the problem.</li>
+    <li><b>Blind set A: 12 of 24.</b> Eight cases written by an analyst who never saw the code. Rules scored 15. WhyTrace locked out no innocent user; rules locked out three and missed six attacks.</li>
+    <li><b>We published it and wrote down why.</b> Each miss has a cause from its trace and a general fix candidate — no case names in code.</li>
+    <li><b>v2 is measured on a second blind set.</b> New cases, frozen code, one run. The result goes here whether it is good or not.</li>
+  </ol>
+</section>
+
+<section class="stack" id="stack">
+  <div class="sec-head"><h2>Built on</h2></div>
+  <div class="stack-grid">
+    <article>
+      <h3>Zetaris</h3>
+      <p>One Unified Semantic Layer over six tables with inline foreign keys. <code>RUN DQ</code> results are attached to findings as flags. The Critic's re-queries and the shared-egress test are separate Zetaris queries.</p>
+    </article>
+    <article>
+      <h3>Meterless</h3>
+      <p>Nightshift is the only model provider; every call stores its receipt. Four engines run in the product: World Model (evidence graph, 8/8), H-MEM (lessons from analysts, 13/13), Markovian (long-log password-spray sweeps, 8/8) and Scout Intent (quarantines instructions hidden in attacker-controlled log text).</p>
+    </article>
+    <article>
+      <h3>NVIDIA Nemotron</h3>
+      <p>Super VL 120B plans, judges risk and writes the report; Lightning 30B handles fast steps. The routed model is read from each Nightshift receipt and shown next to every step.</p>
+    </article>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>Look at it yourself.</h2>
+  <div class="cta-row">
+    <a class="btn" href="https://github.com/osmancancet/whytrace">Open the repository</a>
+    <a class="btn ghost" href="https://github.com/osmancancet/whytrace#quick-start">Run it with Docker in sample mode</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p>Built by Osman Can Çetlenbik (team CyberCBU, Manisa Celal Bayar University) for the Open Agent Hackathon 2026, Track 02 — The Agent That Can Explain Why.</p>
+  <p>All users, IPs and events are synthetic; the CISA KEV catalogue is real public data. The replay shows recorded runs, not a live system.</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

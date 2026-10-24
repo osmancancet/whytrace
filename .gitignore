@@ -23,3 +23,8 @@ docs/KICKOFF_PROMPT.md
 data/sample/
 evidence/*.local.*
 conformance/scout/evals/reports/
+
+# site/data.js is generated from committed evidence by site/export_data.py.
+# The GitHub Pages workflow rebuilds it on every deploy, so we don't track it.
+site/data.js
+site/preview_single_file.html
