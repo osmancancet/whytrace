@@ -220,7 +220,7 @@
     $('.cf-min').innerHTML = x.minimal ? `<b>Smallest change that flips it:</b> ${esc(x.minimal)}` : '';
     $('.cf-whynot').innerHTML = x.why_not ? `<b>Why not ${esc(x.why_not.verdict)}?</b> ${esc(x.why_not.text)}` : '';
     $('.cf-faith').textContent = x.faithfulness && x.faithfulness !== 'n/a'
-      ? `Faithfulness@3 = ${x.faithfulness}: the report cites the three findings that matter most. The report cites most findings, so this bar is easy to clear; a stricter precision measure is being added.`
+      ? `Faithfulness@3 = ${x.faithfulness}: the report cites the three findings that matter most. The report cites most findings, so this bar is easy to clear; precision@k and Kendall-τ in evidence/explainability.md are the stricter checks.`
       : '';
   }
 
@@ -256,7 +256,7 @@
   const SETS = [];
   if (D.evals.dev) SETS.push(['dev', 'Our 7 dev cases', D.evals.dev, 'Cases we wrote and tuned against. Three independent runs each, no cached model calls.']);
   if (D.evals.heldout_a) SETS.push(['ha', 'Blind set A', D.evals.heldout_a, 'Eight cases written by an analyst who never saw the code, frozen code, run once (3 runs each). Rules were more accurate here — and locked out three innocent users and missed six attacks. WhyTrace locked out none.']);
-  if (D.evals.heldout_b) SETS.push(['hb', 'Blind set B (v2)', D.evals.heldout_b, 'A second blind set for the v2 fixes.']);
+  if (D.evals.heldout_b) SETS.push(['hb', 'Blind set B (v2)', D.evals.heldout_b, 'A second set of eight unseen cases for the v2 fixes, frozen code. Rules and Nemotron alone were more accurate; rules locked out innocent users six times. WhyTrace locked out none and cleared no attack: every miss was a hand-off to a human.']);
   else SETS.push(['hb', 'Blind set B (v2)', null, 'Running now: a second blind set measures the v2 fixes. Frozen code, one run. The result will be published here as it comes out.']);
   const st = $('.set-tabs');
   SETS.forEach(([k, l], i) => {

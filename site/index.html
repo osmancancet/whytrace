@@ -12,16 +12,18 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"><i></i></div>
 
 <header class="top">
   <a class="brand" href="#top" aria-label="WhyTrace home"><span class="brand-mark" aria-hidden="true"></span>WhyTrace</a>
   <nav aria-label="Sections">
     <a href="#replay">Replay</a>
     <a href="#how">How it works</a>
-    <a href="#why">Why this verdict</a>
+    <a href="#trust">Safeguards</a>
+    <a href="#why">Why</a>
     <a href="#made">Provenance</a>
     <a href="#numbers">Measured</a>
-    <a href="#stack">Built on</a>
+    <a href="#thanks">Sponsors</a>
   </nav>
   <a class="repo" href="https://github.com/osmancancet/whytrace">GitHub</a>
 </header>
@@ -33,6 +35,12 @@
     <h1>Every verdict comes with the rows that prove it.</h1>
     <p class="lede">WhyTrace investigates a flagged university account across sign-ins, MFA, VPN, mail and the CISA known-exploited list, then decides: <b class="v-contain">contain</b>, <b class="v-monitor">monitor</b>, <b class="v-benign">benign</b> or <b class="v-escalate">escalate</b> to a human. A Critic re-runs its own queries before any claim survives.</p>
     <p class="replay-note">Below is a replay of a recorded live run — real Zetaris queries, real Nemotron receipts. Nothing on this page calls a model.</p>
+  </div>
+  <div class="kpis" aria-label="Headline results">
+    <div class="kpi"><b data-count="0">0</b><span>innocent accounts locked out across 48 blind-test verdicts</span></div>
+    <div class="kpi"><b data-count="126" data-suffix="/126">0</b><span>planted false claims caught by the Critic and the validator</span></div>
+    <div class="kpi"><b data-count="3" data-suffix="/3">0</b><span>false-premise alerts refused: the verdict comes from rows, not alert text</span></div>
+    <div class="kpi"><b data-count="665">0</b><span>automated tests, all passing on every commit</span></div>
   </div>
 
   <div class="board" id="replay" aria-label="Investigation replay">
@@ -74,7 +82,7 @@
 </section>
 
 <section class="sources" id="how">
-  <div class="sec-head">
+  <div class="sec-head reveal">
     <h2>Six tables, read in place.</h2>
     <p>Identity, sign-ins, VPN sessions, mail events, devices and CISA KEV live in different systems. Zetaris joins them as one semantic layer with data-quality rules. Nothing is copied into WhyTrace; every fact an agent uses is a query with an id.</p>
   </div>
@@ -94,8 +102,23 @@
   </div>
 </section>
 
+<section class="trust" id="trust">
+  <div class="sec-head reveal">
+    <h2>Six checks between a model and a verdict.</h2>
+    <p>A language model is good at proposing explanations and bad at knowing when it is wrong. WhyTrace lets Nemotron propose, then makes every claim survive checks that do not trust it.</p>
+  </div>
+  <div class="trust-grid">
+    <article class="tcard reveal"><span class="tnum">01</span><h3>Evidence contract</h3><p>Every finding carries a <code>sql_id</code> (SHA-256 of the query text) and the row references Zetaris returned. A finding without rows cannot reach the report.</p><b class="tstat">sql_id + rows</b></article>
+    <article class="tcard reveal"><span class="tnum">02</span><h3>Independent Critic</h3><p>The Critic writes its own, different query to re-check each claim. Near-miss IPs, shifted times, wrong counts and invented CVEs are struck out.</p><b class="tstat">126/126 planted claims caught</b></article>
+    <article class="tcard reveal"><span class="tnum">03</span><h3>Scout quarantine</h3><p>Mail subjects, rule names and user agents are attacker-controlled. Scout Intent finds instructions hidden there and passes them to the model as data, never as commands.</p><b class="tstat">injection precision 1.00 · recall 1.00</b></article>
+    <article class="tcard reveal"><span class="tnum">04</span><h3>Deterministic Risk Gate</h3><p>A fixed policy over confirmed findings decides; the model's opinion is checked against it. When they disagree without grounded evidence, a human gets the case.</p><b class="tstat">0 false contains on blind sets</b></article>
+    <article class="tcard reveal"><span class="tnum">05</span><h3>Report validator</h3><p><code>validateReport()</code> rejects any sentence that does not cite a finding, and any unsupported causal story.</p><b class="tstat">21/21 causal plants rejected</b></article>
+    <article class="tcard reveal"><span class="tnum">06</span><h3>False-premise traps</h3><p>Three alerts that loudly claim a takeover the data does not show. The agent has to disagree with the alert, from the rows.</p><b class="tstat">3/3 refused · 0 lock-outs</b></article>
+  </div>
+</section>
+
 <section class="why" id="why">
-  <div class="sec-head">
+  <div class="sec-head reveal">
     <h2>How much each piece of evidence mattered.</h2>
     <p>The verdict comes from a deterministic policy, so we can measure it exactly. Shapley values split the decision among the findings; switch a finding off to see whether the verdict would change.</p>
   </div>
@@ -112,7 +135,7 @@
 </section>
 
 <section class="how-made" id="made" aria-label="How this answer was made">
-  <div class="sec-head">
+  <div class="sec-head reveal">
     <h2>How this answer was made.</h2>
     <p>Every finding on the active case carries a sql_id; every sql_id carries row count, run timestamp and SHA-256 of the canonical JSON of the rows Zetaris returned. Every model call carries its Nemotron lane, receipt, latency and completion tokens — the same provenance the console drawer shows.</p>
   </div>
@@ -130,7 +153,7 @@
 </section>
 
 <section class="numbers" id="numbers">
-  <div class="sec-head">
+  <div class="sec-head reveal">
     <h2>Measured against the two obvious alternatives.</h2>
     <p>Same cases, three systems: a rules engine like the ones SIEMs ship, Nemotron on its own with the raw events, and WhyTrace. Then we did the uncomfortable part — cases written by someone who never saw our code.</p>
   </div>
@@ -138,6 +161,22 @@
   <div class="chart" aria-live="polite"></div>
   <p class="set-note"></p>
   <div class="facts"></div>
+</section>
+
+<section class="calib" id="calibration">
+  <div class="sec-head reveal">
+    <h2>Confident when right. Less sure when wrong.</h2>
+    <p>Accuracy is not the whole story for a tool that can lock someone out. The Brier score punishes confident wrong answers; lower is better. WhyTrace scores lowest on all three test sets, including both blind ones.</p>
+  </div>
+  <div class="calib-grid">
+    <div class="calib-chart reveal" aria-label="Brier score by test set and system"></div>
+    <aside class="misses reveal">
+      <h3>Every miss is published</h3>
+      <p>On the blind sets, rules were more accurate. They were also the system that locked out innocent users. All of WhyTrace's blind misses went the cautious way: escalate to a human, not contain, not clear.</p>
+      <p>Each miss has a cause read from its trace and a general fix candidate — no case names in the code.</p>
+      <a class="btn ghost small" href="https://github.com/osmancancet/whytrace/blob/main/evidence/failures.md">Read the failure log</a>
+    </aside>
+  </div>
 </section>
 
 <section class="story" aria-label="How the evaluation changed what we built">
@@ -150,22 +189,28 @@
   </ol>
 </section>
 
-<section class="stack" id="stack">
-  <div class="sec-head"><h2>Built on</h2></div>
-  <div class="stack-grid">
-    <article>
-      <h3>Zetaris</h3>
-      <p>One Unified Semantic Layer over six tables with inline foreign keys. <code>RUN DQ</code> results are attached to findings as flags. The Critic's re-queries and the shared-egress test are separate Zetaris queries.</p>
-    </article>
-    <article>
-      <h3>Meterless</h3>
-      <p>Nightshift is the only model provider; every call stores its receipt. Four engines run in the product: World Model (evidence graph, 8/8), H-MEM (lessons from analysts, 13/13), Markovian (long-log password-spray sweeps, 8/8) and Scout Intent (quarantines instructions hidden in attacker-controlled log text).</p>
-    </article>
-    <article>
-      <h3>NVIDIA Nemotron</h3>
-      <p>Super VL 120B plans, judges risk and writes the report; Lightning 30B handles fast steps. The routed model is read from each Nightshift receipt and shown next to every step.</p>
-    </article>
+<section class="thanks" id="thanks">
+  <div class="marquee" aria-hidden="true"><div class="marquee-track"><span>Zetaris</span><span>Meterless</span><span>NVIDIA Nemotron</span><span>Cursor</span><span>GenAI Works</span><span>Open Agent Hackathon 2026</span><span>Zetaris</span><span>Meterless</span><span>NVIDIA Nemotron</span><span>Cursor</span><span>GenAI Works</span><span>Open Agent Hackathon 2026</span></div></div>
+  <div class="sec-head reveal">
+    <h2>Sponsors and thanks.</h2>
+    <p>WhyTrace was built in six days for the Open Agent Hackathon 2026. It stands on the sponsor platforms below; each one does real work in the product, not on a slide.</p>
   </div>
+  <div class="host reveal">
+    <span class="host-k">Hosted by</span>
+    <span class="host-n">GenAI Works</span>
+    <span class="host-d">Open Agent Hackathon 2026 on HackOS · Track 02 — The Agent That Can Explain Why</span>
+  </div>
+  <div class="sponsor-grid">
+    <article class="sponsor reveal"><span class="sp-name">Zetaris</span><span class="sp-role">Data layer</span><p>Unified Semantic Layer over six sources, RUN DQ data-quality flags, and every query the agents and the Critic run.</p></article>
+    <article class="sponsor reveal"><span class="sp-name">Meterless</span><span class="sp-role">Model runtime + engines</span><p>Nightshift is the only model provider, with a receipt for every call. World Model, H-MEM, Markovian and Scout Intent run in the product.</p></article>
+    <article class="sponsor reveal"><span class="sp-name">NVIDIA</span><span class="sp-role">Models</span><p>Nemotron Super VL 120B plans, judges risk and writes the report; Nemotron Lightning 30B handles the fast steps.</p></article>
+    <article class="sponsor reveal"><span class="sp-name">Cursor</span><span class="sp-role">Development</span><p>The IDE WhyTrace was developed in, across the agents, the evaluation harness and this page.</p></article>
+  </div>
+  <div class="thank-note reveal">
+    <h3>Thank you</h3>
+    <p>To the GenAI Works team for running the hackathon and HackOS. To the Zetaris, Meterless, NVIDIA and Cursor teams for their platforms and for fast, patient answers in the help channels. To the builders in the HackOS community who shared fixes, questions and encouragement. And to Manisa Celal Bayar University, where this work started.</p>
+  </div>
+  <p class="tm">Product names are trademarks of their owners. Listing them here describes the technology used; it does not imply endorsement.</p>
 </section>
 
 <section class="cta">
@@ -184,5 +229,6 @@
 
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="extra.js"></script>
 </body>
 </html>
