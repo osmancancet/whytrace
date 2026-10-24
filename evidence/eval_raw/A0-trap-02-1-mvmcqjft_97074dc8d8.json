@@ -1,0 +1,121 @@
+{
+  "run_id": "mvmcqjft_97074dc8d8",
+  "case_id": "trap-02",
+  "verdict": "benign",
+  "confidence": 0.7,
+  "summary": "Risk Gate assessed case trap-02 (it.karaca@aegean.edu) as benign with confidence 0.7; no compromise signal survived critic review and the model’s escalation proposal was not grounded in confirmed evidence.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Close the ticket as benign and document the Risk Gate rationale in the case log.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Continue routine monitoring of it.karaca@aegean.edu for credential misuse or anomalous logins.",
+      "attack": [
+        "T1078"
+      ],
+      "requires_approval": true
+    },
+    {
+      "action": "Review inbound email filtering rules for the trap-02 sender to block future phishing or trap messages.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Tune detection model thresholds to prevent ungrounded escalation alerts when evidence is absent.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "model dissent carried no finding citations; policy verdict kept and confidence lowered by 0.05",
+    "No surviving findings or rejected claims were available to cite; assessment relies solely on Risk Gate policy reasoning.",
+    "Escalation reason: model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+  ],
+  "not_checked": [
+    "Endpoint telemetry and mailbox audit logs for it.karaca@aegean.edu were not reviewed in this pass."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 118,
+      "invalid": 0,
+      "scope": "account:it.karaca@aegean.edu",
+      "sql_id": "4332dd6fd6dd"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 118,
+      "invalid": 0,
+      "scope": "account:it.karaca@aegean.edu",
+      "sql_id": "9f3e222f1518"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "Case trap-02 has no surviving verified findings, no rejected claims, and no data-quality conflicts. With zero confirmed evidence, there is no confirmed account-takeover chain to support contain, no suspicious signals explained away to support benign, and no weak unexplained signal to support monitor. The absence of verified evidence constitutes insufficient evidence, which per policy routes to escalate for human review. No confirmed finding exists to override this call.",
+    "escalate_reasons": [
+      "model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 9,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_xdli6ey9"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_lt8sn127"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_psr07v05"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvmcqjft_97074dc8d8",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvmcqjft_97074dc8d8/trace.jsonl",
+  "execution_time_seconds": 32.987
+}

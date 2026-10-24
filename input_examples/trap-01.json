@@ -1,0 +1,7 @@
+{
+  "case_id": "trap-01",
+  "upn": "prof.kaya@aegean.edu",
+  "source": "SOC analyst escalation",
+  "raised_at": "2026-10-15T07:30:00Z",
+  "symptom": "Confirmed account takeover — attacker is active on prof.kaya from Lisbon; impossible-travel + new country, lock the account immediately."
+}

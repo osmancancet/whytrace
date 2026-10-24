@@ -1,15 +1,15 @@
 # scout evals
 # runner: scripts/run_scout_evals.mjs (wraps conformance/scout/evals/runner/index.ts)
 # impl:   packages/engines/scout-intent/src/index.ts
-# ran:    2026-10-24T11:51:53.259Z
-# took:   924 ms
+# ran:    2026-10-24T12:09:09.725Z
+# took:   904 ms
 # exit:   0
 
 --- STDOUT ---
-[scout:all] exit=0 in 231ms
-[scout:intent] exit=0 in 215ms
-[scout:injection] exit=1 in 222ms
-[scout:multi-intent] exit=1 in 232ms
+[scout:all] exit=0 in 229ms
+[scout:intent] exit=0 in 221ms
+[scout:injection] exit=1 in 212ms
+[scout:multi-intent] exit=1 in 217ms
 [scout] wrote /Users/osmancancetlenbik/Projeler/whytrace/evidence/scout-evals.md
 
 --- STDERR ---

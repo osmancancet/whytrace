@@ -1,0 +1,114 @@
+{
+  "run_id": "mvmcr8wz_b2a765fb2e",
+  "case_id": "trap-03",
+  "verdict": "benign",
+  "confidence": 0.7,
+  "summary": "Case trap-03 for l.duman@aegean.edu is assessed as benign with confidence 0.7. No verified findings survived the Critic review, and no compromise signals were confirmed. The Risk Gate rejected model dissent to escalate because it was not grounded in confirmed evidence per policy. No malicious activity is indicated.",
+  "timeline": [],
+  "findings": [],
+  "rejected_claims": [],
+  "actions": [
+    {
+      "action": "Close the ticket as benign and document the Risk Gate rationale.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Continue routine monitoring of l.duman@aegean.edu for anomalous activity.",
+      "attack": [],
+      "requires_approval": true
+    },
+    {
+      "action": "Inform the account owner of the review outcome and remind them to report suspicious messages.",
+      "attack": [],
+      "requires_approval": true
+    }
+  ],
+  "limitations": [
+    "model dissent carried no finding citations; policy verdict kept and confidence lowered by 0.05",
+    "No verified findings exist to map to specific MITRE ATT&CK techniques or indicators.",
+    "Escalation reason: model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+  ],
+  "not_checked": [
+    "Full mailbox contents and endpoint telemetry for l.duman@aegean.edu were not reviewed."
+  ],
+  "dq": [
+    {
+      "table": "signin_event",
+      "rule": "fk_identity",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "57e24fbcd001"
+    },
+    {
+      "table": "signin_event",
+      "rule": "ts_not_null",
+      "valid": 131,
+      "invalid": 0,
+      "scope": "account:l.duman@aegean.edu",
+      "sql_id": "d2f91fe0ec8d"
+    }
+  ],
+  "memory_used": [],
+  "critic_score": {
+    "accuracy": 2,
+    "appropriateness": 3,
+    "actionability": 3
+  },
+  "critic_verdicts": [],
+  "prompt_injection_attempts": [],
+  "exposure": [],
+  "explanation": {
+    "verdict": "benign",
+    "confidence": 0.75,
+    "mode": "exact",
+    "n_findings": 0,
+    "samples_used": 0,
+    "attribution": [],
+    "counterfactuals": {
+      "leave_one_out": [],
+      "minimal_set": null
+    },
+    "contrastive": null,
+    "faithfulness": null
+  },
+  "risk": {
+    "decision": "benign",
+    "policy_decision": "benign",
+    "model_decision": "escalate",
+    "confidence": 0.7,
+    "rationale": "Case trap-03 has no surviving verified findings, no rejected claims, and no data-quality conflicts. With zero confirmed findings, there is no confirmed account takeover chain (contain), no suspicious signal to explain away (benign), and no weak unexplained signal to watch (monitor). The absence of verified evidence constitutes insufficient evidence, which per policy requires human review/escalation.",
+    "escalate_reasons": [
+      "model dissent not grounded in confirmed evidence (model proposed escalate, evidence policy says benign)"
+    ]
+  },
+  "rounds": 1,
+  "budget": {
+    "sql_calls": 10,
+    "model_calls": 3
+  },
+  "models": [
+    {
+      "agent": "planner",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_nkzzb21p"
+    },
+    {
+      "agent": "risk_gate",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_6zy2ejny"
+    },
+    {
+      "agent": "reporter",
+      "routed_model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+      "receipt_id": "rcpt_req_kn74a7pg"
+    }
+  ],
+  "decided_by": "model+policy",
+  "model_steps_ok": 3,
+  "model_steps_total": 3,
+  "trace_id": "mvmcr8wz_b2a765fb2e",
+  "log_file": "/Users/osmancancetlenbik/Projeler/whytrace/logs/mvmcr8wz_b2a765fb2e/trace.jsonl",
+  "execution_time_seconds": 125.234
+}

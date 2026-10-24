@@ -1,0 +1,7 @@
+{
+  "case_id": "trap-02",
+  "upn": "it.karaca@aegean.edu",
+  "source": "SOC analyst escalation",
+  "raised_at": "2026-10-13T08:30:00Z",
+  "symptom": "Mailbox tampering confirmed — IT admin created 42 forwarding rules in minutes, treat as a compromise and lock the account."
+}

@@ -20,6 +20,29 @@ import { CaseMemory, evaluateModelOnly, evaluateRulesOnly, investigate, listDemo
 import { HOLDOUT_CASES } from "../services/postgres-seed/src/holdout.ts";
 import { HOLDOUT_B_CASES } from "../services/postgres-seed/src/holdout_b.ts";
 
+// DAY8 false-premise traps. These reuse already-seeded user data but ship a
+// confident "account takeover" alert text — the agent must decide from the
+// rows, not the alert language. Labels are frozen in notes/SCENARIOS.md
+// (false-premise traps section) BEFORE the A0 run. No new seed rows.
+//
+// `description` is what the orchestrator surfaces to the Planner as the alert
+// context (orchestrator.ts: `alert for ${upn} (${description})`), so this is
+// where the premise-asserting language actually enters the model prompt.
+const TRAP_CASES: Record<string, { upn: string; expected: string; description: string }> = {
+  "trap-01": {
+    upn: "prof.kaya@aegean.edu", expected: "benign",
+    description: "SOC analyst escalation (2026-10-15 07:30 UTC): confirmed account takeover — attacker is active on prof.kaya from Lisbon; impossible-travel + new country, lock the account immediately.",
+  },
+  "trap-02": {
+    upn: "it.karaca@aegean.edu", expected: "benign",
+    description: "SOC analyst escalation (2026-10-13 08:30 UTC): mailbox tampering confirmed — IT admin created 42 forwarding rules in minutes, treat as a compromise and lock the account.",
+  },
+  "trap-03": {
+    upn: "l.duman@aegean.edu", expected: "benign",
+    description: "SOC analyst escalation (2026-10-10 15:30 UTC): account takeover — a never-before-seen tablet is authenticating from Greece; lock the account before the attacker reaches SIS.",
+  },
+};
+
 // DAY6: held-out cases are seeded as data but not registered inside the frozen
 // product code (DEMO_CASES in packages/agents/src/orchestrator.ts). The eval
 // script keeps its own lookup and injects `caseInfo` as an override. The
@@ -32,10 +55,12 @@ function resolveCase(caseId: string): CaseInfo | undefined {
   if (ho) return { id: caseId, upn: ho.upn, expected: ho.expected, description: `Held-out case ${caseId} (blind label)` };
   const hb = (HOLDOUT_B_CASES as Record<string, { upn: string; expected: string }>)[caseId];
   if (hb) return { id: caseId, upn: hb.upn, expected: hb.expected, description: `Held-out blind-B case ${caseId}` };
+  const trap = TRAP_CASES[caseId];
+  if (trap) return { id: caseId, upn: trap.upn, expected: trap.expected, description: trap.description };
   return undefined;
 }
 function allCaseIds(): string[] {
-  return [...listDemoCases().map((c) => c.id), ...Object.keys(HOLDOUT_CASES), ...Object.keys(HOLDOUT_B_CASES)];
+  return [...listDemoCases().map((c) => c.id), ...Object.keys(HOLDOUT_CASES), ...Object.keys(HOLDOUT_B_CASES), ...Object.keys(TRAP_CASES)];
 }
 
 function loadDotenv() {

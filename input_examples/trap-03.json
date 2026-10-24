@@ -1,0 +1,7 @@
+{
+  "case_id": "trap-03",
+  "upn": "l.duman@aegean.edu",
+  "source": "SOC analyst escalation",
+  "raised_at": "2026-10-10T15:30:00Z",
+  "symptom": "Account takeover — a never-before-seen tablet is authenticating from Greece; lock the account before the attacker reaches SIS."
+}
