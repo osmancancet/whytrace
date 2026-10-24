@@ -243,18 +243,30 @@ async function check(z: SqlRunner, f: FindingT): Promise<{ status: CriticVerdict
       const otherAsn = s(a.asn_org);
       const otherDev = s(a.device_id);
       if (foreignCity && foreignAsn && foreignDev && otherAsn && otherDev) {
-        const cRes = await z.runSql(`SELECT city, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(foreignAsn)}' AND device_id = '${esc(foreignDev)}' AND result IN ('success','mfa_approved') GROUP BY city`);
-        const totals = cRes.rows.reduce((acc, r) => acc + n(r.n), 0);
-        const foreign = cRes.rows.find((r) => s(r.city) === foreignCity);
-        const foreignN = n(foreign?.n);
-        if (totals > 0 && foreignN / totals >= L6_CARRIER_GEO_FRACTION) {
-          // Second half of the guard: the OTHER side must also be baseline.
-          // Baseline here is calendar-day history on the user's own
-          // (asn, device), the same shape L1 uses.
-          const otherBaseline = await z.runSql(`SELECT COUNT(DISTINCT CAST(ts AS DATE)) AS days FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(otherAsn)}' AND device_id = '${esc(otherDev)}' AND result IN ('success','mfa_approved') AND ts < '${esc(String(a.ts))}'`);
-          const otherDays = n(otherBaseline.rows[0]?.days);
-          if (otherDays >= L1_BASELINE_MIN_DAYS) {
-            reasons.push(`carrier-geolocation artefact: ${foreignN}/${totals} baseline sign-ins on the same ASN ${foreignAsn} + device ${foreignDev} already geolocate to ${foreignCity}, and the other endpoint on ${otherAsn}/${otherDev} has ${otherDays} days of history (both sides are the real user)`);
+        // Anchor the baseline window to BEFORE whichever endpoint fired
+        // earlier: the attacker's own sign-in rows from today must not
+        // count as "baseline" for the carrier-geolocation guard. For
+        // ho-03 the attacker's five Datacamp rows all land on the same
+        // "foreign" city, which looked like 5/5 baseline but was really
+        // the attack itself.
+        const aTs = toMs(String(a.ts));
+        const bTs = toMs(String(b.ts));
+        const anchorTs = Math.min(aTs, bTs);
+        if (Number.isFinite(anchorTs)) {
+          const anchorIso = new Date(anchorTs).toISOString();
+          const cRes = await z.runSql(`SELECT city, COUNT(*) AS n FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(foreignAsn)}' AND device_id = '${esc(foreignDev)}' AND result IN ('success','mfa_approved') AND ts < '${esc(anchorIso)}' GROUP BY city`);
+          const totals = cRes.rows.reduce((acc, r) => acc + n(r.n), 0);
+          const foreign = cRes.rows.find((r) => s(r.city) === foreignCity);
+          const foreignN = n(foreign?.n);
+          if (totals > 0 && foreignN / totals >= L6_CARRIER_GEO_FRACTION) {
+            // Second half of the guard: the OTHER side must also be baseline.
+            // Baseline here is calendar-day history on the user's own
+            // (asn, device), the same shape L1 uses.
+            const otherBaseline = await z.runSql(`SELECT COUNT(DISTINCT CAST(ts AS DATE)) AS days FROM ${USL}.signin_event WHERE upn = ${U} AND asn_org = '${esc(otherAsn)}' AND device_id = '${esc(otherDev)}' AND result IN ('success','mfa_approved') AND ts < '${esc(anchorIso)}'`);
+            const otherDays = n(otherBaseline.rows[0]?.days);
+            if (otherDays >= L1_BASELINE_MIN_DAYS) {
+              reasons.push(`carrier-geolocation artefact: ${foreignN}/${totals} baseline sign-ins (before ${anchorIso.slice(0, 10)}) on the same ASN ${foreignAsn} + device ${foreignDev} already geolocate to ${foreignCity}, and the other endpoint on ${otherAsn}/${otherDev} has ${otherDays} days of prior history (both sides are the real user)`);
+            }
           }
         }
       }

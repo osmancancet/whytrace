@@ -33,6 +33,12 @@ export type PolicyInput = {
    *  of a password with no MFA is already compromise. Optional: the Risk Gate
    *  falls back to pre-L4 behaviour when the identity row is unavailable. */
   mfaMethod?: string | null;
+  /** L4 — "no rule events in the follow-up window" is a key sanity bound; a
+   *  rule the Critic rejected for a benign-looking reason (internal folder
+   *  move, no external target) is STILL a rule event and must prevent L4 from
+   *  downgrading. The orchestrator passes the raw count of `kind='rule'`
+   *  rows from `mail_chain` so this check does not need an extra SQL. */
+  rawRuleEventCount?: number;
 };
 
 export type PolicyDecision = { decision: VerdictT; confidence: number; reasons: string[]; escalate_reasons: string[]; exposure?: Array<{ finding_id: string; claim: string }> };
@@ -87,13 +93,18 @@ export function policy(p: PolicyInput): PolicyDecision {
     //   • no abuse finding survives,
     //   • no credential-use (non-phish) access finding survives,
     //   • no exposure (KEV) finding survives,
-    //   • no DQ conflict blocks the policy.
+    //   • no DQ conflict blocks the policy,
+    //   • no raw rule event exists on `mail_event` for this UPN — a rule the
+    //     Critic rejected for a benign reason (internal folder move, no
+    //     external target) is still "a rule event" per HOLDOUT_LESSONS L4
+    //     and keeps the ambiguous ho-04 shape on escalate.
     // The policy still carries an `exposure[]` list so the Reporter can
     // surface the click URL / sender domain in the Report. If mfa_method is
     // explicitly 'none', the loss of a password without MFA is already a
     // compromise → escalate instead of monitor.
     const mfa = (p.mfaMethod ?? "").toLowerCase();
-    if (phishExposure.length && !abuse.length && !credentialAccess.length && !exposure.length && !p.dqConflicts.length) {
+    const hasRawRuleEvent = (p.rawRuleEventCount ?? 0) > 0;
+    if (phishExposure.length && !abuse.length && !credentialAccess.length && !exposure.length && !p.dqConflicts.length && !hasRawRuleEvent) {
       const confBase = r2(Math.max(0.6, mean(phishExposure.map((f) => f.confidence)) - 0.05));
       const exposureNote = phishExposure.map((f) => ({ finding_id: f.id, claim: f.claim }));
       if (mfa === "none") {

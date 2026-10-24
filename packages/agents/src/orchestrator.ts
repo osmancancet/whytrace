@@ -434,7 +434,16 @@ export async function investigate(opts: OrchestratorOptions): Promise<Report> {
     break;
   }
   void identityRole; // reserved for future lessons; currently L1 reads role via its own Critic re-query.
-  const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources], mfaMethod: identityMfa });
+  // L4 sanity bound: ANY `mail_event` rule row (not just approved external
+  // forward_rule findings) must suppress the phish-exposure-only path. We
+  // count rows directly out of the mail_chain query result instead of adding
+  // a new SQL call — the orchestrator already ran that query during coverage.
+  let rawRuleEventCount = 0;
+  for (const { name, rows } of ran.values()) {
+    if (name !== "mail_chain") continue;
+    for (const r of rows) if (r.kind === "rule") rawRuleEventCount += 1;
+  }
+  const basePolicy = policy({ findings, rejectedCount: rejected.length, dqConflicts, degraded: false, checkedSources: [...checkedSources], mfaMethod: identityMfa, rawRuleEventCount });
   let riskModelMissing = false;
   // The Reporter / Risk-Gate prompts stay bounded: only CONFIRMED findings
   // (fallback to all), top-N by confidence, each claim capped at 240 chars.
