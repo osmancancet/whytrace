@@ -16,6 +16,22 @@
 > `evidence/heldout-b.md` for the full honest write-up and
 > `notes/HOLDOUT_B_LESSONS.md` for the three new reasoning shapes
 > the hb-* run surfaced.
+>
+> **Calibration companion** (DAY8, `evidence/calibration.md` — regenerate with
+> `python3 scripts/eval_calibration.py`): per-variant Brier score
+> (one-vs-rest on the chosen verdict) and mean confidence on correct
+> vs wrong rows.
+>
+> | set | A0 Brier (ok/n · mean conf correct/wrong) | B0 Brier | M0 Brier |
+> |---|---|---|---|
+> | dev (21) | **0.0905** (19/21 · 0.79/0.55) | 0.2950 (9/21 · 0.78/0.69) | 0.2572 (13/21 · 0.94/0.80) |
+> | ho (24)  | **0.2556** (12/24 · 0.81/0.69) | 0.2662 (15/24 · 0.74/0.77) | 0.3544 (12/24 · 0.91/0.83) |
+> | hb (24)  | **0.2104** (15/24 · 0.73/0.65) | 0.2256 (18/24 · 0.72/0.80) | 0.2365 (17/24 · 0.83/0.83) |
+>
+> A0 keeps a visible correct-vs-wrong confidence gap on every set; M0's
+> mean confidence on wrong rows stays at 0.80+ everywhere (Nemotron
+> alone is confident even when wrong — the symptom the agent
+> architecture is built to cushion).
 
 The 21-run DAY3D sweep below remains the official dev-set snapshot for
 model-contribution and provider-failure disclosure; the DAY7 one-run

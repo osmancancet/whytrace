@@ -12,6 +12,64 @@ Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Expla
 - **Evidence chain:** every finding links to a `sql_id` the Critic re-queried independently; nothing is "the model said so".
 - **Sponsor stack:** [Zetaris](https://zetaris.com) (Unified Semantic Layer over four sources), [Meterless](https://meterless.ai) (World Model, H-MEM, Markovian engines + Nightshift provider), [NVIDIA Nemotron](https://developer.nvidia.com/blog/accelerate-ai-development-with-the-nvidia-nemotron-open-models/) (Super VL 120B + Lightning 30B lanes), Cursor IDE + Claude (development tools).
 
+## Head-to-head: WhyTrace vs rules-only vs Nemotron alone
+
+Three test sets, three systems, same rows. Every number below is parsed from the committed evidence tables cited on each table title; nothing is retyped by hand. Terms: **FC** = said `contain` when expected ≠ contain (silently locks a real user). **FB** = said `benign` when expected ≠ benign (silently clears a real attack). **Escalated share** = share of verdicts kicked to a human. **Model-backed share** = share of rows that reached a verdict via `decided_by = model+policy` (not `policy_fallback`). **"No row evidence"** = rows with a non-benign verdict and zero surviving findings in the Report JSON (counted directly in `evidence/eval_raw/*.json`). **Mean conf · wrong** = mean confidence on the rows the system got wrong (lower = humbler when wrong).
+
+### Dev set (7 cases × 3 runs, 23 Oct 2026, [`evidence/eval.md`](evidence/eval.md))
+
+| metric | WhyTrace (A0) | rules-only (B0) | Nemotron alone (M0) |
+|---|---|---|---|
+| Accuracy (ok/n)                   | **19/21 (90.5%)** | 9/21 (43%)   | 13/21 (62%)   |
+| False contain (innocent locked)   | **0**             | 3            | 3             |
+| False benign (missed attack)      | **0**             | 3            | 2             |
+| Escalated-to-human share          | 24%               | 0%           | 5%            |
+| Model-backed share                | 18/21 (86%)       | n/a          | 20/21 (95%)   |
+| Verdict without row evidence (count) | **1 of 21**       | 15 of 21      | 16 of 21       |
+| Mean confidence on wrong rows     | **0.55**          | 0.69         | 0.80          |
+
+### Seen held-out ho (8 cases × 3 runs, DAY6 24 Oct 2026, [`evidence/heldout.md`](evidence/heldout.md))
+
+| metric | WhyTrace (A0 v1) | rules-only (B0) | Nemotron alone (M0) |
+|---|---|---|---|
+| Accuracy (ok/n)                   | 12/24 (50%)      | **15/24 (63%)**   | 12/24 (50%)   |
+| False contain (innocent locked)   | **0**            | 3                 | 7             |
+| False benign (missed attack)      | 3 (ho-07 ×3)     | 6                 | 3             |
+| Escalated-to-human share          | 50%              | 0%                | 8%            |
+| Model-backed share                | 24/24 (100%)     | n/a               | 24/24 (100%)  |
+| Verdict without row evidence      | **0 of 24**      | 12 of 24           | 15 of 24      |
+| Mean confidence on wrong rows     | **0.69**         | 0.77              | 0.83          |
+
+Rules-only is **more accurate** here — and locks three innocent users out and misses six attacks silently. WhyTrace locks out none and misses three (all ho-07, the privileged admin's hosting-ASN baseline-break; fixed in v2 via L1, see the DAY7 story below). DAY7 v2 one-run sanity on the same cases: A0 **7/8 (87.5%)** · FC 0 · FB 0 ([`evidence/day7-regression.md`](evidence/day7-regression.md)). v2 is frozen at commit `2b28af2` for the blind measurement below.
+
+### Blind held-out hb (8 cases × 3 runs, 24 Oct 2026, [`evidence/heldout-b.md`](evidence/heldout-b.md))
+
+A separate analyst authored eight new cases without seeing any WhyTrace code; labels were fixed before the run and have never been changed. The system under test is the DAY7 v2 build (commit `2b28af2`, `git diff --stat 2b28af2 -- packages/` is empty for the whole hb phase).
+
+| metric | WhyTrace (A0 v2) | rules-only (B0) | Nemotron alone (M0) |
+|---|---|---|---|
+| Accuracy (ok/n)                   | 15/24 (62.5%)    | **18/24 (75%)**   | 17/24 (71%)   |
+| False contain (innocent locked)   | **0**            | 6                 | 2             |
+| False benign (missed attack)      | **0**            | 0                 | 2             |
+| Escalated-to-human share          | 62%              | 0%                | 21%           |
+| Model-backed share                | 24/24 (100%)     | n/a               | 24/24 (100%)  |
+| Verdict without row evidence      | **1 of 24**      | 18 of 24           | 18 of 24      |
+| Mean confidence on wrong rows     | **0.65**         | 0.80              | 0.83          |
+
+Rules-only is **more accurate** here too — and silently locks real users out six times (hb-04 and hb-08 three times each, both ambiguous cases where "escalate for a human" is the correct call). WhyTrace never silently locks anyone out and never silently clears a real attack across any of the three sets. The three WhyTrace misses on hb are all over-escalations covered in [`evidence/failures.md`](evidence/failures.md); candidate general-rule fixes live in [`notes/HOLDOUT_B_LESSONS.md`](notes/HOLDOUT_B_LESSONS.md) and are deliberately **not implemented** in v2 — writing new lessons after seeing the blind set would turn hb into another training set.
+
+### Calibration — Brier score (one-vs-rest on the chosen verdict)
+
+Lower is better; a confident wrong answer costs the most. From [`evidence/calibration.md`](evidence/calibration.md) (regenerate with `python3 scripts/eval_calibration.py`).
+
+| set | WhyTrace (A0) | rules-only (B0) | Nemotron alone (M0) |
+|---|---|---|---|
+| dev (21)           | **0.0905** | 0.2950 | 0.2572 |
+| seen ho (24)       | **0.2556** | 0.2662 | 0.3544 |
+| blind hb (24)      | **0.2104** | 0.2256 | 0.2365 |
+
+WhyTrace is the best-calibrated system on every set and keeps a visible correct-vs-wrong confidence gap. The two baselines keep mean confidence on wrong rows above 0.69 everywhere; Nemotron alone's wrong-row confidence stays at 0.80+ (confident even when wrong) — the symptom the agent architecture is built to cushion.
+
 ## The problem
 
 Universities run on disconnected systems: identity in Entra, mail in a gateway, assets in a CMDB spreadsheet, vulnerabilities in CISA KEV. Analysts triage account-compromise tickets by context-switching between five consoles for an hour per case. KVKK/GDPR often forbid centralising the raw PII into a SIEM, so "query in place" is a hard constraint, not a nice-to-have. WhyTrace answers each ticket with a defensible verdict in minutes and keeps every row where it was.
