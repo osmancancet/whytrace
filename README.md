@@ -1,12 +1,41 @@
+<div align="center">
+
 # WhyTrace
 
-> **Evidence-backed account-compromise investigator for university IT.** A planner → investigator ↔ critic → risk-gate → reporter loop reads four fragmented data sources in place through **Zetaris**, cites the exact query and rows behind every claim, and routes to a human when the signal does not stand up to re-query.
+**Evidence-backed account-compromise investigator for university IT**
+
+*Every verdict points to the exact query and rows behind it. When the evidence does not hold up, a human decides.*
+
+![Track 02](https://img.shields.io/badge/Open%20Agent%20Hackathon%202026-Track%2002%20%C2%B7%20Explain%20Why-1f6feb?style=for-the-badge)
+
+![Zetaris](https://img.shields.io/badge/Zetaris-Unified%20Semantic%20Layer%20%2B%20RUN%20DQ-0b7285?style=flat-square)
+![Meterless](https://img.shields.io/badge/Meterless-Nightshift%20%C2%B7%20World%20Model%20%C2%B7%20H--MEM%20%C2%B7%20Markovian%20%C2%B7%20Scout-5f3dc4?style=flat-square)
+![NVIDIA](https://img.shields.io/badge/NVIDIA-Nemotron%203.5%20Super%20VL%20120B-76b900?style=flat-square&logo=nvidia&logoColor=white)
+![Team](https://img.shields.io/badge/team-CyberCBU-555?style=flat-square)
+
+**[▶ Demo video (3:51)](https://youtu.be/CeU9bjrZ2zg)** · **[Live replay, no install](https://osmancancet.github.io/whytrace/)** · **[Deck (PDF)](https://osmancancet.github.io/whytrace/WhyTrace_deck.pdf)** · **[Review in 2 minutes](#review-it-in-2-minutes-no-install)**
+
+<img src="docs/media/console-explain-case-001.png" alt="WhyTrace analyst console: verdict, evidence chain and per-finding attribution for case-001" width="860">
+
+</div>
+
+## At a glance
+
+| | WhyTrace | rules-only | Nemotron alone |
+|---|:---:|:---:|:---:|
+| Innocent users locked out (false contain), all 69 verdicts on 3 sets | **0** | 12 | 12 |
+| Verdicts with no row evidence behind them, all 69 verdicts | **2** | 45 | 49 |
+| Best calibrated (lowest Brier score) | **3 of 3 sets** | 0 | 0 |
+| Planted false claims caught (adversarial test) | **126 / 126** | – | – |
+| False-premise "lock this account now" alerts refused | **3 / 3** | – | – |
+
+Honest part: on the two held-out sets (one written blind by an analyst who never saw the code) rules-only was more accurate (15 vs 12 and 18 vs 15 of 24). WhyTrace escalated the ambiguous cases to a human instead of silently locking people out. Full tables in [Head-to-head](#head-to-head-whytrace-vs-rules-only-vs-nemotron-alone).
+
+> A planner → investigator ↔ critic → risk-gate → reporter loop reads four fragmented data sources in place through **Zetaris**, cites the exact query and rows behind every claim, and routes to a human when the signal does not stand up to re-query.
 
 Built for the **Open Agent Hackathon 2026 — Track 02 "The Agent That Can Explain Why"** by Osman Can Çetlenbik (CyberCBU, Manisa Celal Bayar University). Development was done in the Cursor IDE with Claude as the AI coding assistant.
 
 ## TL;DR
-
-**Demo video (3:51):** https://youtu.be/CeU9bjrZ2zg · **Live replay:** https://osmancancet.github.io/whytrace/ · **Deck (PDF):** https://osmancancet.github.io/whytrace/WhyTrace_deck.pdf
 
 - **User:** one analyst in a university SOC, with Entra ID + a mail gateway + an asset CMDB + CISA KEV and no time to copy-paste across them.
 - **Problem:** phishing → account takeover is the most common incident; a wrong *benign* leaks student records, a wrong *contain* locks a lecturer out mid-exam.
